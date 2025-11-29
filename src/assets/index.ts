@@ -1,6 +1,6 @@
 // Importe a imagem local
 // Certifique-se de que o arquivo "BioAiLabIllustration.png" está dentro da pasta "src/assets/images/"
-import labWorkImg from "./images/BioAiLabIlustration.png";
+import labWorkImg from "./images/BioAiLabIlustration.svg";
 
 export const Assets = {
   hero: {

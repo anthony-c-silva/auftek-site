@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { NAV_LINKS } from "../../data/constants";
 import { useScroll, scrollToElement } from "../../hooks/useScroll";
-import { Logo } from "../ui/Logo"; // Importe o novo componente
+import { Logo } from "../ui/Logo";
 
 export const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -27,15 +27,12 @@ export const Header: React.FC = () => {
           className="cursor-pointer flex items-center gap-2"
           onClick={() => window.scrollTo(0, 0)}
         >
-          {/* Aqui inserimos o SVG. Ajuste o 'h-10' para o tamanho desejado */}
-          <Logo className="h-10 w-auto text-white hover:text-auftek-blue transition-colors duration-300" />
-
-          {/* Opcional: Se quiser manter o texto "AUFTEK" ao lado do ícone, descomente abaixo: */}
-          {/* <span className="text-2xl font-bold text-white tracking-tighter">AUFTEK<span className="text-auftek-blue">.</span></span> */}
+          <Logo className="h-8 md:h-10 w-auto text-white hover:text-auftek-blue transition-colors duration-300" />
         </div>
 
-        {/* Desktop Nav */}
-        <div className="hidden md:flex items-center gap-8">
+        {/* Desktop Nav - Alterado de 'hidden md:flex' para 'hidden lg:flex' (aprox 1024px) */}
+        {/* Isso garante que em 900px o menu desktop suma e entre o mobile */}
+        <div className="hidden lg:flex items-center gap-8">
           {NAV_LINKS.map((link) => (
             <a
               key={link.name}
@@ -57,24 +54,25 @@ export const Header: React.FC = () => {
           </button>
         </div>
 
-        {/* Mobile Menu Toggle */}
+        {/* Mobile Menu Toggle - Alterado de 'md:hidden' para 'lg:hidden' */}
         <button
-          className="md:hidden text-white"
+          className="lg:hidden text-white p-2"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
+          aria-label="Abrir menu"
         >
-          {isMenuOpen ? <X /> : <Menu />}
+          {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
         </button>
       </div>
 
-      {/* Mobile Nav */}
+      {/* Mobile Nav - Fundo sólido e tela cheia para melhor experiência */}
       {isMenuOpen && (
-        <div className="md:hidden bg-auftek-dark border-b border-gray-800 p-6 absolute w-full animate-fade-in">
-          <div className="flex flex-col gap-4">
+        <div className="lg:hidden fixed inset-0 top-20 bg-auftek-dark/95 backdrop-blur-xl border-t border-gray-800 p-6 flex flex-col h-[calc(100vh-5rem)] overflow-y-auto animate-fade-in z-40">
+          <div className="flex flex-col gap-6 items-center justify-center flex-1">
             {NAV_LINKS.map((link) => (
               <a
                 key={link.name}
                 href={link.href}
-                className="text-lg font-medium text-gray-300"
+                className="text-2xl font-bold text-gray-300 hover:text-white transition-colors"
                 onClick={(e) => {
                   e.preventDefault();
                   handleNavClick(link.href);
@@ -83,6 +81,12 @@ export const Header: React.FC = () => {
                 {link.name}
               </a>
             ))}
+            <button
+              className="mt-8 px-8 py-3 bg-auftek-blue text-white text-lg font-bold rounded-full shadow-lg shadow-blue-500/30 w-full max-w-xs"
+              onClick={() => handleNavClick("#contato")}
+            >
+              Fale Conosco
+            </button>
           </div>
         </div>
       )}
