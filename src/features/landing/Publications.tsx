@@ -14,11 +14,15 @@ import { Section, SectionTitle } from "../../components/ui/Section";
 export const Publications: React.FC = () => {
   return (
     <Section id="publicacoes" darker>
-      <SectionTitle subtitle="Soluções validadas para diversos setores da indústria e pesquisa.">
+      {/* CORREÇÃO AQUI: Adicionado align="center" */}
+      <SectionTitle
+        align="center"
+        subtitle="Soluções validadas para diversos setores da indústria e pesquisa."
+      >
         Aplicações Reais
       </SectionTitle>
 
-      {/* Updated Applications Grid */}
+      {/* Grid de Aplicações */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
         {/* 1. Detecção de Salmonella */}
         <div className="bg-[#0e223b] border border-gray-800 p-6 rounded-xl hover:border-red-400/50 transition-colors group">
@@ -104,7 +108,7 @@ export const Publications: React.FC = () => {
         </div>
       </div>
 
-      {/* Less prominent Publicações Section */}
+      {/* Seção Secundária: Publicações */}
       <div className="border-t border-gray-800 pt-16">
         <h3 className="text-2xl font-bold text-gray-300 mb-8 text-center">
           Publicações e Embasamento Técnico-Científico
