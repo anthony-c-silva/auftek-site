@@ -15,10 +15,14 @@ export const Header: React.FC = () => {
 
   return (
     <nav
-      className={`fixed w-full z-50 transition-all duration-300 ${
+      // FIX 1: Adicionado 'top-0 left-0' para garantir posição exata.
+      // FIX 2: Alterado 'border-gray-800' para 'border-white/10'.
+      // A borda cinza sólida (gray-800) criava o efeito de "linha branca" forte.
+      // A borda com opacidade (white/10) é mais sutil e se adapta ao fundo.
+      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
         scrolled
-          ? "bg-auftek-dark/95 backdrop-blur-md shadow-lg border-b border-gray-800"
-          : "bg-transparent"
+          ? "bg-auftek-dark/95 backdrop-blur-md shadow-lg border-b border-white/10"
+          : "bg-transparent border-b border-transparent"
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -30,8 +34,7 @@ export const Header: React.FC = () => {
           <Logo className="h-8 md:h-10 w-auto text-white hover:text-auftek-blue transition-colors duration-300" />
         </div>
 
-        {/* Desktop Nav - Alterado de 'hidden md:flex' para 'hidden lg:flex' (aprox 1024px) */}
-        {/* Isso garante que em 900px o menu desktop suma e entre o mobile */}
+        {/* Desktop Nav */}
         <div className="hidden lg:flex items-center gap-8">
           {NAV_LINKS.map((link) => (
             <a
@@ -54,7 +57,7 @@ export const Header: React.FC = () => {
           </button>
         </div>
 
-        {/* Mobile Menu Toggle - Alterado de 'md:hidden' para 'lg:hidden' */}
+        {/* Mobile Menu Toggle */}
         <button
           className="lg:hidden text-white p-2"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -64,9 +67,9 @@ export const Header: React.FC = () => {
         </button>
       </div>
 
-      {/* Mobile Nav - Fundo sólido e tela cheia para melhor experiência */}
+      {/* Mobile Nav */}
       {isMenuOpen && (
-        <div className="lg:hidden fixed inset-0 top-20 bg-auftek-dark/95 backdrop-blur-xl border-t border-gray-800 p-6 flex flex-col h-[calc(100vh-5rem)] overflow-y-auto animate-fade-in z-40">
+        <div className="lg:hidden fixed inset-0 top-20 bg-auftek-dark/95 backdrop-blur-xl border-t border-white/10 p-6 flex flex-col h-[calc(100vh-5rem)] overflow-y-auto animate-fade-in z-40">
           <div className="flex flex-col gap-6 items-center justify-center flex-1">
             {NAV_LINKS.map((link) => (
               <a
