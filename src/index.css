@@ -21,3 +21,19 @@ body {
     backdrop-filter: blur(10px);
     border: 1px solid rgba(30, 144, 255, 0.2);
 }
+@keyframes scroll {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+.animate-scroll {
+    animation: scroll 30s linear infinite;
+}
+
+.animate-scroll:hover {
+    animation-play-state: paused;
+}
