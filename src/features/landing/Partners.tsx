@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Section } from "../../components/ui/Section";
 
-// --- IMPORTAÇÃO DOS LOGOS ---
 import corsanLogo from "../../assets/images/partners/CORSAN.png";
 import aegeaLogo from "../../assets/images/partners/AEGEA.png";
 import eletrobrasLogo from "../../assets/images/partners/ELTROBRAS_CEPEL.png";
@@ -15,7 +14,14 @@ import ufsmLogo from "../../assets/images/partners/UFSM.png";
 import uspLogo from "../../assets/images/partners/USP.png";
 import zeitLogo from "../../assets/images/partners/ZEIT.png";
 
-// Lista de Dados
+import cnpqLogo from "../../assets/images/apoios/CNPq.svg";
+import fapergsLogo from "../../assets/images/apoios/Fapergs.svg";
+import finepLogo from "../../assets/images/apoios/Finep.svg";
+import nvidiaLogo from "../../assets/images/apoios/Nvidia.svg";
+import pulsarLogo from "../../assets/images/apoios/Pulsar.svg";
+import sebraeLogo from "../../assets/images/apoios/Sebrae.svg";
+import ventiurLogo from "../../assets/images/apoios/Ventiur.svg";
+
 const PARTNERS_LIST = [
   { name: "CORSAN", logo: corsanLogo },
   { name: "AEGEA", logo: aegeaLogo },
@@ -30,62 +36,75 @@ const PARTNERS_LIST = [
   { name: "ZEIT", logo: zeitLogo },
 ];
 
-export const Partners: React.FC = () => {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  // Controla a velocidade do scroll:
-  // 1 = normal, 0 = pausado, 10 = rápido direita, -10 = rápido esquerda
-  const speedRef = useRef(1);
+const SUPPORTERS_LIST = [
+  { name: "CNPq", logo: cnpqLogo },
+  { name: "FAPERGS", logo: fapergsLogo },
+  { name: "FINEP", logo: finepLogo },
+  { name: "NVIDIA", logo: nvidiaLogo },
+  { name: "PULSAR", logo: pulsarLogo },
+  { name: "SEBRAE", logo: sebraeLogo },
+  { name: "VENTIUR", logo: ventiurLogo },
+];
 
-  // Duplicamos a lista para criar o efeito de loop infinito
-  const infiniteList = [...PARTNERS_LIST, ...PARTNERS_LIST];
+export const Partners: React.FC = () => {
+  const partnersScrollRef = useRef<HTMLDivElement>(null);
+  const partnersSpeedRef = useRef(1);
+
+  const supportersScrollRef = useRef<HTMLDivElement>(null);
+  const supportersSpeedRef = useRef(1);
+
+  const infinitePartners = [...PARTNERS_LIST, ...PARTNERS_LIST];
+  const infiniteSupporters = [...SUPPORTERS_LIST, ...SUPPORTERS_LIST];
 
   useEffect(() => {
-    const scrollContainer = scrollRef.current;
-    if (!scrollContainer) return;
-
     let animationFrameId: number;
 
     const step = () => {
-      if (scrollContainer) {
-        // Aplica a velocidade atual
-        scrollContainer.scrollLeft += speedRef.current;
-
-        // --- LÓGICA DO LOOP INFINITO ---
-        const maxScroll = scrollContainer.scrollWidth / 2; // Metade do conteúdo duplicado
-
-        // Se chegou no fim (direita), volta pro começo
-        if (scrollContainer.scrollLeft >= maxScroll) {
-          scrollContainer.scrollLeft = scrollContainer.scrollLeft - maxScroll;
-        }
-        // Se chegou no começo (esquerda/ré), pula pro "final" virtual
-        else if (scrollContainer.scrollLeft <= 0) {
-          scrollContainer.scrollLeft = maxScroll + scrollContainer.scrollLeft;
+      if (partnersScrollRef.current) {
+        partnersScrollRef.current.scrollLeft += partnersSpeedRef.current;
+        const maxScroll1 = partnersScrollRef.current.scrollWidth / 2;
+        if (partnersScrollRef.current.scrollLeft >= maxScroll1) {
+          partnersScrollRef.current.scrollLeft = partnersScrollRef.current.scrollLeft - maxScroll1;
+        } else if (partnersScrollRef.current.scrollLeft <= 0) {
+          partnersScrollRef.current.scrollLeft = maxScroll1 + partnersScrollRef.current.scrollLeft;
         }
       }
+
+      if (supportersScrollRef.current) {
+        supportersScrollRef.current.scrollLeft += supportersSpeedRef.current;
+        const maxScroll2 = supportersScrollRef.current.scrollWidth / 2;
+        if (supportersScrollRef.current.scrollLeft >= maxScroll2) {
+          supportersScrollRef.current.scrollLeft = supportersScrollRef.current.scrollLeft - maxScroll2;
+        } else if (supportersScrollRef.current.scrollLeft <= 0) {
+          supportersScrollRef.current.scrollLeft = maxScroll2 + supportersScrollRef.current.scrollLeft;
+        }
+      }
+
       animationFrameId = requestAnimationFrame(step);
     };
 
-    // Inicia a animação
     animationFrameId = requestAnimationFrame(step);
-
     return () => cancelAnimationFrame(animationFrameId);
   }, []);
 
-  // Handlers para alterar a velocidade baseado no Mouse
-  const handleMouseEnterContainer = () => { speedRef.current = 0; }; // Pausa ao ler
-  const handleMouseLeaveContainer = () => { speedRef.current = 1; }; // Retoma suave
+  const handlePartnersEnterContainer = () => { partnersSpeedRef.current = 0; };
+  const handlePartnersLeaveContainer = () => { partnersSpeedRef.current = 1; };
+  const handlePartnersEnterLeft = () => { partnersSpeedRef.current = -10; };
+  const handlePartnersLeaveLeft = () => { partnersSpeedRef.current = 0; };
+  const handlePartnersEnterRight = () => { partnersSpeedRef.current = 10; };
+  const handlePartnersLeaveRight = () => { partnersSpeedRef.current = 0; };
 
-  const handleMouseEnterLeft = () => { speedRef.current = -10; }; // Rápido para Esquerda
-  const handleMouseLeaveLeft = () => { speedRef.current = 0; };   // Volta a pausar (pois está dentro do container)
-
-  const handleMouseEnterRight = () => { speedRef.current = 10; }; // Rápido para Direita
-  const handleMouseLeaveRight = () => { speedRef.current = 0; };  // Volta a pausar
+  const handleSupportersEnterContainer = () => { supportersSpeedRef.current = 0; };
+  const handleSupportersLeaveContainer = () => { supportersSpeedRef.current = 1; };
+  const handleSupportersEnterLeft = () => { supportersSpeedRef.current = -10; };
+  const handleSupportersLeaveLeft = () => { supportersSpeedRef.current = 0; };
+  const handleSupportersEnterRight = () => { supportersSpeedRef.current = 10; };
+  const handleSupportersLeaveRight = () => { supportersSpeedRef.current = 0; };
 
   return (
       <Section id="parceiros" className="relative overflow-hidden bg-white">
         <div className="relative z-10">
 
-          {/* CABEÇALHO */}
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-[#0e223b] mb-3">
               Quem usa e apoia
@@ -107,18 +126,15 @@ export const Partners: React.FC = () => {
                 <div className="h-[1px] w-12 bg-gray-300"></div>
               </div>
 
-              {/* Container Relativo */}
               <div
                   className="relative group/carousel"
-                  onMouseEnter={handleMouseEnterContainer}
-                  onMouseLeave={handleMouseLeaveContainer}
+                  onMouseEnter={handlePartnersEnterContainer}
+                  onMouseLeave={handlePartnersLeaveContainer}
               >
-
-                {/* --- BOTÃO ESQUERDA (ZONA DE ACELERAÇÃO) --- */}
                 <div
                     className="absolute -left-2 md:-left-10 top-0 bottom-0 z-20 flex items-center justify-center cursor-pointer w-16"
-                    onMouseEnter={handleMouseEnterLeft}
-                    onMouseLeave={handleMouseLeaveLeft}
+                    onMouseEnter={handlePartnersEnterLeft}
+                    onMouseLeave={handlePartnersLeaveLeft}
                 >
                   <ChevronLeft
                       size={40}
@@ -127,17 +143,13 @@ export const Partners: React.FC = () => {
                   />
                 </div>
 
-                {/* Viewport do Scroll */}
                 <div
-                    ref={scrollRef}
+                    ref={partnersScrollRef}
                     className="flex overflow-x-hidden py-4 items-center gap-8 md:gap-12 select-none"
                     style={{ scrollBehavior: "auto" }}
                 >
-                  {infiniteList.map((partner, i) => (
-                      <div
-                          key={i}
-                          className="flex-shrink-0 w-40 md:w-52"
-                      >
+                  {infinitePartners.map((partner, i) => (
+                      <div key={i} className="flex-shrink-0 w-40 md:w-52">
                         <div className="group flex items-center justify-center h-32 p-4 bg-white rounded-xl border border-gray-200 shadow-sm hover:border-[#0e223b] hover:shadow-md transition-all duration-300 hover:-translate-y-1 cursor-grab active:cursor-grabbing">
                           <img
                               src={partner.logo}
@@ -150,11 +162,10 @@ export const Partners: React.FC = () => {
                   ))}
                 </div>
 
-                {/* --- BOTÃO DIREITA (ZONA DE ACELERAÇÃO) --- */}
                 <div
                     className="absolute -right-2 md:-right-10 top-0 bottom-0 z-20 flex items-center justify-center cursor-pointer w-16"
-                    onMouseEnter={handleMouseEnterRight}
-                    onMouseLeave={handleMouseLeaveRight}
+                    onMouseEnter={handlePartnersEnterRight}
+                    onMouseLeave={handlePartnersLeaveRight}
                 >
                   <ChevronRight
                       size={40}
@@ -162,12 +173,10 @@ export const Partners: React.FC = () => {
                       className="text-gray-400 hover:text-[#0e223b] hover:scale-125 transition-all duration-300"
                   />
                 </div>
-
               </div>
             </div>
 
-            {/* --- GRUPO 2: FOMENTO --- */}
-            <div>
+            <div className="mb-10 px-4 md:px-12">
               <div className="flex items-center justify-center gap-4 mb-10">
                 <div className="h-[1px] w-12 bg-gray-300"></div>
                 <h3 className="text-center text-gray-500 uppercase tracking-[0.2em] font-bold text-xs">
@@ -176,26 +185,56 @@ export const Partners: React.FC = () => {
                 <div className="h-[1px] w-12 bg-gray-300"></div>
               </div>
 
-              <div className="flex flex-wrap justify-center gap-6">
-                {[
-                  "FAPESP",
-                  "PIPE Empreendedor",
-                  "FINEP",
-                  "CNPq",
-                  "SEBRAE",
-                  "MCTI",
-                ].map((funder, i) => (
-                    <div
-                        key={i}
-                        className="group flex items-center justify-center px-8 py-4 bg-slate-50 rounded-lg border border-gray-200 hover:border-auftek-green/50 hover:bg-white hover:shadow-md transition-all duration-300"
-                    >
-                  <span className="font-bold text-gray-600 group-hover:text-[#0e223b] transition-colors text-sm tracking-wide">
-                    {funder}
-                  </span>
-                    </div>
-                ))}
+              <div
+                  className="relative group/carousel-apoio"
+                  onMouseEnter={handleSupportersEnterContainer}
+                  onMouseLeave={handleSupportersLeaveContainer}
+              >
+                <div
+                    className="absolute -left-2 md:-left-10 top-0 bottom-0 z-20 flex items-center justify-center cursor-pointer w-16"
+                    onMouseEnter={handleSupportersEnterLeft}
+                    onMouseLeave={handleSupportersLeaveLeft}
+                >
+                  <ChevronLeft
+                      size={40}
+                      strokeWidth={1.5}
+                      className="text-gray-400 hover:text-auftek-green hover:scale-125 transition-all duration-300"
+                  />
+                </div>
+
+                <div
+                    ref={supportersScrollRef}
+                    className="flex overflow-x-hidden py-4 items-center gap-8 md:gap-12 select-none"
+                    style={{ scrollBehavior: "auto" }}
+                >
+                  {infiniteSupporters.map((supporter, i) => (
+                      <div key={i} className="flex-shrink-0 w-40 md:w-52">
+                        <div className="group flex items-center justify-center h-32 p-4 bg-slate-50 rounded-xl border border-gray-200 shadow-sm hover:border-auftek-green/50 hover:bg-white hover:shadow-md transition-all duration-300 hover:-translate-y-1 cursor-grab active:cursor-grabbing overflow-hidden">
+                          <img
+                              src={supporter.logo}
+                              alt={`Logo ${supporter.name}`}
+                              className="max-h-20 w-auto max-w-full object-contain filter grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300"
+                              draggable={false}
+                          />
+                        </div>
+                      </div>
+                  ))}
+                </div>
+
+                <div
+                    className="absolute -right-2 md:-right-10 top-0 bottom-0 z-20 flex items-center justify-center cursor-pointer w-16"
+                    onMouseEnter={handleSupportersEnterRight}
+                    onMouseLeave={handleSupportersLeaveRight}
+                >
+                  <ChevronRight
+                      size={40}
+                      strokeWidth={1.5}
+                      className="text-gray-400 hover:text-auftek-green hover:scale-125 transition-all duration-300"
+                  />
+                </div>
               </div>
             </div>
+
           </div>
         </div>
       </Section>

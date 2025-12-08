@@ -1,37 +1,38 @@
 import React from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+
+// Layout Global
+// Se você moveu o Header para src/layout, ajuste o import abaixo para '../layout/Header'
 import { Header } from './components/layout/Header';
 import { Footer } from './components/layout/Footer';
-import { Hero } from './features/landing/Hero';
-import { About } from './features/landing/About';
-import { Solutions } from './features/landing/Solutions';
-import { Microbiology } from './features/landing/Microbiology';
-import { BioAiLab } from './features/landing/BioAiLab';
-import { Publications } from './features/landing/Publications'; 
-import { Energy } from './features/landing/Energy';
-import { Partners } from './features/landing/Partners';
-import { Team } from './features/landing/Team'; 
-import { Contact } from './features/landing/Contact';
+
+// Páginas
+import { Home } from './pages/Home';
+import { BlogPage } from './features/blog/BlogPage'; // As páginas do Blog que criamos antes
+import { BlogPostPage } from './features/blog/BlogPostPage';
 
 function App() {
     return (
-        <div className="min-h-screen bg-auftek-dark text-slate-200 font-sans selection:bg-auftek-blue selection:text-white">
-            <Header />
+        <BrowserRouter>
+            <div className="min-h-screen bg-auftek-dark text-slate-200 font-sans selection:bg-auftek-blue selection:text-white">
 
-            <main>
-                <Hero />
-                <About />
-                <Solutions />
-                <Microbiology />
-                <BioAiLab />
-                <Publications />
-                <Energy />
-                <Partners />
-                <Team />
-                <Contact />
-            </main>
+                {/* Header Fixo em todas as páginas */}
+                <Header />
 
-            <Footer />
-        </div>
+                {/* Área de conteúdo dinâmico */}
+                <Routes>
+                    {/* Rota raiz carrega a Home completa */}
+                    <Route path="/" element={<Home />} />
+
+                    {/* Rotas do Blog */}
+                    <Route path="/blog" element={<BlogPage />} />
+                    <Route path="/blog/:id" element={<BlogPostPage />} />
+                </Routes>
+
+                {/* Footer Fixo em todas as páginas */}
+                <Footer />
+            </div>
+        </BrowserRouter>
     );
 }
 
