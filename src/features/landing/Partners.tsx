@@ -1,108 +1,246 @@
-import React from 'react';
-import { Section, SectionTitle } from '../../components/ui/Section';
-import {
-    Building2,
-    Sprout,
-    FlaskConical,
-    Landmark,
-    Rocket,
-    Award,
-} from 'lucide-react';
+import React, { useEffect, useRef } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Section } from "../../components/ui/Section";
 
-const PARTNERS = [
-    { name: 'Embrapa', icon: Sprout },
-    { name: 'Zeit', icon: Rocket },
-    { name: 'USP', icon: Landmark },
-    { name: 'UFSCar', icon: Landmark },
-    { name: 'Finep', icon: Award },
-    { name: 'FAPERGS', icon: FlaskConical },
-    { name: 'SEBRAE', icon: Building2 },
-    { name: 'Badesul', icon: Building2 },
+
+import corsanLogo from "../../assets/images/partners/CORSAN.png";
+import aegeaLogo from "../../assets/images/partners/AEGEA.png";
+// Mantido ELTROBRAS conforme o nome do arquivo no seu print (sem o primeiro E)
+import eletrobrasLogo from "../../assets/images/partners/ELTROBRAS_CEPEL.png";
+// CORRIGIDO: Renomeie o arquivo na pasta para IEE_USP.png
+import ieeUspLogo from "../../assets/images/partners/IEE_USP.png";
+// CORRIGIDO: Renomeie o arquivo na pasta para IEM_UFSM.png
+import iemUfsmLogo from "../../assets/images/partners/IEM_UFSM.png";
+import mackenzieLogo from "../../assets/images/partners/MACKENZIE.png";
+import senaiLogo from "../../assets/images/partners/SENAI.png";
+import solubioLogo from "../../assets/images/partners/SOLUBIO.png";
+import ufsmLogo from "../../assets/images/partners/UFSM.png";
+import uspLogo from "../../assets/images/partners/USP.png";
+import zeitLogo from "../../assets/images/partners/ZEIT.png";
+
+import cnpqLogo from "../../assets/images/apoios/CNPq.svg";
+import fapergsLogo from "../../assets/images/apoios/Fapergs.svg";
+import finepLogo from "../../assets/images/apoios/Finep.svg";
+import nvidiaLogo from "../../assets/images/apoios/Nvidia.svg";
+import pulsarLogo from "../../assets/images/apoios/Pulsar.svg";
+import sebraeLogo from "../../assets/images/apoios/Sebrae.svg";
+import ventiurLogo from "../../assets/images/apoios/Ventiur.svg";
+
+const PARTNERS_LIST = [
+  { name: "CORSAN", logo: corsanLogo },
+  { name: "AEGEA", logo: aegeaLogo },
+  { name: "ELETROBRAS CEPEL", logo: eletrobrasLogo },
+  { name: "IEE USP", logo: ieeUspLogo },
+  { name: "IEM UFSM", logo: iemUfsmLogo },
+  { name: "MACKENZIE", logo: mackenzieLogo },
+  { name: "SENAI", logo: senaiLogo },
+  { name: "SOLUBIO", logo: solubioLogo },
+  { name: "UFSM", logo: ufsmLogo },
+  { name: "USP", logo: uspLogo },
+  { name: "ZEIT", logo: zeitLogo },
+];
+
+const SUPPORTERS_LIST = [
+  { name: "CNPq", logo: cnpqLogo },
+  { name: "FAPERGS", logo: fapergsLogo },
+  { name: "FINEP", logo: finepLogo },
+  { name: "NVIDIA", logo: nvidiaLogo },
+  { name: "PULSAR", logo: pulsarLogo },
+  { name: "SEBRAE", logo: sebraeLogo },
+  { name: "VENTIUR", logo: ventiurLogo },
 ];
 
 export const Partners: React.FC = () => {
-    return (
-        <Section
-            id="parceiros"
-            className="relative overflow-hidden !bg-auftek-dark py-24"
-        >
-            {/* Background Sutil */}
-            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-0 pointer-events-none"></div>
+  const partnersScrollRef = useRef<HTMLDivElement>(null);
+  const partnersSpeedRef = useRef(1);
 
-            <div className="relative z-10">
-                <SectionTitle
-                    align="center"
-                    subtitle="Quem confia e impulsiona nossa tecnologia"
-                >
-                    Quem usa e apoia
-                </SectionTitle>
+  const supportersScrollRef = useRef<HTMLDivElement>(null);
+  const supportersSpeedRef = useRef(1);
 
-                {/* --- CARROSSEL INFINITO --- */}
-                {/* AQUI ESTÁ A CORREÇÃO DA SOMBRA: Usamos mask-image em vez de divs laterais */}
+  const infinitePartners = [...PARTNERS_LIST, ...PARTNERS_LIST];
+  const infiniteSupporters = [...SUPPORTERS_LIST, ...SUPPORTERS_LIST];
+
+  useEffect(() => {
+    let animationFrameId: number;
+
+    const step = () => {
+      if (partnersScrollRef.current) {
+        partnersScrollRef.current.scrollLeft += partnersSpeedRef.current;
+        const maxScroll1 = partnersScrollRef.current.scrollWidth / 2;
+        if (partnersScrollRef.current.scrollLeft >= maxScroll1) {
+          partnersScrollRef.current.scrollLeft = partnersScrollRef.current.scrollLeft - maxScroll1;
+        } else if (partnersScrollRef.current.scrollLeft <= 0) {
+          partnersScrollRef.current.scrollLeft = maxScroll1 + partnersScrollRef.current.scrollLeft;
+        }
+      }
+
+      if (supportersScrollRef.current) {
+        supportersScrollRef.current.scrollLeft += supportersSpeedRef.current;
+        const maxScroll2 = supportersScrollRef.current.scrollWidth / 2;
+        if (supportersScrollRef.current.scrollLeft >= maxScroll2) {
+          supportersScrollRef.current.scrollLeft = supportersScrollRef.current.scrollLeft - maxScroll2;
+        } else if (supportersScrollRef.current.scrollLeft <= 0) {
+          supportersScrollRef.current.scrollLeft = maxScroll2 + supportersScrollRef.current.scrollLeft;
+        }
+      }
+
+      animationFrameId = requestAnimationFrame(step);
+    };
+
+    animationFrameId = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(animationFrameId);
+  }, []);
+
+  const handlePartnersEnterContainer = () => { partnersSpeedRef.current = 0; };
+  const handlePartnersLeaveContainer = () => { partnersSpeedRef.current = 1; };
+  const handlePartnersEnterLeft = () => { partnersSpeedRef.current = -10; };
+  const handlePartnersLeaveLeft = () => { partnersSpeedRef.current = 0; };
+  const handlePartnersEnterRight = () => { partnersSpeedRef.current = 10; };
+  const handlePartnersLeaveRight = () => { partnersSpeedRef.current = 0; };
+
+  const handleSupportersEnterContainer = () => { supportersSpeedRef.current = 0; };
+  const handleSupportersLeaveContainer = () => { supportersSpeedRef.current = 1; };
+  const handleSupportersEnterLeft = () => { supportersSpeedRef.current = -10; };
+  const handleSupportersLeaveLeft = () => { supportersSpeedRef.current = 0; };
+  const handleSupportersEnterRight = () => { supportersSpeedRef.current = 10; };
+  const handleSupportersLeaveRight = () => { supportersSpeedRef.current = 0; };
+
+  return (
+      <Section id="parceiros" className="relative overflow-hidden bg-white">
+        <div className="relative z-10">
+
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-[#0e223b] mb-3">
+              Quem usa e apoia
+            </h2>
+            <p className="text-gray-600 font-bold tracking-widest uppercase text-xs">
+              Quem confia e impulsiona nossa tecnologia
+            </p>
+            <div className="w-24 h-1 bg-auftek-blue mx-auto mt-6 rounded-full"></div>
+          </div>
+
+          <div className="max-w-6xl mx-auto mt-12">
+
+            <div className="mb-20 px-4 md:px-12">
+              <div className="flex items-center justify-center gap-4 mb-10">
+                <div className="h-[1px] w-12 bg-gray-300"></div>
+                <h3 className="text-center text-gray-500 uppercase tracking-[0.2em] font-bold text-xs">
+                  Parceiros Tecnológicos & Clientes
+                </h3>
+                <div className="h-[1px] w-12 bg-gray-300"></div>
+              </div>
+
+              <div
+                  className="relative group/carousel"
+                  onMouseEnter={handlePartnersEnterContainer}
+                  onMouseLeave={handlePartnersLeaveContainer}
+              >
                 <div
-                    className="mt-16 relative w-full overflow-hidden"
-                    style={{
-                        maskImage:
-                            'linear-gradient(to right, transparent, black 10%, black 90%, transparent)',
-                        WebkitMaskImage:
-                            'linear-gradient(to right, transparent, black 10%, black 90%, transparent)',
-                    }}
+                    className="absolute -left-2 md:-left-10 top-0 bottom-0 z-20 flex items-center justify-center cursor-pointer w-16"
+                    onMouseEnter={handlePartnersEnterLeft}
+                    onMouseLeave={handlePartnersLeaveLeft}
                 >
-                    {/* Track do Slider */}
-                    <div className="flex w-max animate-scroll">
-                        {/* Lista Original */}
-                        <div className="flex gap-16 mx-8 items-center">
-                            {PARTNERS.map((partner, i) => (
-                                // CORREÇÃO DE TYPESCRIPT: Passamos a key aqui, mas o componente PartnerItem não precisa saber dela.
-                                <PartnerItem
-                                    key={`original-${i}`}
-                                    partner={partner}
-                                />
-                            ))}
-                        </div>
-
-                        {/* Lista Duplicada */}
-                        <div className="flex gap-16 mx-8 items-center">
-                            {PARTNERS.map((partner, i) => (
-                                <PartnerItem
-                                    key={`duplicate-${i}`}
-                                    partner={partner}
-                                />
-                            ))}
-                        </div>
-
-                        {/* Triplicada */}
-                        <div className="flex gap-16 mx-8 items-center">
-                            {PARTNERS.map((partner, i) => (
-                                <PartnerItem
-                                    key={`triplicate-${i}`}
-                                    partner={partner}
-                                />
-                            ))}
-                        </div>
-                    </div>
+                  <ChevronLeft
+                      size={40}
+                      strokeWidth={1.5}
+                      className="text-gray-400 hover:text-[#0e223b] hover:scale-125 transition-all duration-300"
+                  />
                 </div>
+
+                <div
+                    ref={partnersScrollRef}
+                    className="flex overflow-x-hidden py-4 items-center gap-8 md:gap-12 select-none"
+                    style={{ scrollBehavior: "auto" }}
+                >
+                  {infinitePartners.map((partner, i) => (
+                      <div key={i} className="flex-shrink-0 w-40 md:w-52">
+                        <div className="group flex items-center justify-center h-32 p-4 bg-white rounded-xl border border-gray-200 shadow-sm hover:border-[#0e223b] hover:shadow-md transition-all duration-300 hover:-translate-y-1 cursor-grab active:cursor-grabbing">
+                          <img
+                              src={partner.logo}
+                              alt={`Logo ${partner.name}`}
+                              className="max-h-20 w-auto max-w-full object-contain filter grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300"
+                              draggable={false}
+                          />
+                        </div>
+                      </div>
+                  ))}
+                </div>
+
+                <div
+                    className="absolute -right-2 md:-right-10 top-0 bottom-0 z-20 flex items-center justify-center cursor-pointer w-16"
+                    onMouseEnter={handlePartnersEnterRight}
+                    onMouseLeave={handlePartnersLeaveRight}
+                >
+                  <ChevronRight
+                      size={40}
+                      strokeWidth={1.5}
+                      className="text-gray-400 hover:text-[#0e223b] hover:scale-125 transition-all duration-300"
+                  />
+                </div>
+              </div>
             </div>
-        </Section>
-    );
-};
 
-// CORREÇÃO: Removi a prop 'key' da definição de tipos, pois ela é interna do React.
-const PartnerItem = ({
-    partner,
-}: {
-    partner: { name: string; icon: React.ElementType };
-}) => (
-    <div className="group flex flex-col items-center justify-center min-w-[120px] opacity-40 hover:opacity-100 transition-all duration-300 cursor-pointer grayscale hover:grayscale-0">
-        <div className="w-20 h-20 mb-3 rounded-full bg-white/5 border border-white/5 flex items-center justify-center group-hover:border-auftek-blue/30 group-hover:bg-auftek-blue/5 transition-colors">
-            <partner.icon
-                size={32}
-                className="text-gray-400 group-hover:text-white"
-            />
+            <div className="mb-10 px-4 md:px-12">
+              <div className="flex items-center justify-center gap-4 mb-10">
+                <div className="h-[1px] w-12 bg-gray-300"></div>
+                <h3 className="text-center text-gray-500 uppercase tracking-[0.2em] font-bold text-xs">
+                  Fomento e Apoio Institucional
+                </h3>
+                <div className="h-[1px] w-12 bg-gray-300"></div>
+              </div>
+
+              <div
+                  className="relative group/carousel-apoio"
+                  onMouseEnter={handleSupportersEnterContainer}
+                  onMouseLeave={handleSupportersLeaveContainer}
+              >
+                <div
+                    className="absolute -left-2 md:-left-10 top-0 bottom-0 z-20 flex items-center justify-center cursor-pointer w-16"
+                    onMouseEnter={handleSupportersEnterLeft}
+                    onMouseLeave={handleSupportersLeaveLeft}
+                >
+                  <ChevronLeft
+                      size={40}
+                      strokeWidth={1.5}
+                      className="text-gray-400 hover:text-auftek-green hover:scale-125 transition-all duration-300"
+                  />
+                </div>
+
+                <div
+                    ref={supportersScrollRef}
+                    className="flex overflow-x-hidden py-4 items-center gap-8 md:gap-12 select-none"
+                    style={{ scrollBehavior: "auto" }}
+                >
+                  {infiniteSupporters.map((supporter, i) => (
+                      <div key={i} className="flex-shrink-0 w-40 md:w-52">
+                        <div className="group flex items-center justify-center h-32 p-4 bg-slate-50 rounded-xl border border-gray-200 shadow-sm hover:border-auftek-green/50 hover:bg-white hover:shadow-md transition-all duration-300 hover:-translate-y-1 cursor-grab active:cursor-grabbing overflow-hidden">
+                          <img
+                              src={supporter.logo}
+                              alt={`Logo ${supporter.name}`}
+                              className="max-h-20 w-auto max-w-full object-contain filter grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300"
+                              draggable={false}
+                          />
+                        </div>
+                      </div>
+                  ))}
+                </div>
+
+                <div
+                    className="absolute -right-2 md:-right-10 top-0 bottom-0 z-20 flex items-center justify-center cursor-pointer w-16"
+                    onMouseEnter={handleSupportersEnterRight}
+                    onMouseLeave={handleSupportersLeaveRight}
+                >
+                  <ChevronRight
+                      size={40}
+                      strokeWidth={1.5}
+                      className="text-gray-400 hover:text-auftek-green hover:scale-125 transition-all duration-300"
+                  />
+                </div>
+              </div>
+            </div>
+
+          </div>
         </div>
-
-        <span className="text-sm font-bold text-gray-500 group-hover:text-white transition-colors">
-            {partner.name}
-        </span>
-    </div>
-);
+      </Section>
+  );
+};
