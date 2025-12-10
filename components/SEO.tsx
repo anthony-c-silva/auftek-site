@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Author } from '../../../../blog-v1/types.ts';
+import { Author } from '../types/blog';
 
 interface SEOProps {
   title: string;
