@@ -2,11 +2,18 @@ import React, { useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Section } from "../../components/ui/Section";
 
+// --- IMPORTS DE PARCEIROS ---
+// Certifique-se que o caminho ../../ está correto para onde este arquivo Partners.tsx está salvo.
+// Se der erro de 'Module not found', tente mudar para '../assets' em vez de '../../assets'
+
 import corsanLogo from "../../assets/images/partners/CORSAN.png";
 import aegeaLogo from "../../assets/images/partners/AEGEA.png";
+// Mantido ELTROBRAS conforme o nome do arquivo no seu print (sem o primeiro E)
 import eletrobrasLogo from "../../assets/images/partners/ELTROBRAS_CEPEL.png";
-import ieeUspLogo from "../../assets/images/partners/IEE USP.png";
-import iemUfsmLogo from "../../assets/images/partners/IEM UFSM.png";
+// CORRIGIDO: Renomeie o arquivo na pasta para IEE_USP.png
+import ieeUspLogo from "../../assets/images/partners/IEE_USP.png";
+// CORRIGIDO: Renomeie o arquivo na pasta para IEM_UFSM.png
+import iemUfsmLogo from "../../assets/images/partners/IEM_UFSM.png";
 import mackenzieLogo from "../../assets/images/partners/MACKENZIE.png";
 import senaiLogo from "../../assets/images/partners/SENAI.png";
 import solubioLogo from "../../assets/images/partners/SOLUBIO.png";
@@ -14,6 +21,7 @@ import ufsmLogo from "../../assets/images/partners/UFSM.png";
 import uspLogo from "../../assets/images/partners/USP.png";
 import zeitLogo from "../../assets/images/partners/ZEIT.png";
 
+// --- IMPORTS DE APOIO ---
 import cnpqLogo from "../../assets/images/apoios/CNPq.svg";
 import fapergsLogo from "../../assets/images/apoios/Fapergs.svg";
 import finepLogo from "../../assets/images/apoios/Finep.svg";
