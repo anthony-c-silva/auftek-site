@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
 import { BlogPost } from '../../types/blog';
 import { ArrowLeft, Calendar, Clock, Tag, Share2, Linkedin, Twitter, Facebook } from 'lucide-react';
-import AuthorBio from './AuthorBio.tsx';
-import SEO from '../SEO.tsx';
+import AuthorBio from './AuthorBio';
+import SEO from '../SEO';
 
 interface PostDetailProps {
   post: BlogPost;
