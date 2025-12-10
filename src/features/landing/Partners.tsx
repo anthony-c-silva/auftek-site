@@ -2,9 +2,6 @@ import React, { useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Section } from "../../components/ui/Section";
 
-// --- IMPORTS DE PARCEIROS ---
-// Certifique-se que o caminho ../../ está correto para onde este arquivo Partners.tsx está salvo.
-// Se der erro de 'Module not found', tente mudar para '../assets' em vez de '../../assets'
 
 import corsanLogo from "../../assets/images/partners/CORSAN.png";
 import aegeaLogo from "../../assets/images/partners/AEGEA.png";
@@ -21,7 +18,6 @@ import ufsmLogo from "../../assets/images/partners/UFSM.png";
 import uspLogo from "../../assets/images/partners/USP.png";
 import zeitLogo from "../../assets/images/partners/ZEIT.png";
 
-// --- IMPORTS DE APOIO ---
 import cnpqLogo from "../../assets/images/apoios/CNPq.svg";
 import fapergsLogo from "../../assets/images/apoios/Fapergs.svg";
 import finepLogo from "../../assets/images/apoios/Finep.svg";
