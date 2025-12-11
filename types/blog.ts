@@ -16,9 +16,10 @@ export interface Author {
 
 export interface BlogPost {
     id: string;
+    slug: string;
     title: string;
     excerpt: string;
-    content: string[]; // Array de parágrafos para facilitar
+    content: string[];
     date: string;
     readTime: string;
     author: Author;

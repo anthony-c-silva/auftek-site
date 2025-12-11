@@ -9,8 +9,11 @@ import { NAV_LINKS } from "../../data/constants";
 import { useScroll, scrollToElement } from "../../hooks/useScroll";
 import { Logo } from "../ui/Logo";
 import { cn } from "../../lib/utils";
+import { useAuth } from "@/context/AuthContext";
+import { LogOut, LayoutDashboard } from "lucide-react";
 
 export const Header: React.FC = () => {
+  const { isAdmin, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const scrolled = useScroll(50);
 

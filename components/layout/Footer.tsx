@@ -1,6 +1,7 @@
 "use client";
 import React from 'react';
 import { Logo } from '../ui/Logo';
+import Link from 'next/link';
 
 export const Footer: React.FC = () => {
     return (
@@ -22,9 +23,21 @@ export const Footer: React.FC = () => {
                         Política de Privacidade
                     </a>
                 </div>
-                <div className="text-gray-600 text-sm">
-                    &copy; {new Date().getFullYear()} Auftek Tecnologia. Todos
-                    os direitos reservados.
+
+                {/* Coluna da Direita: Copyright + Link Admin */}
+                <div className="flex flex-col items-center md:items-end gap-2">
+                    <div className="text-gray-600 text-sm text-center md:text-right">
+                        &copy; {new Date().getFullYear()} Auftek Tecnologia. Todos
+                        os direitos reservados.
+                    </div>
+
+                    {/* Link Discreto para o Login */}
+                    <Link
+                        href="/login"
+                        className="text-[10px] text-gray-800 hover:text-auftek-blue transition-colors uppercase tracking-widest hover:underline cursor-pointer"
+                    >
+                        Painel do Admin
+                    </Link>
                 </div>
             </div>
         </footer>
