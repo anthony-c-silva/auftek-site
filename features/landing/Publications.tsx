@@ -114,43 +114,47 @@ export const Publications: React.FC = () => {
           Publicações e Embasamento Técnico-Científico
         </h3>
         <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          <a
-            href="https://pubs.acs.org/doi/10.1021/acs.analchem.5c03766"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex gap-4 p-4 rounded-lg bg-[#0e223b]/50 border border-gray-800 hover:border-gray-600 transition-colors cursor-pointer"
-          >
+          {/* Card 1 */}
+          <div className="flex gap-4 p-4 rounded-lg bg-[#0e223b]/50 border border-gray-800 hover:border-gray-600 transition-colors">
             <FileText className="text-gray-500 shrink-0" size={24} />
             <div>
-              <h4 className="text-white font-medium hover:text-auftek-blue transition-colors">
-                Analytical Chemistry
-              </h4>
+              <h4 className="text-white font-medium">Analytical Chemistry</h4>
               <p className="text-gray-500 text-sm mt-1">
                 Feasibility for Real-Time Monitoring of Bacterial Growth in Raw
-                Milk Using a New Contactless Sensor - DOI:
-                https://doi.org/10.1021/acs.analchem.5c03766
+                Milk Using a New Contactless Sensor – DOI:{" "}
+                <a
+                  href="https://doi.org/10.1021/acs.analchem.5c03766"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-auftek-blue hover:underline hover:text-cyan-300 transition-colors"
+                >
+                  https://doi.org/10.1021/acs.analchem.5c03766
+                </a>
               </p>
             </div>
-          </a>
-          <a
-            href="http://dx.doi.org/10.1109/jsen.2024.3361311"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex gap-4 p-4 rounded-lg bg-[#0e223b]/50 border border-gray-800 hover:border-gray-600 transition-colors cursor-pointer"
-          >
+          </div>
+
+          {/* Card 2 */}
+          <div className="flex gap-4 p-4 rounded-lg bg-[#0e223b]/50 border border-gray-800 hover:border-gray-600 transition-colors">
             <FileText className="text-gray-500 shrink-0" size={24} />
             <div>
-              <h4 className="text-white font-medium hover:text-auftek-blue transition-colors">
-                IEEE Sensors Journal
-              </h4>
+              <h4 className="text-white font-medium">IEEE Sensors Journal</h4>
               <p className="text-gray-500 text-sm mt-1">
                 Contactless Electrical Sensor Based on Resonance Frequency for
-                Real-Time Monitoring of Bacterial Growth - DOI:
-                10.1109/JSEN.2024.3361311
+                Real-Time Monitoring of Bacterial Growth – DOI:{" "}
+                <a
+                  href="http://dx.doi.org/10.1109/jsen.2024.3361311"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-auftek-blue hover:underline hover:text-cyan-300 transition-colors"
+                >
+                  10.1109/JSEN.2024.3361311
+                </a>
               </p>
             </div>
-          </a>
+          </div>
         </div>
+
         <p className="text-center text-gray-500 text-sm mt-6 italic">
           O BioAiLab tem sido utilizado em estudos científicos publicados em
           periódicos de destaque internacional.

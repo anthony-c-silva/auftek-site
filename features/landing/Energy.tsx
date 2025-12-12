@@ -48,11 +48,14 @@ export const Energy: React.FC = () => {
           {/* 3. O flex-1 AQUI EMPURRA O CONTEÚDO PARA PREENCHER O VAZIO */}
           <div className="p-8 flex flex-col flex-1">
             <h3 className="text-2xl font-bold text-white mb-3">PVAG LAB</h3>
-            <p className="text-gray-400 mb-6">
+            <p className="text-gray-400 mb-4">
               Sistema modular de precisão para emulação controlada de arcos
               elétricos em corrente contínua, desenvolvido para ensaios de
               segurança e certificação de inversores fotovoltaicos conforme a
-              IEC 63027 e portaria 140 Inmetro. Reproduz falhas reais de arco
+              IEC 63027 e portaria 140 Inmetro. 
+            </p>
+            <p className="text-gray-400 mb-8">
+              Reproduz falhas reais de arco
               com total controle dos parâmetros elétricos, garantindo ensaios
               repetíveis, confiáveis e alinhados às exigências regulatórias
               internacionais.
@@ -87,7 +90,8 @@ export const Energy: React.FC = () => {
                 <ArrowRight size={16} />
               </Button>
               <Button
-                className="bg-red-600 text-white hover:bg-red-700 px-6 py-3 rounded-full flex items-center gap-2"
+                variant="outline"
+                className="border-grey-600 text-grey-600 hover:text-white px-6 py-3 rounded-full"
                 onClick={() =>
                   window.open(
                     "https://www.youtube.com/playlist?list=PLikkF_yABojGV-2xLF1zsSfi1CkttXdyR",
@@ -111,16 +115,14 @@ export const Energy: React.FC = () => {
             />
             <div className="absolute bottom-4 left-4">
               <div className="bg-blue-500/20 text-blue-400 border border-blue-500/30 px-3 py-1 rounded text-xs font-bold inline-flex items-center gap-1">
-                <Award size={12} /> IEC 62109-2
+                <Award size={12} /> FUGA DE CORRENTE
               </div>
             </div>
           </div>
 
           <div className="p-8 flex flex-col flex-1">
-            <h3 className="text-2xl font-bold text-white mb-3">
-              FUGA DE CORRENTE
-            </h3>
-            <p className="text-gray-400 mb-6">
+            <h3 className="text-2xl font-bold text-white mb-3">IRCCT System</h3>
+            <p className="text-gray-400 mb-4">
               Sistema modular de alta precisão para ensaios de corrente residual
               e resistência de isolação em inversores fotovoltaicos sem
               transformador, conforme as normas IEC 62109-2 e IEC 63112, no
@@ -151,7 +153,7 @@ export const Energy: React.FC = () => {
               </li>
               <li className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 bg-auftek-blue rounded-full"></div>{" "}
-                Sistema modular para inversores até 1500V
+                Sistema modular para inversores até 75 KW
               </li>
             </ul>
 
@@ -164,7 +166,8 @@ export const Energy: React.FC = () => {
                 <ArrowRight size={16} />
               </Button>
               <Button
-                className="bg-red-600 text-white hover:bg-red-700 px-6 py-3 rounded-full flex items-center gap-2"
+                variant="outline"
+                className="border-grey-600 text-grey-600 hover:text-white px-6 py-3 rounded-full"
                 onClick={() =>
                   window.open(
                     "https://www.youtube.com/playlist?list=PLikkF_yABojGV-2xLF1zsSfi1CkttXdyR",

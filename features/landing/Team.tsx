@@ -9,7 +9,7 @@ export const Team: React.FC = () => {
       <Section id="time" className="pb-32 md:pb-40">
         <SectionTitle
             align="center"
-            subtitle="Mestres, doutores e engenheiros dedicados à inovação."
+            subtitle="Mestres, doutores e especialistas dedicados à inovação."
         >
           Nosso Time
         </SectionTitle>
