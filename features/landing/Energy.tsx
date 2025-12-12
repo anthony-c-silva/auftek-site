@@ -27,10 +27,12 @@ export const Energy: React.FC = () => {
         </p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-8">
+      {/* 1. ADICIONADO items-stretch AQUI PARA FORÇAR ALTURA IGUAL */}
+      <div className="grid md:grid-cols-2 gap-8 items-stretch">
         {/* PVAG LAB */}
-        <div className="group relative bg-[#0a192f] rounded-2xl overflow-hidden border border-gray-700 hover:border-yellow-500/50 transition-all">
-          <div className="h-48 bg-gray-800 relative">
+        {/* 2. O h-full AQUI GARANTE QUE O CARD OCUPE O ESPAÇO ESTICADO */}
+        <div className="group relative bg-[#0a192f] rounded-2xl overflow-hidden border border-gray-700 hover:border-yellow-500/50 transition-all flex flex-col h-full">
+          <div className="h-48 bg-gray-800 relative shrink-0">
             <img
               src={IMG_ARC}
               alt="Arc Flash"
@@ -42,7 +44,9 @@ export const Energy: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="p-8">
+
+          {/* 3. O flex-1 AQUI EMPURRA O CONTEÚDO PARA PREENCHER O VAZIO */}
+          <div className="p-8 flex flex-col flex-1">
             <h3 className="text-2xl font-bold text-white mb-3">PVAG LAB</h3>
             <p className="text-gray-400 mb-6">
               Sistema modular de precisão para emulação controlada de arcos
@@ -56,11 +60,11 @@ export const Energy: React.FC = () => {
             <ul className="text-sm text-gray-500 space-y-2">
               <li className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 bg-yellow-500 rounded-full"></div>{" "}
-                Emulação precisa e repetível de arcos eçetricos em DC
+                Emulação precisa e repetível de arcos elétricos em DC
               </li>
               <li className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 bg-yellow-500 rounded-full"></div>{" "}
-                Atende aos requisitos da Portaria inmetro nº 140
+                Atende aos requisitos da Portaria Inmetro nº 140
               </li>
               <li className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 bg-yellow-500 rounded-full"></div>{" "}
@@ -68,11 +72,13 @@ export const Energy: React.FC = () => {
               </li>
               <li className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 bg-yellow-500 rounded-full"></div>{" "}
-                Projetado para uso em laboratórios de certificação e
-                ensaios de conformidade
+                Projetado para uso em laboratórios de certificação e ensaios de
+                conformidade
               </li>
             </ul>
-            <div className="mt-6 flex justify-center gap-4">
+
+            {/* 4. mt-auto EMPURRA OS BOTÕES PARA O FINAL DO CARD ESTICADO */}
+            <div className="mt-auto pt-6 flex justify-center gap-4">
               <Button
                 className="bg-yellow-500 text-black hover:bg-yellow-600 px-6 py-3 rounded-full flex items-center gap-2"
                 onClick={() => alert("Orçamento solicitado")}
@@ -96,8 +102,8 @@ export const Energy: React.FC = () => {
         </div>
 
         {/* IRCCT */}
-        <div className="group relative bg-[#0a192f] rounded-2xl overflow-hidden border border-gray-700 hover:border-blue-500/50 transition-all">
-          <div className="h-48 bg-gray-800 relative">
+        <div className="group relative bg-[#0a192f] rounded-2xl overflow-hidden border border-gray-700 hover:border-blue-500/50 transition-all flex flex-col h-full">
+          <div className="h-48 bg-gray-800 relative shrink-0">
             <img
               src={IMG_SAFETY}
               alt="Electrical Safety"
@@ -109,7 +115,8 @@ export const Energy: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="p-8">
+
+          <div className="p-8 flex flex-col flex-1">
             <h3 className="text-2xl font-bold text-white mb-3">
               FUGA DE CORRENTE
             </h3>
@@ -147,7 +154,8 @@ export const Energy: React.FC = () => {
                 Sistema modular para inversores até 1500V
               </li>
             </ul>
-            <div className="mt-6 flex justify-center gap-4">
+
+            <div className="mt-auto pt-6 flex justify-center gap-4">
               <Button
                 className="bg-yellow-500 text-black hover:bg-yellow-600 px-6 py-3 rounded-full flex items-center gap-2"
                 onClick={() => alert("Orçamento solicitado")}
