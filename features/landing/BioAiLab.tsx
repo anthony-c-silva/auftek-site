@@ -32,8 +32,11 @@ export const BioAiLab: React.FC = () => {
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
             A Solução:{" "}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-auftek-blue to-cyan-400">
-              BioAiLab®
+              BioAiLab
             </span>
+            <sup className="text-[1.3rem] text-cyan-300 leading-none relative top-[-0.12em] ml-[2px]">
+              ®
+            </sup>
           </h2>
 
           <h3 className="text-xl md:text-2xl text-gray-300 font-light mb-8 leading-relaxed">
@@ -105,8 +108,11 @@ export const BioAiLab: React.FC = () => {
               <div className="text-center space-y-2">
                 <h3 className="text-3xl font-bold text-white tracking-widest group-hover:text-auftek-blue transition-colors">
                   BioAiLab
-                  <span className="text-sm align-top opacity-60">®</span>
+                  <sup className="text-[0.90rem] opacity-60 leading-none relative top-[-0.12em]">
+                    ®
+                  </sup>
                 </h3>
+
                 <p className="text-auftek-green text-sm font-medium tracking-wide bg-auftek-green/5 px-3 py-1 rounded-full border border-auftek-green/10">
                   Smart Incubator System
                 </p>
@@ -140,8 +146,8 @@ export const BioAiLab: React.FC = () => {
           O aplicativo do BioAiLab integra um CRM de monitoramento
           microbiológico em tempo real, acompanhando a dinâmica do crescimento
           por curvas de Gompertz e IA preditiva. A plataforma gera relatórios
-          automáticos de contagem, tempo de crescimento e eficiência dos
-          sistemas.
+          automáticos de contagem, tempo de crescimento e eficiência dos sitemas
+          de tratamento de água e esgoto.
         </p>
         <BioDashboard />
       </ScrollReveal>

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { scrollToElement } from "../../hooks/useScroll";
+import { FaBacteria } from "react-icons/fa";
 
 const IMAGES = {
   heroBg:
@@ -100,6 +101,7 @@ export const Hero: React.FC = () => {
               >
                 <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                 <span className="relative flex items-center gap-2 justify-center">
+                <FaBacteria className="text-white-400 group-hover:scale-110 transition-transform" size={18} />
                 Conheça o BioAiLab
                 <ArrowRight className="group-hover:translate-x-1 transition-transform" size={18} />
               </span>
