@@ -174,7 +174,7 @@ export const Energy: React.FC = () => {
                     "_blank"
                   )
                 }
-              >
+              > 
                 <Youtube size={16} /> YouTube
               </Button>
             </div>
