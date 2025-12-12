@@ -20,13 +20,13 @@ const PARTNERS_LIST = [
 ];
 
 const SUPPORTERS_LIST = [
-  { name: "CNPq", logo: "/images/apoios/CNPq.svg", url: "https://www.gov.br/cnpq/pt-br" },
-  { name: "FAPERGS", logo: "/images/apoios/Fapergs.svg", url: "https://fapergs.rs.gov.br/inicial" },
-  { name: "FINEP", logo: "/images/apoios/Finep.svg", url: "http://www.finep.gov.br/" },
-  { name: "NVIDIA", logo: "/images/apoios/Nvidia.svg", url: "https://www.nvidia.com/" },
-  { name: "PULSAR", logo: "/images/apoios/Pulsar.svg", url: "https://www.ufsm.br/orgaos-suplementares/inovatec/pulsar" },
-  { name: "SEBRAE", logo: "/images/apoios/Sebrae.svg", url: "https://sebrae.com.br/sites/PortalSebrae" },
-  { name: "VENTIUR", logo: "/images/apoios/Ventiur.svg", url: "https://ventiur.net/" },
+  { name: "CNPq", logo: "/images/apoios/CNPq.png", url: "https://www.gov.br/cnpq/pt-br" },
+  { name: "FAPERGS", logo: "/images/apoios/Fapergs.png", url: "https://fapergs.rs.gov.br/inicial" },
+  { name: "FINEP", logo: "/images/apoios/Finep.png", url: "http://www.finep.gov.br/" },
+  { name: "NVIDIA", logo: "/images/apoios/Nvidia.png", url: "https://www.nvidia.com/" },
+  { name: "PULSAR", logo: "/images/apoios/Pulsar.png", url: "https://www.ufsm.br/orgaos-suplementares/inovatec/pulsar" },
+  { name: "SEBRAE", logo: "/images/apoios/Sebrae.png", url: "https://sebrae.com.br/sites/PortalSebrae" },
+  { name: "VENTIUR", logo: "/images/apoios/Ventiur.png", url: "https://ventiur.net/" },
 ];
 
 export const Partners: React.FC = () => {
@@ -212,7 +212,7 @@ export const Partners: React.FC = () => {
                           <img
                               src={supporter.logo}
                               alt={`Logo ${supporter.name}`}
-                              className="max-h-14 md:max-h-16 w-auto max-w-full object-contain filter grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300"
+                              className="max-h-20 w-auto max-w-full object-contain filter grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300"
                               draggable={false}
                           />
                         </a>

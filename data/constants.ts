@@ -37,7 +37,7 @@ export const SOLUTIONS = [
         icon: Zap,
         title: 'Energia Fotovoltaica',
         description:
-            'Instrumentação para creditação de inversores e emulação de arco elétrico.',
+            'Instrumentação para acreditação de inversores e emulação de arco elétrico.',
     },
     {
         icon: Cpu,
