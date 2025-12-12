@@ -7,14 +7,22 @@ type Props = {
     params: Promise<{ id: string }>;
 };
 
+interface UpdateUserData {
+    email?: string;
+    password?: string;
+}
+
 // PUT: Atualizar Email ou Senha
 export async function PUT(request: Request, { params }: Props) {
     try {
         const { id } = await params;
         await connectDB();
-        const body = await request.json(); // { email?: "...", password?: "..." }
 
-        const updateData: any = {};
+        // 2. Tipamos o retorno do json()
+        const body = await request.json() as UpdateUserData;
+
+        // 3. Inicializamos o objeto com a tipagem correta (sem any)
+        const updateData: UpdateUserData = {};
 
         // Se veio email, verifica duplicidade
         if (body.email) {
