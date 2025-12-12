@@ -4,16 +4,18 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { AdminPostList } from "@/components/admin/AdminPostList";
 import { PostForm } from "@/components/admin/PostForm";
-import { RegisterForm } from "@/components/admin/RegisterForm"; // <--- Import Novo
+import { AuthorManager } from "@/components/admin/AuthorManager";
+import { TeamManager } from "@/components/admin/TeamManager"; // <--- NOVO UNIFICADO
 import { Modal } from "@/components/ui/Modal";
-import { UserPlus } from "lucide-react"; // <--- Ícone Novo
+import { Users, PenTool } from "lucide-react";
 
 export default function AdminDashboard() {
     const { isAdmin, isLoading } = useAuth();
     const router = useRouter();
 
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const [isUserModalOpen, setIsUserModalOpen] = useState(false); // <--- Estado Novo
+    const [isTeamModalOpen, setIsTeamModalOpen] = useState(false); // Um modal para tudo de equipe
+    const [isAuthorModalOpen, setIsAuthorModalOpen] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
 
     useEffect(() => {
@@ -27,19 +29,26 @@ export default function AdminDashboard() {
             <div className="max-w-7xl mx-auto">
 
                 {/* Cabeçalho */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+                <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-8 gap-4">
                     <div>
                         <h1 className="text-3xl font-bold text-slate-900">Gerenciar Blog</h1>
-                        <p className="text-slate-500 mt-1">Painel administrativo Auftek</p>
                     </div>
 
-                    <div className="flex gap-3">
-                        {/* Botão Novo Usuário */}
+                    <div className="flex flex-wrap gap-3">
+                        {/* Botão Autores */}
                         <button
-                            onClick={() => setIsUserModalOpen(true)}
+                            onClick={() => setIsAuthorModalOpen(true)}
+                            className="bg-white text-slate-700 border border-slate-300 px-4 py-3 rounded-lg font-bold hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-2"
+                        >
+                            <PenTool size={18} /> <span className="hidden sm:inline">Gerenciar Autores</span>
+                        </button>
+
+                        {/* Botão Equipe (Unificado) */}
+                        <button
+                            onClick={() => setIsTeamModalOpen(true)}
                             className="bg-purple-600 text-white px-4 py-3 rounded-lg font-bold hover:bg-purple-700 transition-colors shadow-md flex items-center gap-2"
                         >
-                            <UserPlus size={18} /> <span className="hidden sm:inline">Novo Admin</span>
+                            <Users size={18} /> <span className="hidden sm:inline">Gerenciar Equipe</span>
                         </button>
 
                         {/* Botão Novo Post */}
@@ -52,9 +61,12 @@ export default function AdminDashboard() {
                     </div>
                 </div>
 
+                {/* Lista de Posts */}
                 <AdminPostList key={refreshKey} />
 
-                {/* Modal de Post */}
+                {/* --- MODAIS --- */}
+
+                {/* Modal de Criar Post */}
                 <Modal
                     isOpen={isCreateModalOpen}
                     onClose={() => setIsCreateModalOpen(false)}
@@ -67,16 +79,22 @@ export default function AdminDashboard() {
                     />
                 </Modal>
 
-                {/* Modal de Usuário (Novo) */}
+                {/* Modal de Equipe (Cadastro + Lista) */}
                 <Modal
-                    isOpen={isUserModalOpen}
-                    onClose={() => setIsUserModalOpen(false)}
-                    title="Cadastrar Novo Administrador"
+                    isOpen={isTeamModalOpen}
+                    onClose={() => setIsTeamModalOpen(false)}
+                    title="Gestão de Acesso Administrativo"
                 >
-                    <RegisterForm
-                        onSuccess={() => setIsUserModalOpen(false)}
-                        onCancel={() => setIsUserModalOpen(false)}
-                    />
+                    <TeamManager />
+                </Modal>
+
+                {/* Modal de Autores */}
+                <Modal
+                    isOpen={isAuthorModalOpen}
+                    onClose={() => setIsAuthorModalOpen(false)}
+                    title="Gerenciar Autores e Especialistas"
+                >
+                    <AuthorManager />
                 </Modal>
 
             </div>

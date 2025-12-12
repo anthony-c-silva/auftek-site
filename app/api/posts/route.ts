@@ -7,7 +7,6 @@ export async function GET() {
     try {
         await connectDB();
 
-        // FILTRO NOVO: Traz apenas onde deletedAt é null
         const posts = await Post.find({ deletedAt: null }).sort({ createdAt: -1 });
 
         return NextResponse.json(posts);

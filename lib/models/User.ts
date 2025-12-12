@@ -4,6 +4,7 @@ export interface IUser extends Document {
     email: string;
     password: string;
     name: string;
+    deletedAt?: Date | null;
 }
 
 const UserSchema: Schema = new Schema(
@@ -11,6 +12,7 @@ const UserSchema: Schema = new Schema(
         email: { type: String, required: true, unique: true },
         password: { type: String, required: true },
         name: { type: String, required: true },
+        deletedAt: { type: Date, default: null }
     },
     { timestamps: true }
 );

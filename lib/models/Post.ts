@@ -6,10 +6,19 @@ export interface IPost extends Document {
     content: string;
     coverImage: string;
     tags: string[];
+
+    // Autor (Especialista)
     author: {
         name: string;
-        avatar: string;
+        photoUrl: string; // Atualizado de avatar para photoUrl
     };
+
+    // Redator (Equipe - NOVO)
+    writer: {
+        name: string;
+        email: string;
+    };
+
     createdAt: Date;
     deletedAt?: Date | null;
 }
@@ -39,10 +48,19 @@ const PostSchema: Schema = new Schema(
             type: [String],
             default: []
         },
+
+        // Configuração do Autor (Especialista)
         author: {
             name: { type: String, required: true },
-            avatar: { type: String, required: false }
+            photoUrl: { type: String, required: false } // Padronizado
         },
+
+        // Configuração do Redator (Quem postou) - ADICIONADO AGORA
+        writer: {
+            name: { type: String, required: false }, // Opcional para não quebrar posts antigos
+            email: { type: String, required: false }
+        },
+
         deletedAt: {
             type: Date,
             default: null
@@ -53,6 +71,7 @@ const PostSchema: Schema = new Schema(
     }
 );
 
+// Previne erro de recompilação do modelo em hot-reload
 const Post: Model<IPost> = mongoose.models.Post || mongoose.model<IPost>("Post", PostSchema);
 
 export default Post;

@@ -41,14 +41,11 @@ export const Header: React.FC = () => {
     router.push(target);
   };
 
-  // --- NOVA FUNÇÃO PARA O CLICK DO BLOG ---
   const handleBlogClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    // Se estamos na raiz do blog (/blog), scrollamos pro topo
     if (pathname === "/blog") {
       e.preventDefault();
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
-    // Se estamos em um post (/blog/post-1), o comportamento padrão do Link acontece (navega para /blog)
 
     setIsMenuOpen(false); // Fecha o menu mobile se estiver aberto
   };
