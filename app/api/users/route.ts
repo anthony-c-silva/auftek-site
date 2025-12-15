@@ -36,7 +36,6 @@ export async function GET() {
 // 2. POST - Criar Usuário
 export async function POST(request: Request) {
     try {
-        // SEGURANÇA
         const authenticatedUser = await getAuthenticatedUser();
         if (!authenticatedUser) {
             return NextResponse.json(
@@ -72,7 +71,6 @@ export async function POST(request: Request) {
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
-
 
         await User.create({
             name,
