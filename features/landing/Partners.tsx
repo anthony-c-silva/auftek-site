@@ -92,20 +92,20 @@ export const Partners: React.FC = () => {
       <Section id="parceiros" className="relative overflow-hidden bg-white">
         <div className="relative z-10">
 
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-[#0e223b] mb-3">
               Quem usa e apoia
             </h2>
             <p className="text-gray-600 font-bold tracking-widest uppercase text-xs">
               Quem confia e impulsiona nossa tecnologia
             </p>
-            <div className="w-24 h-1 bg-auftek-blue mx-auto mt-6 rounded-full"></div>
+            <div className="w-24 h-1 bg-auftek-blue mx-auto mt-4 rounded-full"></div>
           </div>
 
-          <div className="max-w-6xl mx-auto mt-12">
+          <div className="max-w-6xl mx-auto">
 
             {/* --- CARROSEL 1: PARCEIROS --- */}
-            <div className="mb-20 px-4 md:px-12">
+            <div className="mb-12 px-4 md:px-12">
               <div className="flex items-center justify-center gap-4 mb-10">
                 <div className="h-[1px] w-12 bg-gray-300"></div>
                 <h3 className="text-center text-gray-500 uppercase tracking-[0.2em] font-bold text-xs">
@@ -142,7 +142,7 @@ export const Partners: React.FC = () => {
                             href={partner.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="group flex items-center justify-center h-32 p-4 bg-white rounded-xl border border-gray-200 shadow-sm hover:border-[#0e223b] hover:shadow-md transition-all duration-300 hover:-translate-y-1 cursor-pointer block"
+                            className="group flex items-center justify-center h-24 md:h-28 p-3 bg-slate-50 rounded-xl border border-gray-200 shadow-sm hover:border-auftek-green/50 hover:bg-white hover:shadow-md transition-all duration-300 hover:-translate-y-1 cursor-pointer overflow-hidden block"
                         >
                           <img
                               src={partner.logo}

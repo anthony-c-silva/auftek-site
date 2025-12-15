@@ -23,7 +23,6 @@ export const NAV_LINKS = [
     { name: 'Energia', href: '#energia' },
     { name: 'Publicações', href: '#publicacoes' },
     { name: 'Parceiros', href: '#parceiros' },
-    { name: 'Contato', href: '#contato' },
 ];
 
 export const SOLUTIONS = [
