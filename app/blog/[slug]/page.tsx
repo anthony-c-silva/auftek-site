@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import PostDetail from '@/components/blog/PostDetail';
 import Newsletter from '@/components/blog/Newsletter';
 import { BlogPost } from '@/types/blog';
+
 interface BlogPostPageProps {
     params: Promise<{ slug: string }>;
 }
@@ -33,7 +34,10 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
                     slug: data.slug,
                     title: data.title,
                     excerpt: data.excerpt || "",
-                    imageUrl: data.coverImage,
+
+                    // Fallback para garantir a imagem independente do nome no banco
+                    imageUrl: data.coverImage || data.imageUrl || "",
+
                     tags: data.tags || [],
 
                     // Garante que content seja string[] (array) para o componente
@@ -42,15 +46,25 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
                         : data.content,
 
                     date: new Date(data.createdAt).toLocaleDateString('pt-BR'),
-                    readTime: "5 min",
+
+                    // --- CORREÇÃO: Tempo de Leitura Dinâmico ---
+                    readTime: data.readTime || "5 min",
+
                     category: data.tags?.[0] || "Artigo",
+
                     author: {
                         name: data.author?.name || "Equipe Auftek",
-                        // IMPORTANTE: Fallback vazio "" para ativar as iniciais
-                        avatarUrl: data.author?.avatar || "",
-                        avatar: data.author?.avatar || "",
-                        role: "Autor",
-                        bio: "Especialista em tecnologia"
+
+                        // --- CORREÇÃO: Foto do Autor ---
+                        // Prioriza photoUrl (novo padrão), tenta avatar (antigo), ou vazio
+                        photoUrl: data.author?.photoUrl || data.author?.avatar || "",
+
+                        // Mantemos propriedades extras caso o PostDetail precise delas
+                        avatarUrl: data.author?.photoUrl || data.author?.avatar || "",
+                        avatar: data.author?.photoUrl || data.author?.avatar || "",
+
+                        role: data.author?.education || "Autor", // Tenta puxar a educação/cargo
+                        bio: data.author?.bio || "Especialista em tecnologia"
                     }
                 };
 

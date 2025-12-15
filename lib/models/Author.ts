@@ -8,6 +8,8 @@ export interface IAuthor extends Document {
     education: string;
     linkedin?: string;
     lattes?: string;
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 const AuthorSchema: Schema = new Schema(

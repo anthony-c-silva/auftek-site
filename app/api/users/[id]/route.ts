@@ -2,29 +2,47 @@ import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import User from "@/lib/models/User";
 import bcrypt from "bcryptjs";
+import { getAuthenticatedUser } from "@/lib/auth-server"; // Importante para segurança
 
 type Props = {
     params: Promise<{ id: string }>;
 };
 
+// Interface tipada para o corpo da requisição
 interface UpdateUserData {
+    name?: string; // Adicionei name caso queira editar também
     email?: string;
     password?: string;
 }
 
-// PUT: Atualizar Email ou Senha
+// 1. PUT: Atualizar Usuário (Protegido)
 export async function PUT(request: Request, { params }: Props) {
     try {
+        // SEGURANÇA: Apenas usuários logados podem editar
+        const authenticatedUser = await getAuthenticatedUser();
+        if (!authenticatedUser) {
+            return NextResponse.json(
+                { error: "Acesso negado. Token inválido ou ausente." },
+                { status: 401 }
+            );
+        }
+
         const { id } = await params;
         await connectDB();
 
-        // 2. Tipamos o retorno do json()
+        // Tipagem do body
         const body = await request.json() as UpdateUserData;
 
-        // 3. Inicializamos o objeto com a tipagem correta (sem any)
-        const updateData: UpdateUserData = {};
+        // Objeto de atualização tipado
+        // Usamos Partial<UpdateUserData> para dizer que nem todos os campos são obrigatórios agora
+        const updateData: any = {}; // Usamos any temporário aqui apenas para montar o objeto dinâmico do Mongoose, ou tipamos estritamente
 
-        // Se veio email, verifica duplicidade
+        // Se veio nome
+        if (body.name) {
+            updateData.name = body.name;
+        }
+
+        // Se veio email, verifica duplicidade (excluindo o próprio ID)
         if (body.email) {
             const emailExists = await User.findOne({ email: body.email, _id: { $ne: id } });
             if (emailExists) {
@@ -39,28 +57,46 @@ export async function PUT(request: Request, { params }: Props) {
             updateData.password = await bcrypt.hash(body.password, salt);
         }
 
-        const updatedUser = await User.findByIdAndUpdate(id, updateData, { new: true });
+        // Atualiza e retorna o novo documento (sem a senha)
+        const updatedUser = await User.findByIdAndUpdate(id, updateData, { new: true }).select("-password");
 
-        if (!updatedUser) return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 });
+        if (!updatedUser) {
+            return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 });
+        }
 
-        return NextResponse.json({ message: "Dados atualizados com sucesso!" });
+        return NextResponse.json({ message: "Dados atualizados com sucesso!", user: updatedUser });
 
-    } catch (error) {
+    } catch (error: unknown) {
+        console.error("Erro PUT User:", error);
         return NextResponse.json({ error: "Erro ao atualizar usuário" }, { status: 500 });
     }
 }
 
-// DELETE: Soft Delete
+// 2. DELETE: Soft Delete (Protegido)
 export async function DELETE(request: Request, { params }: Props) {
     try {
+        // SEGURANÇA: Apenas usuários logados podem deletar
+        const authenticatedUser = await getAuthenticatedUser();
+        if (!authenticatedUser) {
+            return NextResponse.json(
+                { error: "Acesso negado. Token inválido ou ausente." },
+                { status: 401 }
+            );
+        }
+
         const { id } = await params;
         await connectDB();
 
-        // Marca a data de exclusão em vez de apagar o registro
-        await User.findByIdAndUpdate(id, { deletedAt: new Date() });
+        // Marca a data de exclusão
+        const deletedUser = await User.findByIdAndUpdate(id, { deletedAt: new Date() });
+
+        if (!deletedUser) {
+            return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 });
+        }
 
         return NextResponse.json({ message: "Usuário removido com sucesso!" });
-    } catch (error) {
+    } catch (error: unknown) {
+        console.error("Erro DELETE User:", error);
         return NextResponse.json({ error: "Erro ao remover usuário" }, { status: 500 });
     }
 }

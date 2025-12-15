@@ -29,14 +29,52 @@ export function TeamManager() {
     // Classes CSS Padronizadas
     const inputClass = "p-2 border border-slate-300 rounded text-sm w-full bg-white text-slate-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-600 transition-all";
 
-    // 1. CARREGAR USUÁRIOS
+    // 1. CARREGAR USUÁRIOS (COM DIAGNÓSTICO DE ERRO)
     const fetchUsers = async () => {
         try {
-            const res = await fetch("/api/users");
+            const token = localStorage.getItem("token"); // Recupera o token
+
+            // --- ÁREA DE DEBUG (F12 > Console) ---
+            console.log("=== DEBUG AUTH ===");
+            console.log("1. Token encontrado:", token);
+
+            if (!token) {
+                console.warn("ALERTA: Usuário sem token (provavelmente deslogado).");
+                setUsers([]); // Zera a lista para não quebrar
+                setLoading(false);
+                return;
+            }
+
+            const res = await fetch("/api/users", {
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}` // Envia o token
+                }
+            });
+
+            console.log("2. Status da API:", res.status);
+
+            if (res.status === 401 || res.status === 403) {
+                console.error("ERRO DE PERMISSÃO: Token inválido ou expirado.");
+                // Opcional: alert("Sessão expirada.");
+                setUsers([]);
+                setLoading(false);
+                return;
+            }
+
             const data = await res.json();
-            setUsers(data);
+            console.log("3. Dados recebidos:", data);
+
+            // SEGURANÇA CRÍTICA: Verifica se é array antes de salvar
+            if (Array.isArray(data)) {
+                setUsers(data);
+            } else {
+                console.error("ERRO CRÍTICO: API não retornou uma lista. Retornou:", data);
+                setUsers([]); // Fallback para array vazio
+            }
         } catch (error) {
-            console.error("Erro ao buscar usuários", error);
+            console.error("Erro fatal ao buscar usuários", error);
+            setUsers([]);
         } finally {
             setLoading(false);
         }
@@ -46,12 +84,14 @@ export function TeamManager() {
         fetchUsers();
     }, []);
 
-    // 2. LÓGICA DE FILTRO
+    // 2. LÓGICA DE FILTRO (Blindada contra erros)
     const filteredUsers = useMemo(() => {
+        if (!Array.isArray(users)) return []; // Proteção extra
+
         const term = searchTerm.toLowerCase();
         return users.filter(user =>
-            user.name.toLowerCase().includes(term) ||
-            user.email.toLowerCase().includes(term)
+            user.name?.toLowerCase().includes(term) ||
+            user.email?.toLowerCase().includes(term)
         );
     }, [users, searchTerm]);
 
@@ -60,9 +100,19 @@ export function TeamManager() {
         e.preventDefault();
         setIsRegistering(true);
         try {
+            const token = localStorage.getItem("token");
+
+            if (!token) {
+                alert("Erro: Você não está logado.");
+                return;
+            }
+
             const res = await fetch("/api/users", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
                 body: JSON.stringify(registerData),
             });
 
@@ -75,7 +125,6 @@ export function TeamManager() {
             setRegisterData({ name: "", email: "", password: "" });
             fetchUsers();
         } catch (error) {
-            // CORREÇÃO AQUI: Verificação de tipo segura
             if (error instanceof Error) {
                 alert(error.message);
             } else {
@@ -90,8 +139,15 @@ export function TeamManager() {
     const handleDelete = async (userId: string) => {
         if (!confirm("Tem certeza que deseja remover este administrador?")) return;
         try {
-            const res = await fetch(`/api/users/${userId}`, { method: 'DELETE' });
+            const token = localStorage.getItem("token");
+
+            const res = await fetch(`/api/users/${userId}`, {
+                method: 'DELETE',
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+
             if (res.ok) fetchUsers();
+            else alert("Erro ao remover usuário.");
         } catch (error) {
             console.error("Erro ao deletar:", error);
         }
@@ -109,22 +165,30 @@ export function TeamManager() {
         setIsSavingEdit(true);
 
         try {
+            const token = localStorage.getItem("token");
             const payload = actionType === 'email' ? { email: editInputValue } : { password: editInputValue };
+
             const res = await fetch(`/api/users/${editingUser._id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify(payload)
             });
 
-            if (!res.ok) throw new Error("Erro ao atualizar");
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.error || "Erro ao atualizar");
+            }
 
             alert("Atualizado com sucesso!");
             setEditingUser(null);
             fetchUsers();
         } catch (error) {
-            // CORREÇÃO AQUI: Alert genérico ou verificação segura
             console.error(error);
-            alert("Erro ao atualizar dados.");
+            if (error instanceof Error) alert(error.message);
+            else alert("Erro ao atualizar dados.");
         } finally {
             setIsSavingEdit(false);
         }

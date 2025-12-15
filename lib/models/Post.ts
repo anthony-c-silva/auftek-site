@@ -7,13 +7,16 @@ export interface IPost extends Document {
     coverImage: string;
     tags: string[];
 
+    // NOVO: Tempo de Leitura (opcional)
+    readTime?: string;
+
     // Autor (Especialista)
     author: {
         name: string;
         photoUrl: string; // Atualizado de avatar para photoUrl
     };
 
-    // Redator (Equipe - NOVO)
+    // Redator (Equipe)
     writer: {
         name: string;
         email: string;
@@ -42,22 +45,28 @@ const PostSchema: Schema = new Schema(
         },
         coverImage: {
             type: String,
-            required: false
+            required: [true, "A imagem de capa é obrigatória"]
         },
         tags: {
             type: [String],
             default: []
         },
 
+        // Campo novo: Tempo de Leitura
+        readTime: {
+            type: String,
+            required: false // Opcional
+        },
+
         // Configuração do Autor (Especialista)
         author: {
             name: { type: String, required: true },
-            photoUrl: { type: String, required: false } // Padronizado
+            photoUrl: { type: String, required: false }
         },
 
-        // Configuração do Redator (Quem postou) - ADICIONADO AGORA
+        // Configuração do Redator (Quem postou)
         writer: {
-            name: { type: String, required: false }, // Opcional para não quebrar posts antigos
+            name: { type: String, required: false },
             email: { type: String, required: false }
         },
 

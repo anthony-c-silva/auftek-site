@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import { BlogPost } from '@/types/blog';
-import { ArrowLeft, Calendar, Tag, Share2, Linkedin, Twitter, Facebook, ImageOff, PenTool } from 'lucide-react';
+import { ArrowLeft, Calendar, Tag, Share2, Linkedin, Twitter, Facebook, PenTool } from 'lucide-react'; // Removi ImageOff
 import AuthorBio from './AuthorBio';
 
 interface PostDetailProps {
@@ -58,14 +58,16 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack }) => {
                         onError={() => setCoverImageError(true)}
                     />
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-950 flex items-center justify-center opacity-100">
-                        <div className="flex flex-col items-center gap-2 text-slate-700">
-                            <ImageOff className="w-16 h-16 opacity-20" />
-                        </div>
+                    // --- MUDANÇA AQUI: Gradiente Azul com Texto AUFTEK ---
+                    <div className="w-full h-full bg-gradient-to-br from-slate-900 to-blue-900 flex items-center justify-center">
+                        <span className="text-6xl md:text-8xl font-black text-white/5 uppercase tracking-[0.15em] select-none">
+                            Auftek
+                        </span>
                     </div>
                 )}
 
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent"></div>
+                {/* Overlay Suave para garantir leitura do texto branco */}
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent"></div>
 
                 <div className="absolute top-6 left-4 sm:left-8 z-20">
                     <button
@@ -86,9 +88,7 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack }) => {
 
                     <div className="flex flex-wrap items-center gap-6 text-slate-300 text-sm font-medium">
 
-                        {/* REMOVIDO: Bloco do Autor (Especialista) foi retirado daqui */}
-
-                        {/* REDATOR (Equipe) - Mantido */}
+                        {/* REDATOR (Equipe) */}
                         {post.writer && post.writer.name && (
                             <div className="flex items-center gap-2 text-slate-400" title="Redação e Edição">
                                 <div className="bg-white/10 p-1 rounded-full">

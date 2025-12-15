@@ -4,13 +4,39 @@ import React, { useEffect, useState, useMemo } from "react";
 import { Edit, Trash2, Eye, Search, X, UserCircle } from "lucide-react";
 import Link from "next/link";
 import { Modal } from "../ui/Modal";
-import { PostForm } from "./PostForm";
+import { PostForm, PostData as FormPostData } from "./PostForm"; // Importando tipo do Form se necessário, ou definindo local
 import { Avatar } from "../ui/Avatar";
 
+// --- INTERFACES ---
+
+interface AuthorData {
+    name?: string;
+    photoUrl?: string;
+}
+
+interface WriterData {
+    name?: string;
+    email?: string;
+}
+
+// A interface aqui reflete o que vem do BANCO DE DADOS/API
+export interface PostData {
+    _id: string;
+    title: string;
+    slug: string;
+    tags?: string[];
+    createdAt: string;
+    author?: AuthorData;
+    writer?: WriterData;
+    content?: string;
+    coverImage?: string;
+    readTime?: string;
+}
+
 export const AdminPostList: React.FC = () => {
-    const [posts, setPosts] = useState<any[]>([]);
+    const [posts, setPosts] = useState<PostData[]>([]);
     const [loading, setLoading] = useState(true);
-    const [editingPost, setEditingPost] = useState<any | null>(null);
+    const [editingPost, setEditingPost] = useState<PostData | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
 
     useEffect(() => {
@@ -21,9 +47,17 @@ export const AdminPostList: React.FC = () => {
         try {
             const res = await fetch("/api/posts");
             const data = await res.json();
-            setPosts(data);
+
+            // SEGURANÇA: Garante que é array
+            if (Array.isArray(data)) {
+                setPosts(data);
+            } else {
+                console.error("API não retornou um array:", data);
+                setPosts([]);
+            }
         } catch (error) {
             console.error("Erro ao buscar posts", error);
+            setPosts([]);
         } finally {
             setLoading(false);
         }
@@ -38,17 +72,22 @@ export const AdminPostList: React.FC = () => {
         } catch (error) { console.error("Erro", error); }
     };
 
-    const handleEditClick = (post: any) => setEditingPost(post);
+    const handleEditClick = (post: PostData) => setEditingPost(post);
     const handleModalClose = () => setEditingPost(null);
     const handleFormSuccess = () => { setEditingPost(null); fetchPosts(); };
 
     const filteredPosts = useMemo(() => {
+        // Fallback se posts for undefined/null
+        if (!Array.isArray(posts)) return [];
+
         if (!searchQuery) return posts;
+
         const lowerQuery = searchQuery.toLowerCase();
+
         return posts.filter(post =>
-            post.title.toLowerCase().includes(lowerQuery) ||
-            post.tags?.some((tag: string) => tag.toLowerCase().includes(lowerQuery)) ||
-            post.slug.toLowerCase().includes(lowerQuery) ||
+            post.title?.toLowerCase().includes(lowerQuery) ||
+            post.tags?.some((tag) => tag.toLowerCase().includes(lowerQuery)) ||
+            post.slug?.toLowerCase().includes(lowerQuery) ||
             post.author?.name?.toLowerCase().includes(lowerQuery) ||
             post.writer?.name?.toLowerCase().includes(lowerQuery)
         );
@@ -59,6 +98,7 @@ export const AdminPostList: React.FC = () => {
     return (
         <>
             <div className="bg-white rounded-xl shadow border border-slate-200 overflow-hidden">
+                {/* Header da Tabela */}
                 <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center gap-4">
                     <div className="relative w-full max-w-md">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -85,13 +125,14 @@ export const AdminPostList: React.FC = () => {
                     </div>
                 </div>
 
+                {/* Tabela */}
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
                         <tr className="bg-slate-50 border-b border-slate-200">
                             <th className="px-6 py-4 text-sm font-semibold text-slate-700">Título</th>
-                            <th className="px-6 py-4 text-sm font-semibold text-slate-700">Redator (Equipe)</th>
-                            <th className="px-6 py-4 text-sm font-semibold text-slate-700">Autor (Especialista)</th>
+                            <th className="px-6 py-4 text-sm font-semibold text-slate-700">Redator</th>
+                            <th className="px-6 py-4 text-sm font-semibold text-slate-700">Autor</th>
                             <th className="px-6 py-4 text-sm font-semibold text-slate-700">Data</th>
                             <th className="px-6 py-4 text-sm font-semibold text-slate-700 text-right">Ações</th>
                         </tr>
@@ -102,7 +143,7 @@ export const AdminPostList: React.FC = () => {
                                 <td className="px-6 py-4">
                                     <p className="font-medium text-slate-900 line-clamp-1">{post.title}</p>
                                     <div className="flex gap-1 mt-1">
-                                        {post.tags?.slice(0, 2).map((tag: string) => (
+                                        {post.tags?.slice(0, 2).map((tag) => (
                                             <span key={tag} className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600">
                                                 {tag}
                                             </span>
@@ -110,24 +151,23 @@ export const AdminPostList: React.FC = () => {
                                     </div>
                                 </td>
 
-                                {/* COLUNA REDATOR (CORRIGIDA) */}
+                                {/* Redator */}
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-2">
                                         <div className="bg-purple-100 p-1.5 rounded-full text-purple-600">
                                             <UserCircle size={16} />
                                         </div>
                                         <span className="text-sm text-slate-700 font-medium">
-                                            {/* Prioridade: Nome > Email > Traço */}
                                             {post.writer?.name || post.writer?.email || "—"}
                                         </span>
                                     </div>
                                 </td>
 
-                                {/* COLUNA AUTOR */}
+                                {/* Autor */}
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-2">
                                         <Avatar
-                                            src={post.author?.avatar}
+                                            src={post.author?.photoUrl}
                                             alt={post.author?.name || "Especialista"}
                                             size={24}
                                             className="border border-slate-200"
@@ -139,7 +179,7 @@ export const AdminPostList: React.FC = () => {
                                 </td>
 
                                 <td className="px-6 py-4 text-sm text-slate-500">
-                                    {new Date(post.createdAt).toLocaleDateString("pt-BR")}
+                                    {post.createdAt ? new Date(post.createdAt).toLocaleDateString("pt-BR") : "-"}
                                 </td>
                                 <td className="px-6 py-4 text-right">
                                     <div className="flex items-center justify-end gap-3">

@@ -8,7 +8,28 @@ import Hero from '@/components/blog/Hero';
 import CategoryFilter from '@/components/blog/CategoryFilter';
 import PostCard from '@/components/blog/PostCard';
 import Newsletter from '@/components/blog/Newsletter';
-import { CategoryType, BlogPost } from '@/types/blog'; // Importamos o tipo correto
+import { CategoryType, BlogPost } from '@/types/blog';
+
+interface RawPostData {
+    _id: string;
+    id?: string;
+    slug: string;
+    title: string;
+    content?: string;
+    excerpt?: string;
+    coverImage?: string;
+    imageUrl?: string;
+    createdAt: string;
+    readTime?: string;
+    tags?: string[];
+    author?: {
+        name?: string;
+        photoUrl?: string;
+        avatar?: string;
+        education?: string;
+        bio?: string;
+    };
+}
 
 export default function BlogPage() {
     const router = useRouter();
@@ -22,35 +43,54 @@ export default function BlogPage() {
         const fetchPosts = async () => {
             try {
                 const response = await fetch('/api/posts');
-                const data = await response.json();
 
-                // 2. NORMALIZAÇÃO IMEDIATA:
-                // Transformamos os dados brutos do banco (data) no formato BlogPost aqui.
-                // Isso limpa o código lá embaixo no return.
-                const normalizedPosts: BlogPost[] = data.map((item: any) => ({
-                    id: item._id,
+                // Validação de segurança do tipo de conteúdo
+                const contentType = response.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    throw new Error("A API não retornou JSON.");
+                }
+
+                // Tipagem explícita aqui remove a necessidade de 'any' depois
+                const data = await response.json() as RawPostData[];
+
+                // Proteção contra dados inválidos
+                if (!Array.isArray(data)) {
+                    console.error("Formato inválido recebido (esperado array):", data);
+                    setPosts([]);
+                    return;
+                }
+
+                const normalizedPosts: BlogPost[] = data.map((item) => ({
+                    id: item._id || item.id || "",
                     slug: item.slug,
                     title: item.title,
-                    // Gera o resumo se não existir
-                    excerpt: item.content ? item.content.substring(0, 150) + "..." : "",
-                    content: item.content, // Mantemos string para a busca funcionar
-                    imageUrl: item.coverImage,
-                    date: new Date(item.createdAt).toLocaleDateString('pt-BR'),
-                    readTime: "5 min",
+                    excerpt: item.excerpt || (item.content ? item.content.substring(0, 150) + "..." : ""),
+                    content: item.content || "",
+
+                    imageUrl: item.coverImage || item.imageUrl || "",
+
+                    date: item.createdAt ? new Date(item.createdAt).toLocaleDateString('pt-BR') : "",
+
+                    readTime: item.readTime || "5 min",
+
                     category: item.tags?.[0] || "Geral",
                     tags: item.tags || [],
+
                     author: {
                         name: item.author?.name || "Autor Auftek",
-                        // Mapeia para o novo campo 'avatar' e garante string vazia no fallback
-                        avatar: item.author?.avatar || "",
-                        role: "Colaborador",
+                        // Fallback seguro para foto
+                        photoUrl: item.author?.photoUrl || item.author?.avatar || "",
+                        education: item.author?.education || "Colaborador",
                         bio: "Especialista em tecnologia"
-                    }
+                    },
+                    // Campos obrigatórios da interface BlogPost que precisam ser preenchidos
+                    authorId: "",
                 }));
 
                 setPosts(normalizedPosts);
             } catch (error) {
                 console.error("Erro ao buscar posts:", error);
+                setPosts([]);
             } finally {
                 setLoading(false);
             }
@@ -67,7 +107,7 @@ export default function BlogPage() {
                 matchesCategory = true;
             } else {
                 const normalize = (str: string) =>
-                    str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                    str ? str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "";
 
                 const targetCategory = normalize(selectedCategory);
 
@@ -82,13 +122,14 @@ export default function BlogPage() {
 
             const searchLower = searchQuery.toLowerCase();
 
-            // Verificação segura de conteúdo (pode ser string ou array, dependendo da normalização)
-            const contentText = Array.isArray(post.content) ? post.content.join(" ") : post.content;
+            // Garante que content é tratado corretamente como string ou array
+            const contentText = Array.isArray(post.content) ? post.content.join(" ") : (post.content || "");
+            const titleText = post.title || "";
 
             const matchesSearch =
-                post.title?.toLowerCase().includes(searchLower) ||
+                titleText.toLowerCase().includes(searchLower) ||
                 post.tags?.some((tag: string) => tag.toLowerCase().includes(searchLower)) ||
-                (contentText && contentText.toLowerCase().includes(searchLower));
+                contentText.toLowerCase().includes(searchLower);
 
             return matchesCategory && matchesSearch;
         });
@@ -125,7 +166,6 @@ export default function BlogPage() {
 
                 {filteredPosts.length > 0 ? (
                     <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-                        {/* 3. RENDERIZAÇÃO LIMPA: Como já normalizamos antes, passamos o objeto direto */}
                         {filteredPosts.map((post) => (
                             <PostCard
                                 key={post.id}

@@ -14,7 +14,7 @@ export default function AdminDashboard() {
     const router = useRouter();
 
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const [isTeamModalOpen, setIsTeamModalOpen] = useState(false); // Um modal para tudo de equipe
+    const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
     const [isAuthorModalOpen, setIsAuthorModalOpen] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
 

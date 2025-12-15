@@ -7,24 +7,32 @@ import { Author } from "@/types/blog";
 import { Avatar } from "@/components/ui/Avatar";
 import { useAuth } from "@/context/AuthContext";
 
-interface PostData {
+// Interface para a resposta da API de autores
+interface APIAuthor extends Author {
+    _id: string;
+}
+
+// Interface tipada para o corpo da requisição de post
+export interface PostData {
+    _id?: string;
     title: string;
-    slug: string;
-    content: string;
-    tags: string[];
-    coverImage: string;
-    author: {
-        name: string;
-        photoUrl: string;
+    slug?: string;
+    content?: string;
+    tags?: string[];
+    coverImage?: string;
+    readTime?: string;
+    author?: {
+        name?: string;
+        photoUrl?: string;
     };
     writer?: {
-        name: string;
-        email: string;
+        name?: string;
+        email?: string;
     };
 }
 
 interface PostFormProps {
-    initialData?: PostData;
+    initialData?: PostData | null;
     isEditing?: boolean;
     onSuccess?: () => void;
     onCancel?: () => void;
@@ -41,7 +49,6 @@ export const PostForm: React.FC<PostFormProps> = ({
 
     const [loading, setLoading] = useState(false);
     const [authors, setAuthors] = useState<Author[]>([]);
-
     const [isAuthorMenuOpen, setIsAuthorMenuOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -51,11 +58,13 @@ export const PostForm: React.FC<PostFormProps> = ({
         content: "",
         tags: "",
         coverImage: "",
+        readTime: "",
         authorId: "",
     });
 
     const [isFormValid, setIsFormValid] = useState(false);
 
+    // Fecha o dropdown ao clicar fora
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -72,12 +81,15 @@ export const PostForm: React.FC<PostFormProps> = ({
             try {
                 const res = await fetch("/api/authors");
                 if (res.ok) {
-                    const data = await res.json();
-                    // Normalização simples caso venha do Mongo com _id
-                    const normalized = data.map((a: any) => ({ ...a, id: a.id || a._id }));
+                    // Tipagem segura: afirmamos que o JSON é um array de APIAuthor
+                    const data = await res.json() as APIAuthor[];
+                    const normalized: Author[] = data.map((a) => ({
+                        ...a,
+                        id: a.id || a._id
+                    }));
                     setAuthors(normalized);
                 }
-            } catch (error) {
+            } catch (error: unknown) {
                 console.error("Erro ao carregar autores:", error);
             }
         };
@@ -88,12 +100,14 @@ export const PostForm: React.FC<PostFormProps> = ({
     useEffect(() => {
         if (initialData) {
             const foundAuthor = authors.find(a => a.name === initialData.author?.name);
+
             setFormData({
                 title: initialData.title || "",
                 slug: initialData.slug || "",
                 content: initialData.content || "",
                 tags: Array.isArray(initialData.tags) ? initialData.tags.join(", ") : "",
                 coverImage: initialData.coverImage || "",
+                readTime: initialData.readTime || "",
                 authorId: foundAuthor?.id || "",
             });
         }
@@ -104,20 +118,21 @@ export const PostForm: React.FC<PostFormProps> = ({
         const isValid =
             formData.title.trim() !== "" &&
             formData.content.trim() !== "" &&
-            formData.authorId !== "";
+            formData.authorId !== "" &&
+            formData.coverImage.trim() !== "" &&
+            formData.readTime.trim() !== "" &&
+            formData.tags.trim() !== "";
+
         setIsFormValid(isValid);
-    }, [formData.title, formData.content, formData.authorId]);
+    }, [formData]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    // Seleção de Autor
     const handleSelectAuthor = (id: string, e: React.MouseEvent) => {
-        // Previne qualquer comportamento padrão ou propagação estranha
         e.preventDefault();
         e.stopPropagation();
-
         setFormData({ ...formData, authorId: id });
         setIsAuthorMenuOpen(false);
     };
@@ -128,22 +143,29 @@ export const PostForm: React.FC<PostFormProps> = ({
         setLoading(true);
 
         try {
+            // 1. SEGURANÇA: Recuperar o Token
+            const token = localStorage.getItem("token");
+
+            if (!token) {
+                alert("Sessão expirada ou inválida. Por favor, faça login novamente.");
+                router.push("/login");
+                return;
+            }
+
             const selectedAuthor = authors.find(a => a.id === formData.authorId);
 
             const payload = {
                 title: formData.title,
                 content: formData.content,
-                coverImage: formData.coverImage || "",
+                coverImage: formData.coverImage,
+                readTime: formData.readTime,
                 tags: formData.tags.split(",").map((t) => t.trim()).filter((t) => t !== ""),
 
-                author: {
-                    name: selectedAuthor?.name || "Admin Auftek",
-                    photoUrl: selectedAuthor?.photoUrl || ""
-                },
+                authorId: formData.authorId,
 
                 writer: {
-                    name: user?.name || "Equipe Auftek",
-                    email: user?.email || ""
+                    name: user?.name,
+                    email: user?.email
                 },
 
                 ...(formData.slug ? { slug: formData.slug } : {})
@@ -152,13 +174,21 @@ export const PostForm: React.FC<PostFormProps> = ({
             const url = isEditing ? `/api/posts/${formData.slug}` : "/api/posts";
             const method = isEditing ? "PUT" : "POST";
 
+            // 2. SEGURANÇA: Enviar o Token no Header
             const res = await fetch(url, {
                 method,
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}` // <--- CORREÇÃO DO ERRO 401
+                },
                 body: JSON.stringify(payload),
             });
 
-            if (!res.ok) throw new Error("Erro ao salvar");
+            if (!res.ok) {
+                // Tipagem segura da resposta de erro
+                const errorData = await res.json() as { error?: string };
+                throw new Error(errorData.error || "Erro ao salvar");
+            }
 
             if (onSuccess) {
                 onSuccess();
@@ -166,10 +196,16 @@ export const PostForm: React.FC<PostFormProps> = ({
                 router.push("/admin");
                 router.refresh();
             }
+        } catch (error: unknown) {
+            // 3. SEM ANY: Tratamento de erro seguro
+            let errorMessage = "Erro desconhecido ao salvar post.";
 
-        } catch (error) {
-            alert("Erro ao salvar post.");
-            console.error(error);
+            if (error instanceof Error) {
+                errorMessage = error.message;
+            }
+
+            alert(errorMessage);
+            console.error("Erro no submit:", error);
         } finally {
             setLoading(false);
         }
@@ -185,6 +221,7 @@ export const PostForm: React.FC<PostFormProps> = ({
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Título */}
             <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                     Título da Publicação <span className="text-red-500">*</span>
@@ -200,9 +237,10 @@ export const PostForm: React.FC<PostFormProps> = ({
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
+                {/* Capa */}
                 <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">
-                        URL da Imagem de Capa <span className="text-slate-400 font-normal lowercase">(opcional)</span>
+                        URL da Imagem de Capa <span className="text-red-500">*</span>
                     </label>
                     <input
                         name="coverImage"
@@ -210,20 +248,41 @@ export const PostForm: React.FC<PostFormProps> = ({
                         onChange={handleChange}
                         className={inputClass}
                         placeholder="https://..."
+                        required
                     />
                 </div>
+                {/* Tags */}
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Tags</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                        Tags <span className="text-red-500">*</span>
+                    </label>
                     <input
                         name="tags"
                         value={formData.tags}
                         onChange={handleChange}
                         className={inputClass}
                         placeholder="Ex: Energia, IoT, Inovação"
+                        required
                     />
                 </div>
             </div>
 
+            {/* Tempo de Leitura */}
+            <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Tempo de Leitura <span className="text-red-500">*</span>
+                </label>
+                <input
+                    name="readTime"
+                    value={formData.readTime}
+                    onChange={handleChange}
+                    className={inputClass}
+                    placeholder="Ex: 5 min"
+                    required
+                />
+            </div>
+
+            {/* Autor */}
             <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 relative z-40">
                 <label className="block text-xs font-bold uppercase text-slate-500 mb-2">
                     Autor da Publicação <span className="text-red-500">*</span>
@@ -255,17 +314,14 @@ export const PostForm: React.FC<PostFormProps> = ({
                     </button>
 
                     {isAuthorMenuOpen && (
-                        // AQUI FOI A MUDANÇA: Mudamos de z-10 para z-50
                         <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
                             {authors.length === 0 ? (
                                 <div className="p-3 text-sm text-slate-500 text-center">Nenhum autor cadastrado</div>
                             ) : (
                                 authors.map((author) => (
                                     <button
-                                        // Garantia de key única
                                         key={author.id}
                                         type="button"
-                                        // Passamos 'e' para prevenir default
                                         onClick={(e) => handleSelectAuthor(author.id || "", e)}
                                         className="w-full px-4 py-3 flex items-center gap-3 hover:bg-slate-50 transition border-b border-slate-50 last:border-none text-left cursor-pointer"
                                     >
@@ -285,11 +341,9 @@ export const PostForm: React.FC<PostFormProps> = ({
                         </div>
                     )}
                 </div>
-                <p className="text-xs text-slate-400 mt-2">
-                    O nome e a foto selecionados aparecerão no topo do artigo.
-                </p>
             </div>
 
+            {/* Conteúdo */}
             <div className="relative z-0">
                 <label className="block text-sm font-medium text-slate-700 mb-1">
                     Conteúdo do Artigo <span className="text-red-500">*</span>
@@ -305,10 +359,11 @@ export const PostForm: React.FC<PostFormProps> = ({
                 />
             </div>
 
+            {/* Botões */}
             <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-slate-100 items-center">
                 {!isFormValid && (
-                    <div className="flex-1 text-amber-600 text-xs flex items-center gap-1">
-                        <AlertCircle size={14} /> Preencha Título, Conteúdo e Autor para salvar.
+                    <div className="flex-1 text-amber-600 text-xs flex items-center gap-1 font-medium">
+                        <AlertCircle size={14} /> Todos os campos são obrigatórios.
                     </div>
                 )}
                 <div className="flex gap-3 w-full sm:w-auto ml-auto">
