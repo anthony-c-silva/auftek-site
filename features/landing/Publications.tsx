@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { Section, SectionTitle } from "../../components/ui/Section";
 
-// NÃO IMPORTE ARQUIVOS DA PUBLIC! Use a string direta.
+// Garanta que esta imagem exista na pasta public/images/
 const MILK_ICON_PATH = "/images/milk.svg";
 
 export const Publications: React.FC = () => {
@@ -22,11 +22,9 @@ export const Publications: React.FC = () => {
         Aplicações Reais
       </SectionTitle>
 
-      {/* Grid de Aplicações */}
+      {/* --- Grid de Aplicações --- */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
-        {/* ... (Os outros cards permanecem iguais) ... */}
-
-        {/* Cards 1 a 5 omitidos para brevidade - Mantenha o código original deles */}
+        {/* 1. Detecção de Salmonella */}
         <div className="bg-[#0e223b] border border-gray-800 p-6 rounded-xl hover:border-red-400/50 transition-colors group">
           <div className="w-12 h-12 bg-red-500/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-red-500/20 transition-colors">
             <AlertCircle className="text-red-400" size={24} />
@@ -40,6 +38,7 @@ export const Publications: React.FC = () => {
           </p>
         </div>
 
+        {/* 2. E.coli e Coliformes */}
         <div className="bg-[#0e223b] border border-gray-800 p-6 rounded-xl hover:border-auftek-blue/50 transition-colors group">
           <div className="w-12 h-12 bg-auftek-blue/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-auftek-blue/20 transition-colors">
             <Activity className="text-auftek-blue" size={24} />
@@ -52,6 +51,7 @@ export const Publications: React.FC = () => {
           </p>
         </div>
 
+        {/* 3. Bioinsumos no Agro */}
         <div className="bg-[#0e223b] border border-gray-800 p-6 rounded-xl hover:border-auftek-green/50 transition-colors group">
           <div className="w-12 h-12 bg-auftek-green/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-auftek-green/20 transition-colors">
             <Leaf className="text-auftek-green" size={24} />
@@ -64,6 +64,7 @@ export const Publications: React.FC = () => {
           </p>
         </div>
 
+        {/* 4. Água e Efluentes */}
         <div className="bg-[#0e223b] border border-gray-800 p-6 rounded-xl hover:border-blue-300/50 transition-colors group">
           <div className="w-12 h-12 bg-blue-300/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-300/20 transition-colors">
             <Droplet className="text-blue-300" size={24} />
@@ -76,6 +77,7 @@ export const Publications: React.FC = () => {
           </p>
         </div>
 
+        {/* 5. Processos Industriais */}
         <div className="bg-[#0e223b] border border-gray-800 p-6 rounded-xl hover:border-orange-400/50 transition-colors group">
           <div className="w-12 h-12 bg-orange-400/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-orange-400/20 transition-colors">
             <Factory className="text-orange-400" size={24} />
@@ -88,10 +90,9 @@ export const Publications: React.FC = () => {
           </p>
         </div>
 
-        {/* 6. Qualidade do Leite (CORRIGIDO) */}
+        {/* 6. Qualidade do Leite */}
         <div className="bg-[#0e223b] border border-gray-800 p-6 rounded-xl hover:border-white/50 transition-colors group">
           <div className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-white/20 transition-colors">
-            {/* Uso direto do caminho da string */}
             <img
               src={MILK_ICON_PATH}
               alt="Ícone Leite"
@@ -108,51 +109,56 @@ export const Publications: React.FC = () => {
         </div>
       </div>
 
-      {/* Seção Secundária: Publicações */}
+      {/* --- Seção Secundária: Publicações --- */}
       <div className="border-t border-gray-800 pt-16">
         <h3 className="text-2xl font-bold text-gray-300 mb-8 text-center">
           Publicações e Embasamento Técnico-Científico
         </h3>
+
         <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          {/* Card 1 */}
-          <div className="flex gap-4 p-4 rounded-lg bg-[#0e223b]/50 border border-gray-800 hover:border-gray-600 transition-colors">
-            <FileText className="text-gray-500 shrink-0" size={24} />
+          {/* Card Pub 1 - Analytical Chemistry */}
+          <a
+            href="https://pubs.acs.org/doi/10.1021/acs.analchem.5c03766"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex gap-4 p-4 rounded-lg bg-[#0e223b]/50 border border-gray-800 hover:border-gray-500 hover:bg-[#0e223b]/80 transition-all group"
+          >
+            <FileText
+              className="text-gray-500 shrink-0 group-hover:text-cyan-300 transition-colors"
+              size={24}
+            />
             <div>
-              <h4 className="text-white font-medium">Analytical Chemistry</h4>
+              <h4 className="text-white font-medium group-hover:text-cyan-300 transition-colors">
+                Analytical Chemistry
+              </h4>
               <p className="text-gray-500 text-sm mt-1">
                 Feasibility for Real-Time Monitoring of Bacterial Growth in Raw
-                Milk Using a New Contactless Sensor – DOI:{" "}
-                <a
-                  href="https://doi.org/10.1021/acs.analchem.5c03766"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-auftek-blue hover:underline hover:text-cyan-300 transition-colors"
-                >
-                  https://doi.org/10.1021/acs.analchem.5c03766
-                </a>
+                Milk Using a New Contactless Sensor
               </p>
             </div>
-          </div>
+          </a>
 
-          {/* Card 2 */}
-          <div className="flex gap-4 p-4 rounded-lg bg-[#0e223b]/50 border border-gray-800 hover:border-gray-600 transition-colors">
-            <FileText className="text-gray-500 shrink-0" size={24} />
+          {/* Card Pub 2 - IEEE Sensors Journal */}
+          <a
+            href="https://ieeexplore.ieee.org/document/10424681"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex gap-4 p-4 rounded-lg bg-[#0e223b]/50 border border-gray-800 hover:border-gray-500 hover:bg-[#0e223b]/80 transition-all group"
+          >
+            <FileText
+              className="text-gray-500 shrink-0 group-hover:text-cyan-300 transition-colors"
+              size={24}
+            />
             <div>
-              <h4 className="text-white font-medium">IEEE Sensors Journal</h4>
+              <h4 className="text-white font-medium group-hover:text-cyan-300 transition-colors">
+                IEEE Sensors Journal
+              </h4>
               <p className="text-gray-500 text-sm mt-1">
                 Contactless Electrical Sensor Based on Resonance Frequency for
-                Real-Time Monitoring of Bacterial Growth – DOI:{" "}
-                <a
-                  href="http://dx.doi.org/10.1109/jsen.2024.3361311"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-auftek-blue hover:underline hover:text-cyan-300 transition-colors"
-                >
-                  10.1109/JSEN.2024.3361311
-                </a>
+                Real-Time Monitoring of Bacterial Growth
               </p>
             </div>
-          </div>
+          </a>
         </div>
 
         <p className="text-center text-gray-500 text-sm mt-6 italic">

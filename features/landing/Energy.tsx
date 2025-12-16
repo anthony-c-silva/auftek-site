@@ -17,11 +17,11 @@ export const Energy: React.FC = () => {
     >
       <div className="max-w-4xl mx-auto text-center mb-16">
         <SectionTitle align="center" subtitle="Soluções para o Setor Elétrico">
-          Energia e Creditação de Inversores
+          Energia e Acreditação de Inversores
         </SectionTitle>
         <p className="text-xl text-gray-300">
-          A Auftek Tecnologia desenvolve instrumentação completa para creditação
-          de inversores fotovoltaicos, atendendo às normas{" "}
+          A Auftek Tecnologia desenvolve instrumentação completa para
+          acreditação de inversores fotovoltaicos, atendendo às normas{" "}
           <span className="text-white font-bold">IEC 63027</span> e{" "}
           <span className="text-white font-bold">IEC 62109-2</span>.
         </p>
@@ -52,13 +52,12 @@ export const Energy: React.FC = () => {
               Sistema modular de precisão para emulação controlada de arcos
               elétricos em corrente contínua, desenvolvido para ensaios de
               segurança e certificação de inversores fotovoltaicos conforme a
-              IEC 63027 e portaria 140 Inmetro. 
+              IEC 63027 e portaria 140 Inmetro.
             </p>
             <p className="text-gray-400 mb-8">
-              Reproduz falhas reais de arco
-              com total controle dos parâmetros elétricos, garantindo ensaios
-              repetíveis, confiáveis e alinhados às exigências regulatórias
-              internacionais.
+              Reproduz falhas reais de arco com total controle dos parâmetros
+              elétricos, garantindo ensaios repetíveis, confiáveis e alinhados
+              às exigências regulatórias internacionais.
             </p>
             <ul className="text-sm text-gray-500 space-y-2">
               <li className="flex items-center gap-2">
@@ -84,7 +83,16 @@ export const Energy: React.FC = () => {
             <div className="mt-auto pt-6 flex justify-center gap-4">
               <Button
                 className="bg-yellow-500 text-black hover:bg-yellow-600 px-6 py-3 rounded-full flex items-center gap-2"
-                onClick={() => alert("Orçamento solicitado")}
+                onClick={() => {
+                  const phone = "555591261525"; // Número no formato internacional (sem + ou -)
+                  const message =
+                    "Olá! Gostaria de solicitar um orçamento para o equipamento PVAG LAB."; 
+                  const url = `https://wa.me/${phone}?text=${encodeURIComponent(
+                    message
+                  )}`;
+
+                  window.open(url, "_blank"); // Abre em nova aba
+                }}
               >
                 Solicitar Orçamento
                 <ArrowRight size={16} />
@@ -125,23 +133,18 @@ export const Energy: React.FC = () => {
             <p className="text-gray-400 mb-4">
               Sistema modular de alta precisão para ensaios de corrente residual
               e resistência de isolação em inversores fotovoltaicos sem
-              transformador, conforme as normas IEC 62109-2 e IEC 63112, no
-              contexto da certificação exigida pela Portaria Inmetro nº 140.
+              transformador, conforme as normas IEC 62109-2 e IEC 63112,
+              atendendo à Portaria Inmetro nº 140.
             </p>
             <p className="text-gray-400 mb-6">
               Permite a reprodução controlada de correntes de fuga contínuas e
-              variações rápidas de corrente residual, com total controle dos
-              parâmetros elétricos, garantindo ensaios repetíveis, confiáveis e
+              variações rápidas, garantindo ensaios repetíveis, confiáveis e
               alinhados às exigências regulatórias.
             </p>
             <ul className="text-sm text-gray-500 space-y-2">
               <li className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 bg-auftek-blue rounded-full"></div>{" "}
                 Ensaios de corrente residual contínua e variação rápida
-              </li>
-              <li className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 bg-auftek-blue rounded-full"></div>{" "}
-                Avaliação de trip level e trip time
               </li>
               <li className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 bg-auftek-blue rounded-full"></div>{" "}
@@ -160,7 +163,16 @@ export const Energy: React.FC = () => {
             <div className="mt-auto pt-6 flex justify-center gap-4">
               <Button
                 className="bg-yellow-500 text-black hover:bg-yellow-600 px-6 py-3 rounded-full flex items-center gap-2"
-                onClick={() => alert("Orçamento solicitado")}
+                onClick={() => {
+                  const phone = "555591261525";
+                  const message =
+                    "Olá! Gostaria de solicitar um orçamento para o equipamento IRCCT.";
+                  const url = `https://wa.me/${phone}?text=${encodeURIComponent(
+                    message
+                  )}`;
+
+                  window.open(url, "_blank"); // Abre em nova aba
+                }}
               >
                 Solicitar Orçamento
                 <ArrowRight size={16} />
@@ -174,7 +186,7 @@ export const Energy: React.FC = () => {
                     "_blank"
                   )
                 }
-              > 
+              >
                 <Youtube size={16} /> YouTube
               </Button>
             </div>
