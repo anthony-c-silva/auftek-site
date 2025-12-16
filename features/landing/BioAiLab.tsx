@@ -8,7 +8,7 @@ import { ScrollReveal } from "../../components/ui/ScrollReveal";
 export const BioAiLab: React.FC = () => {
   return (
     <Section id="bioailab" className="relative overflow-hidden !bg-auftek-dark">
-      {/* --- CAMADA DE FUNDO --- */}
+      {/* --- CAMADA DE FUNDO (INTACTA) --- */}
       <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5 pointer-events-none"></div>
 
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -22,7 +22,8 @@ export const BioAiLab: React.FC = () => {
       <div className="absolute top-0 right-0 w-24 md:w-40 h-full bg-gradient-to-l from-auftek-dark to-transparent z-0 pointer-events-none"></div>
 
       {/* --- CONTEÚDO --- */}
-      <div className="grid lg:grid-cols-2 gap-16 items-center mb-24 relative z-10">
+      <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center mb-24 relative z-10">
+        {/* LADO ESQUERDO: TEXTO */}
         <ScrollReveal>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-auftek-green/10 text-auftek-green border border-auftek-green/20 text-xs font-bold mb-6 hover:bg-auftek-green/20 transition-colors cursor-default">
             <FaBacteria size={14} color="currentColor" />
@@ -34,7 +35,6 @@ export const BioAiLab: React.FC = () => {
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-auftek-blue to-cyan-400">
               BioAiLab
             </span>
-            {/* Ajuste aqui */}
             <span className="text-2xl text-cyan-300 align-top relative -top-2 ml-1">
               ®
             </span>
@@ -80,52 +80,57 @@ export const BioAiLab: React.FC = () => {
           </div>
         </ScrollReveal>
 
+        {/* LADO DIREITO: CARD DO PRODUTO (AJUSTADO PARA MOBILE) */}
         <ScrollReveal
           delay="200"
-          className="relative flex justify-center lg:justify-end"
+          className="relative flex justify-center lg:justify-end w-full"
         >
+          {/* Ponto de luz animado (bg) */}
           <div className="absolute top-10 right-10 w-4 h-4 bg-auftek-green rounded-full blur-[2px] animate-ping opacity-20"></div>
 
-          <div className="relative w-full max-w-md aspect-square bg-gradient-to-br from-[#132338] to-[#0b1624] rounded-3xl border border-gray-700/50 shadow-[0_0_50px_-10px_rgba(30,144,255,0.15)] p-1 overflow-hidden group hover:border-auftek-blue/30 transition-all duration-500">
+          {/* Container do Card: Adicionado mx-auto e max-w responsivo */}
+          <div className="relative w-full max-w-[320px] md:max-w-md aspect-square bg-gradient-to-br from-[#132338] to-[#0b1624] rounded-3xl border border-gray-700/50 shadow-[0_0_50px_-10px_rgba(30,144,255,0.15)] p-1 overflow-hidden group hover:border-auftek-blue/30 transition-all duration-500 mx-auto">
+            {/* Backgrounds internos do card (Noise e Grid) */}
             <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10"></div>
             <div className="absolute inset-0 bg-[linear-gradient(rgba(30,144,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(30,144,255,0.03)_1px,transparent_1px)] bg-[size:40px_40px]"></div>
 
-            <div className="relative h-full w-full flex flex-col items-center justify-center z-10 p-8">
-              <div className="relative mb-8 animate-float flex justify-center items-center">
-                <div className="absolute w-[220px] h-[220px] bg-auftek-blue blur-[70px] opacity-25 group-hover:opacity-45 transition-opacity duration-500 rounded-full"></div>
+            {/* Conteúdo Centralizado do Card */}
+            <div className="relative h-full w-full flex flex-col items-center justify-center z-10 p-4 md:p-8">
+              {/* Área da Imagem + Glow */}
+              <div className="relative mb-6 md:mb-8 animate-float flex justify-center items-center">
+                <div className="absolute w-[160px] h-[160px] md:w-[220px] md:h-[220px] bg-auftek-blue blur-[50px] md:blur-[70px] opacity-25 group-hover:opacity-45 transition-opacity duration-500 rounded-full"></div>
 
-                {/* --- CORREÇÃO: Nome EXATO enviado pelo usuário --- */}
-                {/* Certifique-se que o arquivo está em: public/images/BioAiLabIlustration.png */}
-                {/* Se estiver na pasta partners, mude para: /images/partners/BioAiLabIlustration.png */}
                 <img
                   src="/images/BioAiLabIlustration.png"
                   alt="Dispositivo BioAiLab"
-                  className="w-[180px] h-[180px] object-contain drop-shadow-[0_0_25px_rgba(30,144,255,0.8)] relative z-10"
+                  className="w-[140px] h-[140px] md:w-[180px] md:h-[180px] object-contain drop-shadow-[0_0_25px_rgba(30,144,255,0.8)] relative z-10"
                 />
 
-                <div className="absolute inset-0 border border-auftek-blue/30 rounded-full scale-[1.8] animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite] opacity-20"></div>
+                <div className="absolute inset-0 border border-auftek-blue/30 rounded-full scale-[1.5] md:scale-[1.8] animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite] opacity-20"></div>
               </div>
 
-              <div className="text-center space-y-2">
-                <h3 className="text-3xl font-bold text-white tracking-widest group-hover:text-auftek-blue transition-colors">
+              {/* Texto do Produto */}
+              <div className="text-center space-y-1 md:space-y-2">
+                <h3 className="text-2xl md:text-3xl font-bold text-white tracking-widest group-hover:text-auftek-blue transition-colors">
                   BioAiLab
-                  {/* Ajuste: span com align-top, tamanho menor e recuo negativo no topo */}
-                  <span className="text-sm opacity-60 align-top relative -top-1 ml-0.5">
+                  <span className="text-xs md:text-sm opacity-60 align-top relative -top-1 ml-0.5">
                     ®
                   </span>
                 </h3>
 
-                <p className="text-auftek-green text-sm font-medium tracking-wide bg-auftek-green/5 px-3 py-1 rounded-full border border-auftek-green/10">
+                <p className="text-auftek-green text-xs md:text-sm font-medium tracking-wide bg-auftek-green/5 px-2 py-1 md:px-3 rounded-full border border-auftek-green/10 inline-block">
                   Smart Incubator System
                 </p>
               </div>
 
-              <div className="absolute top-6 right-6 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/40 border border-gray-700/50 backdrop-blur-md text-xs text-gray-300 shadow-lg animate-float-slow">
-                <Wifi size={12} className="text-auftek-blue" />
+              {/* Badge: IoT Connected (Ajuste Mobile: top-3 right-3) */}
+              <div className="absolute top-3 right-3 md:top-6 md:right-6 flex items-center gap-1.5 md:gap-2 px-2 py-1 md:px-3 md:py-1.5 rounded-lg bg-black/40 border border-gray-700/50 backdrop-blur-md text-[10px] md:text-xs text-gray-300 shadow-lg animate-float-slow">
+                <Wifi size={10} className="text-auftek-blue md:w-3 md:h-3" />
                 <span>IoT Connected</span>
               </div>
 
-              <div className="absolute bottom-6 left-6 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/40 border border-gray-700/50 backdrop-blur-md text-xs text-gray-300 shadow-lg animate-float-fast">
+              {/* Badge: AI Active (Ajuste Mobile: bottom-3 left-3) */}
+              <div className="absolute bottom-3 left-3 md:bottom-6 md:left-6 flex items-center gap-1.5 md:gap-2 px-2 py-1 md:px-3 md:py-1.5 rounded-lg bg-black/40 border border-gray-700/50 backdrop-blur-md text-[10px] md:text-xs text-gray-300 shadow-lg animate-float-fast">
                 <div className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
