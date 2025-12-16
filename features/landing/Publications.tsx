@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 import { Section, SectionTitle } from "../../components/ui/Section";
 
-// Garanta que esta imagem exista na pasta public/images/
 const MILK_ICON_PATH = "/images/milk.svg";
 
 export const Publications: React.FC = () => {
@@ -22,11 +21,25 @@ export const Publications: React.FC = () => {
         Aplicações Reais
       </SectionTitle>
 
-      {/* --- Grid de Aplicações --- */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
-        {/* 1. Detecção de Salmonella */}
-        <div className="bg-[#0e223b] border border-gray-800 p-6 rounded-xl hover:border-red-400/50 transition-colors group">
-          <div className="w-12 h-12 bg-red-500/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-red-500/20 transition-colors">
+      {/* MUDANÇAS NO CONTAINER:
+         1. 'pb-8' ou 'pb-10': Dá espaço extra embaixo para não cortar a borda do card.
+         2. 'items-stretch': Garante que todos os cards tenham a altura do maior card.
+      */}
+      <div
+        className="
+          flex overflow-x-auto gap-4 px-4 pb-10 snap-x snap-mandatory items-stretch
+          md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-6 md:pb-0 md:px-0 md:mb-20
+          [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]
+        "
+      >
+        {/* Card 1 */}
+        {/* MUDANÇAS NO CARD:
+            1. 'w-[85vw]': Ocupa 85% da tela do celular. Mostra o conteúdo todo e deixa uma pontinha do próximo card visível.
+            2. 'md:w-auto': No desktop volta ao normal.
+            3. 'h-full': Força o card a ocupar toda a altura disponível.
+        */}
+        <div className="bg-[#0e223b] border border-gray-800 p-6 rounded-xl hover:border-red-400/50 transition-colors group w-[85vw] md:w-auto flex-shrink-0 snap-center h-full flex flex-col">
+          <div className="w-12 h-12 bg-red-500/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-red-500/20 transition-colors shrink-0">
             <AlertCircle className="text-red-400" size={24} />
           </div>
           <h3 className="text-xl font-bold text-white mb-2">
@@ -38,9 +51,9 @@ export const Publications: React.FC = () => {
           </p>
         </div>
 
-        {/* 2. E.coli e Coliformes */}
-        <div className="bg-[#0e223b] border border-gray-800 p-6 rounded-xl hover:border-auftek-blue/50 transition-colors group">
-          <div className="w-12 h-12 bg-auftek-blue/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-auftek-blue/20 transition-colors">
+        {/* Card 2 */}
+        <div className="bg-[#0e223b] border border-gray-800 p-6 rounded-xl hover:border-auftek-blue/50 transition-colors group w-[85vw] md:w-auto flex-shrink-0 snap-center h-full flex flex-col">
+          <div className="w-12 h-12 bg-auftek-blue/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-auftek-blue/20 transition-colors shrink-0">
             <Activity className="text-auftek-blue" size={24} />
           </div>
           <h3 className="text-xl font-bold text-white mb-2">
@@ -51,9 +64,9 @@ export const Publications: React.FC = () => {
           </p>
         </div>
 
-        {/* 3. Bioinsumos no Agro */}
-        <div className="bg-[#0e223b] border border-gray-800 p-6 rounded-xl hover:border-auftek-green/50 transition-colors group">
-          <div className="w-12 h-12 bg-auftek-green/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-auftek-green/20 transition-colors">
+        {/* Card 3 */}
+        <div className="bg-[#0e223b] border border-gray-800 p-6 rounded-xl hover:border-auftek-green/50 transition-colors group w-[85vw] md:w-auto flex-shrink-0 snap-center h-full flex flex-col">
+          <div className="w-12 h-12 bg-auftek-green/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-auftek-green/20 transition-colors shrink-0">
             <Leaf className="text-auftek-green" size={24} />
           </div>
           <h3 className="text-xl font-bold text-white mb-2">
@@ -64,9 +77,9 @@ export const Publications: React.FC = () => {
           </p>
         </div>
 
-        {/* 4. Água e Efluentes */}
-        <div className="bg-[#0e223b] border border-gray-800 p-6 rounded-xl hover:border-blue-300/50 transition-colors group">
-          <div className="w-12 h-12 bg-blue-300/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-300/20 transition-colors">
+        {/* Card 4 */}
+        <div className="bg-[#0e223b] border border-gray-800 p-6 rounded-xl hover:border-blue-300/50 transition-colors group w-[85vw] md:w-auto flex-shrink-0 snap-center h-full flex flex-col">
+          <div className="w-12 h-12 bg-blue-300/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-300/20 transition-colors shrink-0">
             <Droplet className="text-blue-300" size={24} />
           </div>
           <h3 className="text-xl font-bold text-white mb-2">
@@ -77,9 +90,9 @@ export const Publications: React.FC = () => {
           </p>
         </div>
 
-        {/* 5. Processos Industriais */}
-        <div className="bg-[#0e223b] border border-gray-800 p-6 rounded-xl hover:border-orange-400/50 transition-colors group">
-          <div className="w-12 h-12 bg-orange-400/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-orange-400/20 transition-colors">
+        {/* Card 5 */}
+        <div className="bg-[#0e223b] border border-gray-800 p-6 rounded-xl hover:border-orange-400/50 transition-colors group w-[85vw] md:w-auto flex-shrink-0 snap-center h-full flex flex-col">
+          <div className="w-12 h-12 bg-orange-400/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-orange-400/20 transition-colors shrink-0">
             <Factory className="text-orange-400" size={24} />
           </div>
           <h3 className="text-xl font-bold text-white mb-2">
@@ -90,9 +103,9 @@ export const Publications: React.FC = () => {
           </p>
         </div>
 
-        {/* 6. Qualidade do Leite */}
-        <div className="bg-[#0e223b] border border-gray-800 p-6 rounded-xl hover:border-white/50 transition-colors group">
-          <div className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-white/20 transition-colors">
+        {/* Card 6 */}
+        <div className="bg-[#0e223b] border border-gray-800 p-6 rounded-xl hover:border-white/50 transition-colors group w-[85vw] md:w-auto flex-shrink-0 snap-center h-full flex flex-col">
+          <div className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-white/20 transition-colors shrink-0">
             <img
               src={MILK_ICON_PATH}
               alt="Ícone Leite"
@@ -109,6 +122,10 @@ export const Publications: React.FC = () => {
         </div>
       </div>
 
+      <p className="md:hidden text-center text-gray-600 text-xs mb-12 animate-pulse">
+        Deslize para o lado para ver mais →
+      </p>
+
       {/* --- Seção Secundária: Publicações --- */}
       <div className="border-t border-gray-800 pt-16">
         <h3 className="text-2xl font-bold text-gray-300 mb-8 text-center">
@@ -116,7 +133,7 @@ export const Publications: React.FC = () => {
         </h3>
 
         <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-          {/* Card Pub 1 - Analytical Chemistry */}
+          {/* Card Pub 1 */}
           <a
             href="https://pubs.acs.org/doi/10.1021/acs.analchem.5c03766"
             target="_blank"
@@ -138,7 +155,7 @@ export const Publications: React.FC = () => {
             </div>
           </a>
 
-          {/* Card Pub 2 - IEEE Sensors Journal */}
+          {/* Card Pub 2 */}
           <a
             href="https://ieeexplore.ieee.org/document/10424681"
             target="_blank"
