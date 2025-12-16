@@ -3,9 +3,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
+// 1. Atualizamos a Interface para incluir a Role
 interface User {
     name: string;
     email: string;
+    role: 'admin' | 'redator';
 }
 
 interface AuthContextType {
@@ -33,18 +35,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     const data = await res.json();
                     const userData = data.user || data;
 
-                    // SE a rota /me retornar um token renovado, salvamos também
+                    // Se a rota /me retornar um token renovado, salvamos também
                     if (data.token) {
                         localStorage.setItem("token", data.token);
                     }
 
-                    setIsAdmin(true);
+                    // Define a Role (Padrão: redator se não vier nada)
+                    const userRole = userData.role || 'redator';
+
+                    // LÓGICA DE ADMIN: Só é admin se a role for explicitamente 'admin'
+                    setIsAdmin(userRole === 'admin');
+                    
                     setUser({
-                        name: userData.name || "Admin",
-                        email: userData.email || ""
+                        name: userData.name || "Usuário",
+                        email: userData.email || "",
+                        role: userRole
                     });
                 } else {
-                    // Se falhar a validação, removemos qualquer token antigo
+                    // Se falhar a validação
                     localStorage.removeItem("token");
                     setIsAdmin(false);
                     setUser(null);
@@ -71,20 +79,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (res.ok) {
                 const data = await res.json();
 
-                // --- A CORREÇÃO MÁGICA ESTÁ AQUI ---
-                // Precisamos salvar o token explicitamente para o TeamManager usar depois
+                // Salva o token para as requisições autenticadas
                 if (data.token) {
                     localStorage.setItem("token", data.token);
                 } else {
-                    console.error("AVISO: A API de login não retornou a propriedade 'token'. Verifique o backend.");
+                    console.error("AVISO: Token não retornado no login.");
                 }
-                // -----------------------------------
 
-                setIsAdmin(true);
                 const userData = data.user || data;
+                const userRole = userData.role || 'redator';
+
+                // Define se é admin baseada na role vinda do backend
+                setIsAdmin(userRole === 'admin');
+                
                 setUser({
-                    name: userData.name || "Admin",
-                    email: email
+                    name: userData.name || "Usuário",
+                    email: email,
+                    role: userRole
                 });
 
                 router.push('/admin');
@@ -103,8 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch (error) {
             console.error("Erro no logout API", error);
         } finally {
-            // Limpeza completa do Frontend
-            localStorage.removeItem("token"); // <--- Limpa o token
+            localStorage.removeItem("token");
             setIsAdmin(false);
             setUser(null);
             router.push('/login');

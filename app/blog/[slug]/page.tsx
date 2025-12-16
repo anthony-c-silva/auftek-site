@@ -1,118 +1,131 @@
-"use client";
-
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { notFound } from "next/navigation";
+import connectDB from "@/lib/mongodb";
+import Post from "@/lib/models/Post";
 import PostDetail from '@/components/blog/PostDetail';
 import Newsletter from '@/components/blog/Newsletter';
 import { BlogPost } from '@/types/blog';
+import { Metadata } from 'next';
 
 interface BlogPostPageProps {
     params: Promise<{ slug: string }>;
 }
 
-export default function BlogPostPage({ params }: BlogPostPageProps) {
-    const router = useRouter();
-    const { slug } = React.use(params);
-    const [post, setPost] = useState<BlogPost | null>(null);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchPost = async () => {
-            try {
-                const response = await fetch(`/api/posts/${slug}`);
-
-                if (!response.ok) {
-                    throw new Error('Post não encontrado');
-                }
-
-                const data = await response.json();
-
-                // Normalização dos dados
-                const normalizedPost: BlogPost = {
-                    ...data,
-                    id: data._id, // Garante compatibilidade de ID
-                    slug: data.slug,
-                    title: data.title,
-                    excerpt: data.excerpt || "",
-
-                    // Fallback para garantir a imagem independente do nome no banco
-                    imageUrl: data.coverImage || data.imageUrl || "",
-
-                    tags: data.tags || [],
-
-                    // Garante que content seja string[] (array) para o componente
-                    content: typeof data.content === 'string'
-                        ? data.content.split('\n').filter((p: string) => p.trim() !== "")
-                        : data.content,
-
-                    date: new Date(data.createdAt).toLocaleDateString('pt-BR'),
-
-                    // --- CORREÇÃO: Tempo de Leitura Dinâmico ---
-                    readTime: data.readTime || "5 min",
-
-                    category: data.tags?.[0] || "Artigo",
-
-                    author: {
-                        name: data.author?.name || "Equipe Auftek",
-
-                        // --- CORREÇÃO: Foto do Autor ---
-                        // Prioriza photoUrl (novo padrão), tenta avatar (antigo), ou vazio
-                        photoUrl: data.author?.photoUrl || data.author?.avatar || "",
-
-                        // Mantemos propriedades extras caso o PostDetail precise delas
-                        avatarUrl: data.author?.photoUrl || data.author?.avatar || "",
-                        avatar: data.author?.photoUrl || data.author?.avatar || "",
-
-                        role: data.author?.education || "Autor", // Tenta puxar a educação/cargo
-                        bio: data.author?.bio || "Especialista em tecnologia"
-                    }
-                };
-
-                setPost(normalizedPost);
-            } catch (error) {
-                console.error("Erro ao buscar post:", error);
-                setPost(null);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        if (slug) {
-            fetchPost();
-        }
-
-        window.scrollTo(0, 0);
-    }, [slug]);
-
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-white">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-auftek-blue"></div>
-            </div>
-        );
-    }
+// 1. GERAÇÃO DE METADADOS (SEO)
+export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
+    const { slug } = await params;
+    await connectDB();
+    
+    // Busca o post
+    const post = await Post.findOne({ slug, status: 'published' });
 
     if (!post) {
-        return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
-                <h1 className="text-3xl font-bold text-gray-900 mb-4">Artigo não encontrado</h1>
-                <button
-                    onClick={() => router.push('/blog')}
-                    className="bg-auftek-blue text-white px-6 py-3 rounded-full font-semibold hover:bg-blue-700 transition-colors"
-                >
-                    Voltar para o Blog
-                </button>
-            </div>
-        );
+        return { title: "Artigo não encontrado" };
     }
+
+    return {
+        title: `${post.title} | Auftek Blog`,
+        description: post.excerpt || post.content.substring(0, 160),
+        openGraph: {
+            title: post.title,
+            description: post.excerpt || post.content.substring(0, 160),
+            // CORREÇÃO: Usamos post.coverImage (definido no Model)
+            images: [post.coverImage], 
+            type: 'article',
+            authors: [post.author?.name || "Auftek Team"]
+        },
+    };
+}
+
+// 2. PÁGINA (SERVER COMPONENT)
+export default async function BlogPostPage({ params }: BlogPostPageProps) {
+    const { slug } = await params;
+
+    await connectDB();
+
+    const data = await Post.findOne({ slug }).populate('author').lean();
+
+    if (!data) {
+        notFound();
+    }
+
+    // --- NORMALIZAÇÃO DOS DADOS ---
+    const normalizedPost: BlogPost = {
+        // @ts-ignore: _id vem do Mongoose
+        id: data._id.toString(),
+        // @ts-ignore
+        slug: data.slug,
+        // @ts-ignore
+        title: data.title,
+        
+        // @ts-ignore: Agora o excerpt existe na interface, mas como usamos .lean(), o TS pode reclamar
+        excerpt: data.excerpt || "",
+
+        // --- CORREÇÃO AQUI ---
+        // O Frontend espera 'imageUrl', mas o Banco entrega 'coverImage'.
+        // Removemos 'data.imageUrl' porque ele não existe na interface IPost.
+        // @ts-ignore
+        imageUrl: data.coverImage, 
+        
+        // @ts-ignore
+        tags: data.tags || [],
+
+        // @ts-ignore
+        content: typeof data.content === 'string'
+            // @ts-ignore
+            ? data.content.split('\n').filter((p: string) => p.trim() !== "")
+            // @ts-ignore
+            : data.content,
+
+        // @ts-ignore
+        date: new Date(data.createdAt).toLocaleDateString('pt-BR'),
+        // @ts-ignore
+        readTime: data.readTime || "5 min",
+        // @ts-ignore
+        category: data.tags?.[0] || "Artigo",
+
+        author: {
+            // @ts-ignore
+            name: data.author?.name || "Equipe Auftek",
+            // @ts-ignore
+            photoUrl: data.author?.photoUrl || "",
+            // @ts-ignore
+            avatarUrl: data.author?.photoUrl || "",
+            // @ts-ignore
+            avatar: data.author?.photoUrl || "",
+            
+            // Tenta pegar education ou bio se existirem, senão fallback
+            // @ts-ignore
+            role: "Autor", 
+            // @ts-ignore
+            bio: "Especialista em tecnologia"
+        }
+    };
+
+    // JSON-LD
+    const jsonLd = {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "headline": normalizedPost.title,
+        "image": normalizedPost.imageUrl,
+        "author": {
+            "@type": "Person",
+            "name": normalizedPost.author.name
+        },
+        "datePublished": normalizedPost.date, 
+    };
 
     return (
         <div className="bg-white animate-fade-in">
-            <PostDetail
-                post={post}
-                onBack={() => router.push('/blog')}
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
             />
+
+            <PostDetail
+                post={normalizedPost}
+            />
+            
             <Newsletter />
         </div>
     );
-};
+}

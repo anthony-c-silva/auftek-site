@@ -1,38 +1,51 @@
 "use client";
+
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link'; // <--- Importante para navegação
 import { BlogPost } from '@/types/blog';
-import { ArrowLeft, Calendar, Tag, Share2, Linkedin, Twitter, Facebook, PenTool } from 'lucide-react'; // Removi ImageOff
+import { ArrowLeft, Calendar, Tag, Share2, Linkedin, Twitter, Facebook, PenTool } from 'lucide-react';
 import AuthorBio from './AuthorBio';
 
 interface PostDetailProps {
     post: BlogPost;
-    onBack: () => void;
+    // onBack foi removido pois Server Components não passam funções
 }
 
-const PostDetail: React.FC<PostDetailProps> = ({ post, onBack }) => {
+const PostDetail: React.FC<PostDetailProps> = ({ post }) => {
     const [coverImageError, setCoverImageError] = useState(false);
 
+    // Garante que a página comece do topo ao carregar o post
     useEffect(() => {
         window.scrollTo(0, 0);
     }, [post.id]);
 
+    // Trata o conteúdo se vier como string única ou array
     const contentArray = Array.isArray(post.content)
         ? post.content
         : post.content.split('\n');
 
     const showCoverImage = post.imageUrl && post.imageUrl.trim() !== "" && !coverImageError;
 
-    const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+    // URL segura para compartilhar (evita erro de hidratação no servidor)
+    const [shareUrl, setShareUrl] = useState('');
+
+    useEffect(() => {
+        setShareUrl(window.location.href);
+    }, []);
 
     const handleShare = (platform: 'linkedin' | 'twitter' | 'facebook') => {
+        if (!shareUrl) return;
+        
         const encodedUrl = encodeURIComponent(shareUrl);
         const encodedTitle = encodeURIComponent(post.title);
         let url = '';
+        
         switch (platform) {
             case 'linkedin': url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`; break;
             case 'twitter': url = `https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`; break;
             case 'facebook': url = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`; break;
         }
+        
         window.open(url, '_blank', 'noopener,noreferrer,width=600,height=600');
     };
 
@@ -58,7 +71,6 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack }) => {
                         onError={() => setCoverImageError(true)}
                     />
                 ) : (
-                    // --- MUDANÇA AQUI: Gradiente Azul com Texto AUFTEK ---
                     <div className="w-full h-full bg-gradient-to-br from-slate-900 to-blue-900 flex items-center justify-center">
                         <span className="text-6xl md:text-8xl font-black text-white/5 uppercase tracking-[0.15em] select-none">
                             Auftek
@@ -66,16 +78,17 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack }) => {
                     </div>
                 )}
 
-                {/* Overlay Suave para garantir leitura do texto branco */}
+                {/* Overlay Suave */}
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/20 to-transparent"></div>
 
+                {/* BOTÃO VOLTAR (Agora usando Link) */}
                 <div className="absolute top-6 left-4 sm:left-8 z-20">
-                    <button
-                        onClick={onBack}
+                    <Link
+                        href="/blog"
                         className="flex items-center gap-2 text-white/90 hover:text-white bg-black/20 hover:bg-black/40 backdrop-blur-md px-4 py-2 rounded-full transition-all text-sm font-medium"
                     >
                         <ArrowLeft size={18} /> Voltar
-                    </button>
+                    </Link>
                 </div>
 
                 <div className="absolute bottom-0 left-0 w-full p-4 sm:p-8 lg:p-12 z-10 max-w-5xl mx-auto">
@@ -112,9 +125,12 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack }) => {
             {/* CORPO DO TEXTO */}
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 <div className="prose prose-slate prose-lg max-w-none">
-                    <p className="text-xl text-slate-600 font-medium leading-relaxed mb-10 border-l-4 border-auftek-500 pl-6 italic break-words">
-                        {post.excerpt}
-                    </p>
+                    {/* Excerpt em destaque */}
+                    {post.excerpt && (
+                        <p className="text-xl text-slate-600 font-medium leading-relaxed mb-10 border-l-4 border-auftek-500 pl-6 italic break-words">
+                            {post.excerpt}
+                        </p>
+                    )}
 
                     {contentArray.map((paragraph, idx) => (
                         paragraph.trim() !== "" && (
@@ -146,7 +162,7 @@ const PostDetail: React.FC<PostDetailProps> = ({ post, onBack }) => {
                     </div>
                 </div>
 
-                {/* BIO DO AUTOR (No final da página) */}
+                {/* BIO DO AUTOR */}
                 <AuthorBio author={post.author} />
             </div>
         </article>

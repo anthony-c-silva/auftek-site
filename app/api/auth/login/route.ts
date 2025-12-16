@@ -6,9 +6,7 @@ import jwt from "jsonwebtoken";
 
 export async function POST(request: Request) {
     try {
-        // 1. SEGURANÇA: Validação da chave secreta
         const JWT_SECRET = process.env.JWT_SECRET;
-
         if (!JWT_SECRET) {
             throw new Error("A variável de ambiente JWT_SECRET não está definida.");
         }
@@ -17,38 +15,44 @@ export async function POST(request: Request) {
 
         await connectDB();
 
-        // 2. Busca o usuário
+        // 1. Busca o usuário com a senha
         const user = await User.findOne({ email }).select("+password");
 
         if (!user) {
             return NextResponse.json({ error: "Credenciais inválidas" }, { status: 401 });
         }
 
-        // 3. Compara a senha
+        // 2. Compara a senha
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return NextResponse.json({ error: "Credenciais inválidas" }, { status: 401 });
         }
 
-        // 4. Gera o Token JWT usando a chave segura do ENV
+        // 3. Gera o Token JWT INCLUINDO A ROLE
         const token = jwt.sign(
-            { id: user._id, email: user.email, name: user.name },
+            { 
+                id: user._id, 
+                email: user.email, 
+                name: user.name,
+                role: user.role 
+            },
             JWT_SECRET,
             { expiresIn: "7d" }
         );
 
-        // 5. Cria a resposta
+        // 4. Responde INCLUINDO A ROLE no JSON
         const response = NextResponse.json({
             success: true,
             message: "Login realizado com sucesso",
-            token: token, // Envia para o frontend salvar no localStorage
+            token: token,
             user: {
                 name: user.name,
-                email: user.email
+                email: user.email,
+                role: user.role 
             }
         });
 
-        // 6. Define no Cookie também
+        // 5. Define Cookie
         response.cookies.set("token", token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
@@ -59,7 +63,7 @@ export async function POST(request: Request) {
 
         return response;
 
-    } catch (error: unknown) {
+    } catch (error: any) {
         console.error("Erro no login:", error);
         return NextResponse.json({ error: "Erro interno no servidor" }, { status: 500 });
     }

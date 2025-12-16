@@ -1,28 +1,32 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
+// 1. ATUALIZAÇÃO DA INTERFACE
 export interface IPost extends Document {
     title: string;
     slug: string;
     content: string;
     coverImage: string;
     tags: string[];
-
-    // NOVO: Tempo de Leitura (opcional)
     readTime?: string;
+    
+    // CAMPO NOVO ADICIONADO AQUI
+    excerpt?: string; 
+    
+    status: 'published' | 'pending' | 'draft';
+    approvedBy?: mongoose.Types.ObjectId; 
 
-    // Autor (Especialista)
     author: {
         name: string;
-        photoUrl: string; // Atualizado de avatar para photoUrl
+        photoUrl: string; 
     };
 
-    // Redator (Equipe)
     writer: {
         name: string;
         email: string;
     };
 
     createdAt: Date;
+    updatedAt: Date; // Adicionado para manter tipagem correta com timestamps: true
     deletedAt?: Date | null;
 }
 
@@ -39,6 +43,11 @@ const PostSchema: Schema = new Schema(
             unique: true,
             index: true
         },
+        // CAMPO NOVO ADICIONADO NO SCHEMA
+        excerpt: {
+            type: String,
+            required: false // Opcional, pois posts antigos podem não ter
+        },
         content: {
             type: String,
             required: [true, "O conteúdo do post é obrigatório"]
@@ -52,19 +61,28 @@ const PostSchema: Schema = new Schema(
             default: []
         },
 
-        // Campo novo: Tempo de Leitura
         readTime: {
             type: String,
-            required: false // Opcional
+            required: false 
         },
 
-        // Configuração do Autor (Especialista)
+        status: {
+            type: String,
+            enum: ['published', 'pending', 'draft'],
+            default: 'pending', 
+            index: true 
+        },
+
+        approvedBy: {
+            type: Schema.Types.ObjectId,
+            ref: 'User', 
+            default: null
+        },
+        
         author: {
             name: { type: String, required: true },
             photoUrl: { type: String, required: false }
         },
-
-        // Configuração do Redator (Quem postou)
         writer: {
             name: { type: String, required: false },
             email: { type: String, required: false }
@@ -76,11 +94,11 @@ const PostSchema: Schema = new Schema(
         }
     },
     {
-        timestamps: true,
+        timestamps: true, // Isso cria createdAt e updatedAt automaticamente
     }
 );
 
-// Previne erro de recompilação do modelo em hot-reload
+// Previne recompilação do model em hot-reload do Next.js
 const Post: Model<IPost> = mongoose.models.Post || mongoose.model<IPost>("Post", PostSchema);
 
 export default Post;

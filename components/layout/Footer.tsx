@@ -6,15 +6,10 @@ import { useAuth } from '@/context/AuthContext';
 import { LogOut, LayoutDashboard } from 'lucide-react';
 
 export const Footer: React.FC = () => {
-    const { isAdmin, logout, isLoading } = useAuth();
+    const { user, logout, isLoading } = useAuth();
 
     return (
         <footer className="bg-black py-8 px-6 border-t border-gray-900">
-            {/* flex-col: Celular (um embaixo do outro)
-               xl:flex-row: Desktop (tudo na mesma linha)
-               justify-center: Tudo centralizado (não espalhado nas pontas)
-               gap-8: Espaço entre os blocos
-            */}
             <div className="max-w-7xl mx-auto flex flex-col xl:flex-row justify-center items-center gap-6 xl:gap-12 text-sm">
 
                 {/* 1. Logo */}
@@ -37,14 +32,22 @@ export const Footer: React.FC = () => {
 
                     {!isLoading && (
                         <div className="flex items-center gap-3 pl-0 md:pl-4 md:border-l md:border-gray-800">
-                            {isAdmin ? (
+                            
+                            {/* 2. MUDANÇA: Verificamos se 'user' existe (Se estiver logado, entra aqui) */}
+                            {user ? (
                                 <>
+                                    {/* (Opcional) Mostra quem está logado */}
+                                    <span className="text-xs text-gray-500 hidden sm:block">
+                                        Olá, {user.name}
+                                    </span>
+
                                     <Link
                                         href="/admin"
                                         className="text-auftek-blue hover:text-blue-400 font-bold uppercase tracking-wider flex items-center gap-1.5 transition-colors text-xs"
                                     >
                                         <LayoutDashboard size={14} /> Painel
                                     </Link>
+                                    
                                     <button
                                         onClick={logout}
                                         className="text-red-500 hover:text-red-400 uppercase tracking-wider flex items-center gap-1.5 transition-colors text-xs"
@@ -53,11 +56,12 @@ export const Footer: React.FC = () => {
                                     </button>
                                 </>
                             ) : (
+                                /* ESTADO DESLOGADO */
                                 <Link
                                     href="/login"
                                     className="text-gray-700 hover:text-auftek-blue transition-colors text-[10px] uppercase tracking-widest hover:underline"
                                 >
-                                    Admin
+                                    Login
                                 </Link>
                             )}
                         </div>
