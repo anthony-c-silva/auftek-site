@@ -76,7 +76,7 @@ export const Contact: React.FC = () => {
       {/* --- AJUSTE AQUI --- */}
       {/* Antes estava 'top-0'. Mudei para 'top-1/2' e aumentei um pouco o tamanho */}
       {/* Isso centraliza o brilho atrás do formulário, eliminando a quebra no topo */}
-      <div className="absolute top-1/2 left-0 -translate-x-1/2 w-[700px] h-[500px] bg-auftek-blue/15 rounded-full blur-[120px] pointer-events-none -translate-y-1/2"></div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 w-[700px] h-[500px] bg-auftek-blue/15 rounded-full blur-[120px] pointer-events-none -translate-y-1/2"></div>
 
       <div className="max-w-4xl mx-auto relative z-10">
         <ScrollReveal>
