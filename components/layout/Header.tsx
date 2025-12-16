@@ -151,7 +151,7 @@ export const Header: React.FC = () => {
           </div>
 
           <button
-            className="px-4 py-1.5 bg-auftek-blue hover:bg-red-600 text-white text-sm font-medium rounded-sm transition-colors duration-300"
+            className="px-4 py-1.5 bg-auftek-blue text-white text-sm font-medium rounded-sm transition-colors duration-300"
             onClick={() => handleNavigation("#contato")}
           >
             Fale Conosco
