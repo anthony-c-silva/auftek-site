@@ -23,6 +23,7 @@ export const NAV_LINKS = [
     { name: 'Energia', href: '#energia' },
     { name: 'Publicações', href: '#publicacoes' },
     { name: 'Parceiros', href: '#parceiros' },
+    { name: 'Sistema', href: 'https://bioailab.com.br/'}
 ];
 
 export const SOLUTIONS = [
@@ -44,6 +45,7 @@ export const SOLUTIONS = [
         description:
             'Conectividade total para tomada de decisão em tempo real.',
     },
+
 ];
 
 export const TEAM_MEMBERS = [
