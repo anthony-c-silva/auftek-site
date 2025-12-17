@@ -20,7 +20,6 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
         const updateData: any = { ...body };
 
-        // Se a senha vier preenchida, faz o hash. Se vazia, remove para não salvar em branco.
         if (body.password && body.password.trim() !== "") {
             updateData.password = await bcrypt.hash(body.password, 10);
         } else {
