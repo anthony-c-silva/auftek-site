@@ -1,70 +1,119 @@
+"use client";
+
 import React from "react";
-import { Microscope, Zap, FlaskConical } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+import { SOLUTIONS } from "../../data/constants";
 import { Section, SectionTitle } from "../../components/ui/Section";
+import { cn } from "../../lib/utils";
+// 1. Importando a função de scroll
+import { scrollToElement } from "../../hooks/useScroll";
 
 export const Solutions: React.FC = () => {
+  const getThemeStyles = (theme: string) => {
+    switch (theme) {
+      case "green":
+        return {
+          borderHover: "hover:border-auftek-green/50",
+          iconBg: "bg-auftek-green/10 group-hover:bg-auftek-green/20",
+          iconColor: "text-auftek-green",
+          // Estilo Tinted (Fundo sutil + Texto colorido)
+          buttonStyle: "bg-auftek-green/10 text-auftek-green hover:bg-auftek-green/20",
+        };
+      case "yellow":
+        return {
+          borderHover: "hover:border-yellow-400/50",
+          iconBg: "bg-yellow-500/10 group-hover:bg-yellow-500/20",
+          iconColor: "text-yellow-400",
+          buttonStyle: "bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20",
+        };
+      default: // blue
+        return {
+          borderHover: "hover:border-auftek-blue/50",
+          iconBg: "bg-auftek-blue/10 group-hover:bg-auftek-blue/20",
+          iconColor: "text-auftek-blue",
+          buttonStyle: "bg-auftek-blue/10 text-auftek-blue hover:bg-auftek-blue/20",
+        };
+    }
+  };
+
+  // 2. Função para interceptar o clique e usar o scroll customizado
+  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    if (href.startsWith("#")) {
+      e.preventDefault(); // Impede o pulo seco do navegador
+      scrollToElement(href, 80); // Rola suavemente com margem de 80px (tamanho do header)
+    }
+  };
+
   return (
     <Section id="solucoes">
       <SectionTitle align="center" subtitle="O que fazemos">
         Nossas Soluções Laboratoriais
       </SectionTitle>
 
-      {/* --- CONTAINER --- */}
       <div
         className="
-                    flex overflow-x-auto gap-4 px-4 pb-10 snap-x snap-mandatory items-stretch
-                    md:grid md:grid-cols-3 md:gap-6 md:pb-0 md:px-0
-                    [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]
-                "
+          flex overflow-x-auto gap-4 px-4 pb-10 pt-4 snap-x snap-mandatory items-stretch
+          md:grid md:grid-cols-3 md:gap-6 md:px-0
+          [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]
+        "
       >
-        {/* 1. Microbiologia Digital (VERDE) */}
-        {/* Ajustado para bg-[#0e223b] */}
-        <div className="bg-[#0e223b] border border-gray-800 p-6 rounded-xl hover:border-auftek-green/50 transition-colors group w-[85vw] md:w-auto flex-shrink-0 snap-center h-full flex flex-col">
-          <div className="w-12 h-12 bg-auftek-green/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-auftek-green/20 transition-colors shrink-0">
-            <Microscope className="text-auftek-green" size={24} />
-          </div>
-          <h3 className="text-xl font-bold text-white mb-2">
-            Microbiologia Digital
-          </h3>
-          <p className="text-gray-400 text-sm flex-1">
-            Automação e digitalização de processos microbiológicos com análise
-            de dados em tempo real e inteligência artificial para resultados
-            rápidos.
-          </p>
-        </div>
+        {SOLUTIONS.map((sol, index) => {
+          const styles = getThemeStyles(sol.theme || "blue");
+          const Icon = sol.icon;
 
-        {/* 2. Energia Fotovoltaica (AMARELO) */}
-        {/* Ajustado para bg-[#0e223b] */}
-        <div className="bg-[#0e223b] border border-gray-800 p-6 rounded-xl hover:border-yellow-400/50 transition-colors group w-[85vw] md:w-auto flex-shrink-0 snap-center h-full flex flex-col">
-          <div className="w-12 h-12 bg-yellow-500/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-yellow-500/20 transition-colors shrink-0">
-            <Zap className="text-yellow-400" size={24} />
-          </div>
-          <h3 className="text-xl font-bold text-white mb-2">
-            Energia Fotovoltaica
-          </h3>
-          <p className="text-gray-400 text-sm flex-1">
-            Ensaios de segurança elétrica, emulação de arco e performance para
-            inversores, garantindo conformidade com normas IEC e Inmetro.
-          </p>
-        </div>
+          return (
+            <div
+              key={index}
+              className="group block w-[85vw] md:w-auto flex-shrink-0 snap-center h-full relative"
+            >
+              <div
+                className={cn(
+                  "bg-white/5 border border-white/10 p-6 rounded-xl transition-all duration-300 h-full flex flex-col",
+                  styles.borderHover,
+                  "group-hover:-translate-y-2 hover:shadow-xl"
+                )}
+              >
+                {/* Ícone */}
+                <div
+                  className={cn(
+                    "w-12 h-12 rounded-lg flex items-center justify-center mb-4 transition-colors shrink-0",
+                    styles.iconBg
+                  )}
+                >
+                  <Icon className={styles.iconColor} size={24} />
+                </div>
 
-        {/* 3. Pesquisa e Desenvolvimento (AZUL - Padrão) */}
-        {/* Ajustado para bg-[#0e223b] */}
-        <div className="bg-[#0e223b] border border-gray-800 p-6 rounded-xl hover:border-auftek-blue/50 transition-colors group w-[85vw] md:w-auto flex-shrink-0 snap-center h-full flex flex-col">
-          <div className="w-12 h-12 bg-auftek-blue/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-auftek-blue/20 transition-colors shrink-0">
-            <FlaskConical className="text-auftek-blue" size={24} />
-          </div>
-          <h3 className="text-xl font-bold text-white mb-2">
-            Pesquisa e Desenvolvimento
-          </h3>
-          <p className="text-gray-400 text-sm flex-1">
-            Desenvolvimento de hardware e software sob medida para desafios
-            complexos da indústria e laboratórios de pesquisa.
-          </p>
-        </div>
+                {/* Título */}
+                <h3 className="text-xl font-bold text-white mb-2">
+                  {sol.title}
+                </h3>
+
+                {/* Descrição */}
+                <p className="text-gray-400 text-sm flex-1 leading-relaxed">
+                  {sol.description}
+                </p>
+
+                {/* Botão Saiba Mais */}
+                <Link
+                  href={sol.href}
+                  // 3. Adicionamos o evento onClick aqui
+                  onClick={(e) => handleLinkClick(e, sol.href)}
+                  className={cn(
+                    "mt-6 w-full py-3 rounded-lg flex items-center justify-center gap-2 font-semibold transition-all duration-300",
+                    styles.buttonStyle,
+                    "hover:scale-[1.02] active:scale-95"
+                  )}
+                >
+                  Saiba Mais
+                  <ArrowRight size={18} />
+                </Link>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      {/* Dica visual apenas para mobile */}
       <p className="md:hidden text-center text-gray-600 text-xs mt-2 animate-pulse">
         Deslize para ver mais →
       </p>
