@@ -35,7 +35,7 @@ export const BioAiLab: React.FC = () => {
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-auftek-blue to-cyan-400">
               BioAiLab
             </span>
-            <span className="text-2xl text-cyan-300 align-top relative -top-2 ml-1">
+            <span className="text-2xl text-cyan-300 align-top relative -top-0 ml-0">
               ®
             </span>
           </h2>
@@ -113,7 +113,7 @@ export const BioAiLab: React.FC = () => {
               <div className="text-center space-y-1 md:space-y-2">
                 <h3 className="text-2xl md:text-3xl font-bold text-white tracking-widest group-hover:text-auftek-blue transition-colors">
                   BioAiLab
-                  <span className="text-xs md:text-sm opacity-60 align-top relative -top-1 ml-0.5">
+                  <span className="text-xs md:text-sm opacity-60 align-top relative -top-0 ml-0">
                     ®
                   </span>
                 </h3>
