@@ -3,10 +3,9 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { Edit, Trash2, Search, UserCircle, CheckCircle, Clock, FileText } from "lucide-react";
 import { Modal } from "../ui/Modal";
-import { PostForm } from "./PostForm"; 
+import { PostForm } from "./PostForm";
 import { useAuth } from "@/context/AuthContext";
 
-// Interfaces
 interface AuthorData { name?: string; photoUrl?: string; }
 interface WriterData { name?: string; email?: string; }
 
@@ -16,7 +15,7 @@ export interface PostData {
     slug: string;
     tags?: string[];
     createdAt: string;
-    updatedAt: string; 
+    updatedAt: string;
     author?: AuthorData;
     writer?: WriterData;
     content?: string;
@@ -26,18 +25,22 @@ export interface PostData {
 }
 
 export const AdminPostList: React.FC = () => {
-    const { isAdmin } = useAuth();
-    
+    const { isAdmin, user } = useAuth();
+
     const [posts, setPosts] = useState<PostData[]>([]);
     const [loading, setLoading] = useState(true);
     const [editingPost, setEditingPost] = useState<PostData | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
-    
-    // --- MUDANÇA 1: Agora temos 3 estados possíveis ---
-    // 'all' = Misto (Todos)
-    // 'published' = Apenas Publicados
-    // 'pending' = Apenas Pendentes
+
+    // Inicia como 'all', mas o useEffect abaixo corrige se for autor
     const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'pending'>('all');
+
+    // --- MUDANÇA 1: Força a aba inicial para 'published' se não for Admin ---
+    useEffect(() => {
+        if (!loading && !isAdmin && statusFilter === 'all') {
+            setStatusFilter('published');
+        }
+    }, [isAdmin, loading, statusFilter]);
 
     useEffect(() => {
         fetchPosts();
@@ -76,7 +79,7 @@ export const AdminPostList: React.FC = () => {
         if (!confirm("Excluir post?")) return;
         try {
             const token = localStorage.getItem("token");
-            const res = await fetch(`/api/posts/${slug}`, { 
+            const res = await fetch(`/api/posts/${slug}`, {
                 method: "DELETE",
                 headers: { "Authorization": `Bearer ${token}` }
             });
@@ -88,7 +91,6 @@ export const AdminPostList: React.FC = () => {
     const handleModalClose = () => setEditingPost(null);
     const handleFormSuccess = () => { setEditingPost(null); fetchPosts(); };
 
-    // Função auxiliar para formatar data
     const formatDate = (dateString: string) => {
         if (!dateString) return "-";
         return new Date(dateString).toLocaleDateString('pt-BR', {
@@ -97,20 +99,22 @@ export const AdminPostList: React.FC = () => {
         });
     };
 
-    // --- LÓGICA DE FILTRAGEM (3 ABAS) ---
     const filteredPosts = useMemo(() => {
         if (!Array.isArray(posts)) return [];
         let result = posts;
 
-        // 1. Filtro por Aba
         if (statusFilter === 'published') {
-            result = result.filter(p => p.status === 'published');
+            // Filtra posts publicados DO USUÁRIO LOGADO
+            result = result.filter(p => p.status === 'published' && p.writer?.email === user?.email);
         } else if (statusFilter === 'pending') {
-            result = result.filter(p => p.status === 'pending');
-        } 
-        // Se for 'all', não filtramos status (mostra tudo o que veio do backend)
+            // Se for autor, vê só os seus pendentes. Se for admin, vê todos pendentes.
+            if (!isAdmin) {
+                result = result.filter(p => p.status === 'pending' && p.writer?.email === user?.email);
+            } else {
+                result = result.filter(p => p.status === 'pending');
+            }
+        }
 
-        // 2. Filtro por Busca
         if (searchQuery) {
             const lowerQuery = searchQuery.toLowerCase();
             result = result.filter(post =>
@@ -119,16 +123,15 @@ export const AdminPostList: React.FC = () => {
             );
         }
         return result;
-    }, [posts, searchQuery, statusFilter]);
+    }, [posts, searchQuery, statusFilter, user, isAdmin]);
 
     if (loading) return <div className="text-center py-10">Carregando...</div>;
 
     return (
         <>
             <div className="bg-white rounded-xl shadow border border-slate-200 overflow-hidden">
-                
+
                 <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row justify-between items-center gap-4">
-                    {/* Busca */}
                     <div className="relative w-full max-w-sm">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                             <Search size={18} />
@@ -138,19 +141,27 @@ export const AdminPostList: React.FC = () => {
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             placeholder="Pesquisar..."
-                            className="w-full pl-10 pr-10 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-600 outline-none"
+                            className="w-full pl-10 pr-10 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-600 outline-none text-black"
                         />
                     </div>
 
-                    {/* --- 3 ABAS --- */}
+                    {/* --- MUDANÇA 2: Botão 'Todos' oculto para Autores --- */}
                     <div className="flex bg-slate-200/60 p-1 rounded-lg">
-                        <button 
+                        {isAdmin && (
+                            <button
+                                onClick={() => setStatusFilter('all')}
+                                className={`px-4 py-1.5 text-sm rounded-md transition ${statusFilter === 'all' ? 'bg-white shadow text-slate-800 font-bold' : 'text-slate-500 hover:text-slate-700'}`}
+                            >
+                                Todos
+                            </button>
+                        )}
+                        <button
                             onClick={() => setStatusFilter('published')}
                             className={`px-4 py-1.5 text-sm rounded-md transition ${statusFilter === 'published' ? 'bg-white shadow text-green-600 font-bold' : 'text-slate-500 hover:text-slate-700'}`}
                         >
-                            Publicados
+                            Minhas Publicações
                         </button>
-                        <button 
+                        <button
                             onClick={() => setStatusFilter('pending')}
                             className={`px-4 py-1.5 text-sm rounded-md transition ${statusFilter === 'pending' ? 'bg-white shadow text-amber-600 font-bold' : 'text-slate-500 hover:text-slate-700'}`}
                         >
@@ -166,14 +177,10 @@ export const AdminPostList: React.FC = () => {
                             <th className="px-6 py-4 text-sm font-semibold text-slate-700">Status</th>
                             <th className="px-6 py-4 text-sm font-semibold text-slate-700">Título</th>
                             <th className="px-6 py-4 text-sm font-semibold text-slate-700">Redator</th>
-                            
-                            {/* --- COLUNA DINÂMICA (CABEÇALHO) --- */}
+
                             <th className="px-6 py-4 text-sm font-semibold text-slate-700">
-                                {statusFilter === 'published' && "Aprovado em"}
-                                {statusFilter === 'pending' && "Submetido em"}
-                                {statusFilter === 'all' && "Data"}
+                                {statusFilter === 'published' ? "Aprovado em" : "Data"}
                             </th>
-                            {/* ----------------------------------- */}
 
                             <th className="px-6 py-4 text-sm font-semibold text-slate-700 text-right">Ações</th>
                         </tr>
@@ -208,22 +215,18 @@ export const AdminPostList: React.FC = () => {
                                         <div className="bg-purple-100 p-1.5 rounded-full text-purple-600">
                                             <UserCircle size={16} />
                                         </div>
-                                        <span className="text-sm text-slate-700 font-medium">
+                                        <span className="text-sm text-slate-900 font-medium">
                                             {post.writer?.name || "—"}
                                         </span>
                                     </div>
                                 </td>
 
-                                {/* --- COLUNA DINÂMICA (CÉLULA) --- */}
                                 <td className="px-6 py-4 text-sm text-slate-500">
-                                    {statusFilter === 'published' 
-                                        ? formatDate(post.updatedAt) // Aprovado
-                                        : statusFilter === 'pending'
-                                            ? formatDate(post.createdAt) // Submetido
-                                            : formatDate(post.createdAt) // Geral (Todos)
+                                    {statusFilter === 'published'
+                                        ? formatDate(post.updatedAt)
+                                        : formatDate(post.createdAt)
                                     }
                                 </td>
-                                {/* -------------------------------- */}
 
                                 <td className="px-6 py-4 text-right">
                                     <div className="flex items-center justify-end gap-3">

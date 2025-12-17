@@ -4,7 +4,17 @@ export interface IUser extends Document {
     email: string;
     password: string;
     name: string;
-    role: 'admin' | 'redator';
+    role: 'admin' | 'author';
+
+    photoUrl?: string;
+    bio?: string;
+    education?: string;
+    socialLinks?: {
+        linkedin?: string;
+        instagram?: string;
+        github?: string;
+    };
+
     deletedAt?: Date | null;
     createdAt: Date;
     updatedAt: Date;
@@ -15,12 +25,25 @@ const UserSchema: Schema = new Schema(
         email: { type: String, required: true, unique: true },
         password: { type: String, required: true },
         name: { type: String, required: true },
-        deletedAt: { type: Date, default: null },
+
+        // Enum atualizado
         role: {
-        type: String,
-        enum: ['admin', 'redator'], 
-        default: 'redator' 
-    }
+            type: String,
+            enum: ['admin', 'author'],
+            default: 'author'
+        },
+
+        // Campos de Perfil
+        photoUrl: { type: String, default: '' },
+        bio: { type: String, default: '' },
+        education: { type: String, default: '' },
+        socialLinks: {
+            linkedin: { type: String, default: '' },
+            instagram: { type: String, default: '' },
+            github: { type: String, default: '' }
+        },
+
+        deletedAt: { type: Date, default: null },
     },
     { timestamps: true }
 );

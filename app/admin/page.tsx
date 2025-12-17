@@ -1,114 +1,142 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import { useAuth } from "@/context/AuthContext";
+
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import {
+    LayoutDashboard,
+    LogOut,
+    PlusCircle,
+    Users,
+    Settings // Ícone opcional para representar gestão
+} from "lucide-react";
+
+// Componentes
 import { AdminPostList } from "@/components/admin/AdminPostList";
+import { UserManager } from "@/components/admin/UserManager";
 import { PostForm } from "@/components/admin/PostForm";
-import { AuthorManager } from "@/components/admin/AuthorManager";
-import { TeamManager } from "@/components/admin/TeamManager";
 import { Modal } from "@/components/ui/Modal";
-import { Users, PenTool } from "lucide-react";
 
 export default function AdminDashboard() {
-    const { isAdmin, user, isLoading } = useAuth(); 
+    const { user, logout, isLoading } = useAuth();
     const router = useRouter();
 
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
-    const [isAuthorModalOpen, setIsAuthorModalOpen] = useState(false);
-    const [refreshKey, setRefreshKey] = useState(0);
+    const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+    const [postRefreshKey, setPostRefreshKey] = useState(0);
 
     useEffect(() => {
-        if (!isLoading && !user) router.push("/login");
+        if (!isLoading && !user) {
+            router.push("/login");
+        }
     }, [user, isLoading, router]);
 
     if (isLoading || !user) return null;
 
-    return (
-        <div className="min-h-screen bg-gray-50 pt-32 pb-12 px-4">
-            <div className="max-w-7xl mx-auto">
+    const isAdmin = user.role === 'admin';
 
-                {/* Cabeçalho */}
-                <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-8 gap-4">
+    const handlePostSuccess = () => {
+        setIsPostModalOpen(false);
+        setPostRefreshKey(prev => prev + 1);
+    };
+
+    return (
+        <div className="min-h-screen bg-slate-50 flex flex-col">
+
+            {/* Header / Navbar (Agora mais limpo) */}
+            <header className="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm px-6 h-16 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                    <div className="bg-blue-600 p-1.5 rounded-lg">
+                        <LayoutDashboard size={20} className="text-white" />
+                    </div>
+                    <span className="font-bold text-slate-800 text-lg tracking-tight">Auftek Painel</span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                    <div className="hidden md:flex flex-col items-end">
+                        <span className="text-sm font-bold text-slate-700 leading-tight">{user.name}</span>
+                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                            {isAdmin ? "Administrador" : "Autor"}
+                        </span>
+                    </div>
+                    <div className="h-8 w-px bg-slate-200 mx-2" />
+                    <button
+                        onClick={logout}
+                        className="text-slate-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-full transition-colors"
+                        title="Sair"
+                    >
+                        <LogOut size={20} />
+                    </button>
+                </div>
+            </header>
+
+            {/* Conteúdo Principal */}
+            <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
                     <div>
-                        <h1 className="text-3xl font-bold text-slate-900">Gerenciar Blog</h1>
-                        <p className="text-slate-500 text-sm mt-1">
-                            Olá, <b>{user.name}</b> ({user.role === 'admin' ? 'Administrador' : 'Redator'})
-                        </p>
+                        <h1 className="text-2xl font-bold text-slate-900">Gerenciamento de Publicações</h1>
+                        <p className="text-slate-500 text-sm">Crie, edite e modere o conteúdo do blog.</p>
                     </div>
 
-                        <div className="flex flex-wrap gap-3">
-                            
-                            {/* --- MUDANÇA AQUI: Botão Autores agora é protegido --- */}
-                            {isAdmin && (
-                                <button
-                                    onClick={() => setIsAuthorModalOpen(true)}
-                                    className="bg-white text-slate-700 border border-slate-300 px-4 py-3 rounded-lg font-bold hover:bg-slate-50 transition-colors shadow-sm flex items-center gap-2"
-                                >
-                                    <PenTool size={18} /> <span className="hidden sm:inline">Gerenciar Autores</span>
-                                </button>
-                            )}
+                    {/* GRUPO DE AÇÕES */}
+                    <div className="flex gap-3 w-full md:w-auto">
 
-                            {/* Botão Equipe (Já estava protegido, mantenha assim) */}
-                            {isAdmin && (
-                                <button
-                                    onClick={() => setIsTeamModalOpen(true)}
-                                    className="bg-purple-600 text-white px-4 py-3 rounded-lg font-bold hover:bg-purple-700 transition-colors shadow-md flex items-center gap-2"
-                                >
-                                    <Users size={18} /> <span className="hidden sm:inline">Gerenciar Equipe</span>
-                                </button>
-                            )}
-
-                            {/* Botão Novo Post (Todos veem) */}
+                        {/* Botão de Equipe (Movido para cá) */}
+                        {isAdmin && (
                             <button
-                                onClick={() => setIsCreateModalOpen(true)}
-                                className="bg-green-600 text-white px-4 py-3 rounded-lg font-bold hover:bg-green-700 transition-colors shadow-md flex items-center gap-2"
+                                onClick={() => setIsTeamModalOpen(true)}
+                                className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-slate-300 bg-white text-slate-700 font-bold hover:bg-slate-50 hover:text-blue-600 transition shadow-sm active:scale-[0.98]"
                             >
-                                + <span className="hidden sm:inline">Novo Post</span>
+                                <Users size={18} />
+                                <span className="hidden sm:inline">Gerenciar Equipe</span>
+                                <span className="inline sm:hidden">Equipe</span>
                             </button>
-                        </div>
+                        )}
+
+                        {/* Botão de Nova Publicação */}
+                        <button
+                            onClick={() => setIsPostModalOpen(true)}
+                            className="flex-1 md:flex-none bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition shadow-lg shadow-blue-200 active:scale-[0.98] font-bold flex items-center justify-center gap-2"
+                        >
+                            <PlusCircle size={20} />
+                            <span>Nova Publicação</span>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Lista de Posts */}
-                <AdminPostList key={refreshKey} />
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden min-h-[500px]">
+                    <AdminPostList key={postRefreshKey} />
+                </div>
 
-                {/* --- MODAIS --- */}
+            </main>
 
-                {/* Modal de Criar Post */}
+            {/* --- MODAL 1: EQUIPE (ADMIN) --- */}
+            {isAdmin && (
                 <Modal
-                    isOpen={isCreateModalOpen}
-                    onClose={() => setIsCreateModalOpen(false)}
-                    title="Criar Nova Publicação"
+                    isOpen={isTeamModalOpen}
+                    onClose={() => setIsTeamModalOpen(false)}
+                    title="Gestão de Usuários e Permissões"
+                    size="xl"
                 >
-                    <PostForm
-                        isEditing={false}
-                        onSuccess={() => { setIsCreateModalOpen(false); setRefreshKey(k => k + 1); }}
-                        onCancel={() => setIsCreateModalOpen(false)}
-                    />
+                    <UserManager />
                 </Modal>
+            )}
 
-                {/* Modal de Equipe (Cadastro + Lista) */}
-                {/* Só renderiza se for admin para segurança extra */}
-                {isAdmin && (
-                    <Modal
-                        isOpen={isTeamModalOpen}
-                        onClose={() => setIsTeamModalOpen(false)}
-                        title="Gestão de Acesso Administrativo"
-                    >
-                        <TeamManager />
-                    </Modal>
-                )}
+            {/* --- MODAL 2: NOVA POSTAGEM --- */}
+            <Modal
+                isOpen={isPostModalOpen}
+                onClose={() => setIsPostModalOpen(false)}
+                title="Criar Nova Publicação"
+                size="xl"
+            >
+                <PostForm
+                    onSuccess={handlePostSuccess}
+                    onCancel={() => setIsPostModalOpen(false)}
+                />
+            </Modal>
 
-                {/* Modal de Autores */}
-                <Modal
-                    isOpen={isAuthorModalOpen}
-                    onClose={() => setIsAuthorModalOpen(false)}
-                    title="Gerenciar Autores e Especialistas"
-                >
-                    <AuthorManager />
-                </Modal>
-
-            </div>
         </div>
     );
 }
