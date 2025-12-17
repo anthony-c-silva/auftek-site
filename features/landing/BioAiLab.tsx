@@ -50,7 +50,7 @@ export const BioAiLab: React.FC = () => {
 
           <div className="space-y-8">
             <p className="text-gray-400 text-lg font-light">
-              Nosso principal produto, o BioAiLab, reduz análises
+              O BioAiLab, reduz análises
               microbiológicas de {""}
               <strong className="text-white">dias para horas</strong>. Com IA
               embarcada, ele monitora o crescimento microbiano em tempo real e
@@ -60,8 +60,8 @@ export const BioAiLab: React.FC = () => {
             <ul className="space-y-4">
               {[
                 "Totalmente automatizado: acelera incubação e quantificação.",
-                "Identifica E. coli, Coliformes Totais e bactérias heterotróficas, Salmonella e outros...",
-                "Conectividade IoT: Dados na nuvem acessíveis via App e Web.",
+                "Identifica E. coli, Coliformes Totais, Salmonella e outros...",
+                "Conectividade IoT: Dados na nuvem acessíveis via App, e rastreabilidade.",
                 "Dispensa contagem manual e reduz erro humano.",
               ].map((item, i) => (
                 <li
