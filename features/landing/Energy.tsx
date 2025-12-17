@@ -69,25 +69,21 @@ export const Energy: React.FC = () => {
           <span className="text-white font-bold">IEC 62109-2</span>.
         </p>
       </div>
-      {/* --- SWITCHER PREMIUM AJUSTADO --- */}
+
+      {/* --- SWITCHER --- */}
       <div className="md:hidden flex justify-center mb-10 px-4">
-        {/* 1. Container: Aumentei para p-2 para dar mais respiro nas bordas */}
         <div className="bg-black/20 backdrop-blur-sm p-2 rounded-full border border-white/5 shadow-inner flex w-full max-w-sm relative">
-          {/* 2. Fundo Deslizante (Pill): Ajuste matemático preciso */}
           <div
             className={`
         absolute top-2 bottom-2 w-[calc(50%-10px)] rounded-full transition-all duration-300 ease-out shadow-lg
         ${
           activeTab === "pvag"
-            ? /* Se PVAG: Encosta na esquerda (left-2 = 8px) */
-              "left-2 bg-gray-800 border border-yellow-500/30 shadow-[0_0_15px_-3px_rgba(234,179,8,0.3)]"
-            : /* Se IRCCT: Vai para a direita + um pouquinho (50% + 2px) para manter o gap central */
-              "left-[calc(50%+2px)] bg-gray-800 border border-cyan-500/30 shadow-[0_0_15px_-3px_rgba(6,182,212,0.3)]"
+            ? "left-2 bg-gray-800 border border-yellow-500/30 shadow-[0_0_15px_-3px_rgba(234,179,8,0.3)]"
+            : "left-[calc(50%+2px)] bg-gray-800 border border-cyan-500/30 shadow-[0_0_15px_-3px_rgba(6,182,212,0.3)]"
         }
       `}
           ></div>
 
-          {/* Botão PVAG */}
           <button
             onClick={() => setActiveTab("pvag")}
             className={`flex-1 relative z-10 py-3 text-sm font-bold rounded-full transition-colors flex items-center justify-center gap-2 ${
@@ -103,7 +99,6 @@ export const Energy: React.FC = () => {
             PVAG LAB
           </button>
 
-          {/* Botão IRCCT */}
           <button
             onClick={() => setActiveTab("ircct")}
             className={`flex-1 relative z-10 py-3 text-sm font-bold rounded-full transition-colors flex items-center justify-center gap-2 ${
@@ -127,16 +122,13 @@ export const Energy: React.FC = () => {
           const isYellow = product.color === "yellow";
           const Icon = product.icon;
 
-          const borderColor = isYellow
-            ? "hover:border-yellow-500/50"
-            : "hover:border-blue-500/50";
+          const borderColor = "hover:border-yellow-500/50";
+          
           const badgeBg = isYellow
             ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
-            : "bg-blue-500/20 text-blue-400 border-blue-500/30";
-          const bulletColor = isYellow ? "bg-yellow-500" : "bg-auftek-blue";
-          const btnColor = isYellow
-            ? "bg-yellow-500 hover:bg-yellow-600"
-            : "bg-yellow-500 hover:bg-yellow-600";
+            : "bg-cyan-500/20 text-cyan-400 border-cyan-500/30";
+          
+          const bulletColor = isYellow ? "bg-yellow-500" : "bg-cyan-400";
 
           return (
             <div
@@ -147,6 +139,7 @@ export const Energy: React.FC = () => {
                 group relative bg-[#0a192f] rounded-2xl overflow-hidden border border-gray-700 ${borderColor} transition-all flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500
               `}
             >
+              {/* Imagem e Badge */}
               <div className="h-48 bg-gray-800 relative shrink-0">
                 <img
                   src={product.image}
@@ -162,6 +155,7 @@ export const Energy: React.FC = () => {
                 </div>
               </div>
 
+              {/* Conteúdo */}
               <div className="p-8 flex flex-col flex-1">
                 <h3 className="text-2xl font-bold text-white mb-3">
                   {product.title}
@@ -180,9 +174,13 @@ export const Energy: React.FC = () => {
                   ))}
                 </ul>
 
+                {/* Botões de Ação */}
                 <div className="mt-auto pt-6 flex flex-col sm:flex-row justify-center gap-4">
                   <Button
-                    className={`${btnColor} text-black px-6 py-3 rounded-full flex items-center justify-center gap-2 w-full sm:w-auto`}
+                    // CORREÇÃO:
+                    // 1. Forcei 'shadow-black/20' para garantir que a sombra seja escura e não azul.
+                    // 2. Adicionei 'drop-shadow-none' para limpar efeitos externos.
+                    className="bg-yellow-500 hover:bg-yellow-600 text-black px-6 py-3 rounded-full flex items-center justify-center gap-2 w-full sm:w-auto shadow-xl shadow-black/20 drop-shadow-none transition-all border-none"
                     onClick={() => {
                       const phone = "555591261525";
                       const url = `https://wa.me/${phone}?text=${encodeURIComponent(
@@ -194,9 +192,10 @@ export const Energy: React.FC = () => {
                     Solicitar Orçamento
                     <ArrowRight size={16} />
                   </Button>
+
                   <Button
                     variant="outline"
-                    className="border-gray-600 text-gray-400 hover:text-white px-6 py-3 rounded-full flex items-center justify-center gap-2 w-full sm:w-auto"
+                    className="border-gray-600 text-gray-400 hover:text-white px-6 py-3 rounded-full flex items-center justify-center gap-2 w-full sm:w-auto hover:bg-gray-800 transition-all shadow-none"
                     onClick={() =>
                       window.open(
                         "https://www.youtube.com/playlist?list=PLikkF_yABojGV-2xLF1zsSfi1CkttXdyR",
