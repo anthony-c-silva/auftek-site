@@ -143,16 +143,8 @@ export const PostForm: React.FC<PostFormProps> = ({
         setLoading(true);
 
         try {
-            // 1. SEGURANÇA: Recuperar o Token
-            const token = localStorage.getItem("token");
-
-            if (!token) {
-                alert("Sessão expirada ou inválida. Por favor, faça login novamente.");
-                router.push("/login");
-                return;
-            }
-
-            const selectedAuthor = authors.find(a => a.id === formData.authorId);
+            // REMOVIDO: A verificação de localStorage ("Sessão expirada")
+            // REMOVIDO: O token manual. O Cookie vai sozinho.
 
             const payload = {
                 title: formData.title,
@@ -160,32 +152,27 @@ export const PostForm: React.FC<PostFormProps> = ({
                 coverImage: formData.coverImage,
                 readTime: formData.readTime,
                 tags: formData.tags.split(",").map((t) => t.trim()).filter((t) => t !== ""),
-
                 authorId: formData.authorId,
-
                 writer: {
                     name: user?.name,
                     email: user?.email
                 },
-
                 ...(formData.slug ? { slug: formData.slug } : {})
             };
 
             const url = isEditing ? `/api/posts/${formData.slug}` : "/api/posts";
             const method = isEditing ? "PUT" : "POST";
 
-            // 2. SEGURANÇA: Enviar o Token no Header
             const res = await fetch(url, {
                 method,
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}` // <--- CORREÇÃO DO ERRO 401
+                    // REMOVIDO: "Authorization": `Bearer ...` (O Cookie faz isso agora)
                 },
                 body: JSON.stringify(payload),
             });
 
             if (!res.ok) {
-                // Tipagem segura da resposta de erro
                 const errorData = await res.json() as { error?: string };
                 throw new Error(errorData.error || "Erro ao salvar");
             }
@@ -197,13 +184,10 @@ export const PostForm: React.FC<PostFormProps> = ({
                 router.refresh();
             }
         } catch (error: unknown) {
-            // 3. SEM ANY: Tratamento de erro seguro
             let errorMessage = "Erro desconhecido ao salvar post.";
-
             if (error instanceof Error) {
                 errorMessage = error.message;
             }
-
             alert(errorMessage);
             console.error("Erro no submit:", error);
         } finally {

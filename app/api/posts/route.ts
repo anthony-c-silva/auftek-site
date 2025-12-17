@@ -51,13 +51,8 @@ export async function GET(request: Request) {
     }
 }
 
-// ... (Mantenha o POST igual)
 
-// ... Mantenha o POST igual ao que arrumamos antes ...
 export async function POST(request: Request) {
-    // ... (seu código do POST corrigido com slug e author)
-    // Se precisar que eu repita o POST, me avise, mas pode manter o anterior.
-    // Só lembre de manter os imports lá em cima.
     try {
         const user = await getAuthenticatedUser();
         if (!user) return NextResponse.json({ error: "Acesso negado." }, { status: 401 });
@@ -71,7 +66,7 @@ export async function POST(request: Request) {
             finalSlug = generateSlug(body.title);
         }
 
-        let authorData = body.author; 
+        let authorData = body.author;
         if (body.authorId) {
             const dbAuthor = await Author.findById(body.authorId);
             if (!dbAuthor) return NextResponse.json({ error: "Autor não encontrado." }, { status: 404 });
@@ -80,6 +75,7 @@ export async function POST(request: Request) {
         if (!authorData || !authorData.name) return NextResponse.json({ error: "Autor obrigatório." }, { status: 400 });
 
         let postStatus = body.status || 'pending';
+        // Garante que se não for admin, o status volta para pending
         if (user.role !== 'admin') postStatus = 'pending';
 
         const newPost = await Post.create({
@@ -88,7 +84,8 @@ export async function POST(request: Request) {
             author: authorData,
             status: postStatus,
             writer: { name: user.name, email: user.email },
-            approvedBy: postStatus === 'published' ? user.id : null
+            // AQUI ESTÁ A CORREÇÃO: user._id
+            approvedBy: postStatus === 'published' ? user._id : null
         });
 
         return NextResponse.json(newPost, { status: 201 });

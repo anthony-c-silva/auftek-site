@@ -1,26 +1,29 @@
-// lib/auth-server.ts
-import { headers } from "next/headers";
+import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
+import connectDB from "@/lib/mongodb";
+import User from "@/lib/models/User";
 
-const JWT_SECRET = process.env.JWT_SECRET || "sua_chave_secreta_aqui";
+const JWT_SECRET = process.env.JWT_SECRET!;
 
-export interface DecodedUser {
-    id: string;
-    email: string;
-    name: string;
-    role: string;
-}
-
-export async function getAuthenticatedUser(): Promise<DecodedUser | null> {
-    const headersList = await headers();
-    const token = headersList.get("authorization")?.split(" ")[1];
-
-    if (!token) return null;
-
+export async function getAuthenticatedUser() {
     try {
-        const decoded = jwt.verify(token, JWT_SECRET) as DecodedUser;
-        return decoded;
+        const cookieStore = await cookies();
+        const token = cookieStore.get("auftek_token");
+
+        if (!token) return null;
+
+        const decoded = jwt.verify(token.value, JWT_SECRET) as { id: string };
+
+        await connectDB();
+
+        const user = await User.findById(decoded.id).select("-password -__v");
+
+        if (!user) return null;
+
+        return user;
+
     } catch (error) {
+        console.error("Erro na autenticação do servidor:", error);
         return null;
     }
 }

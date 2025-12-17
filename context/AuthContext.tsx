@@ -3,7 +3,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-// 1. Atualizamos a Interface para incluir a Role
 interface User {
     name: string;
     email: string;
@@ -29,42 +28,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         const checkAuth = async () => {
             try {
-                // Tenta validar a sessão
                 const res = await fetch('/api/auth/me');
+
                 if (res.ok) {
                     const data = await res.json();
-                    const userData = data.user || data;
+                    const userData = data.user;
 
-                    // Se a rota /me retornar um token renovado, salvamos também
-                    if (data.token) {
-                        localStorage.setItem("token", data.token);
-                    }
-
-                    // Define a Role (Padrão: redator se não vier nada)
                     const userRole = userData.role || 'redator';
 
-                    // LÓGICA DE ADMIN: Só é admin se a role for explicitamente 'admin'
                     setIsAdmin(userRole === 'admin');
-                    
                     setUser({
-                        name: userData.name || "Usuário",
-                        email: userData.email || "",
+                        name: userData.name,
+                        email: userData.email,
                         role: userRole
                     });
                 } else {
-                    // Se falhar a validação
-                    localStorage.removeItem("token");
                     setIsAdmin(false);
                     setUser(null);
                 }
             } catch (error) {
-                localStorage.removeItem("token");
+                console.error("Erro na verificação de sessão:", error);
                 setIsAdmin(false);
                 setUser(null);
             } finally {
                 setIsLoading(false);
             }
         };
+
         checkAuth();
     }, []);
 
@@ -79,19 +69,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (res.ok) {
                 const data = await res.json();
 
-                // Salva o token para as requisições autenticadas
-                if (data.token) {
-                    localStorage.setItem("token", data.token);
-                } else {
-                    console.error("AVISO: Token não retornado no login.");
-                }
-
-                const userData = data.user || data;
+                // Assumindo que o login retorna a mesma estrutura de user
+                const userData = data.user || {};
                 const userRole = userData.role || 'redator';
 
-                // Define se é admin baseada na role vinda do backend
                 setIsAdmin(userRole === 'admin');
-                
                 setUser({
                     name: userData.name || "Usuário",
                     email: email,
@@ -103,7 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
             return false;
         } catch (error) {
-            console.error(error);
+            console.error("Erro no login:", error);
             return false;
         }
     };
@@ -114,7 +96,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch (error) {
             console.error("Erro no logout API", error);
         } finally {
-            localStorage.removeItem("token");
             setIsAdmin(false);
             setUser(null);
             router.push('/login');

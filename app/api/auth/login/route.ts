@@ -53,7 +53,7 @@ export async function POST(request: Request) {
         });
 
         // 5. Define Cookie
-        response.cookies.set("token", token, {
+        response.cookies.set("auftek_token", token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "strict",

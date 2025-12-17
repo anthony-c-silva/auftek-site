@@ -156,12 +156,6 @@ export const AdminPostList: React.FC = () => {
                         >
                             Pendentes
                         </button>
-                         <button 
-                            onClick={() => setStatusFilter('all')}
-                            className={`px-4 py-1.5 text-sm rounded-md transition ${statusFilter === 'all' ? 'bg-white shadow text-purple-600 font-bold' : 'text-slate-500 hover:text-slate-700'}`}
-                        >
-                            Todos
-                        </button>
                     </div>
                 </div>
 
