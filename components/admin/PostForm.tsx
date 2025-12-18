@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Save, AlertCircle } from "lucide-react";
+import { Save, AlertCircle, Sparkles } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 // Interface simplificada apenas para o Front
@@ -26,15 +26,19 @@ interface PostFormProps {
 }
 
 export const PostForm: React.FC<PostFormProps> = ({
-                                                      initialData,
-                                                      isEditing = false,
-                                                      onSuccess,
-                                                      onCancel
-                                                  }) => {
+    initialData,
+    isEditing = false,
+    onSuccess,
+    onCancel
+}) => {
     // useAuth apenas para saber se está carregando ou se tem permissão visual
     const { user } = useAuth();
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+    const [aiLoading, setAiLoading] = useState(false);
+    const [aiMessage, setAiMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    const [aiExcerptLoading, setAiExcerptLoading] = useState(false);
+    const [aiExcerptMessage, setAiExcerptMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
     const [formData, setFormData] = useState({
         title: "",
@@ -76,6 +80,109 @@ export const PostForm: React.FC<PostFormProps> = ({
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleAISuggestion = async () => {
+        // Limpar mensagem anterior
+        setAiMessage(null);
+
+        // Validar se há conteúdo suficiente
+        if (!formData.content || formData.content.trim().length < 100) {
+            setAiMessage({
+                type: 'error',
+                text: 'Escreva pelo menos 100 caracteres no conteúdo para gerar uma sugestão.'
+            });
+            return;
+        }
+
+        setAiLoading(true);
+
+        try {
+            const response = await fetch('/api/ai/suggest-title', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: formData.content }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Erro ao gerar sugestão');
+            }
+
+            // Atualizar o título com a sugestão
+            setFormData({ ...formData, title: data.title });
+            setAiMessage({
+                type: 'success',
+                text: '✨ Título gerado com sucesso!'
+            });
+
+            // Limpar mensagem de sucesso após 5 segundos
+            setTimeout(() => setAiMessage(null), 5000);
+
+        } catch (error: unknown) {
+            let errorMessage = 'Erro ao gerar sugestão.';
+            if (error instanceof Error) errorMessage = error.message;
+            setAiMessage({
+                type: 'error',
+                text: errorMessage
+            });
+        } finally {
+            setAiLoading(false);
+        }
+    };
+
+    const handleAIExcerptSuggestion = async () => {
+        // Limpar mensagem anterior
+        setAiExcerptMessage(null);
+
+        // Validar se há conteúdo suficiente
+        if (!formData.content || formData.content.trim().length < 100) {
+            setAiExcerptMessage({
+                type: 'error',
+                text: 'Escreva pelo menos 100 caracteres no conteúdo para gerar uma sugestão.'
+            });
+            return;
+        }
+
+        setAiExcerptLoading(true);
+
+        try {
+            const response = await fetch('/api/ai/suggest-excerpt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    content: formData.content,
+                    title: formData.title || undefined
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Erro ao gerar sugestão');
+            }
+
+            // Atualizar o resumo com a sugestão
+            setFormData({ ...formData, excerpt: data.excerpt });
+            setAiExcerptMessage({
+                type: 'success',
+                text: '✨ Resumo gerado com sucesso!'
+            });
+
+            // Limpar mensagem de sucesso após 5 segundos
+            setTimeout(() => setAiExcerptMessage(null), 5000);
+
+        } catch (error: unknown) {
+            let errorMessage = 'Erro ao gerar sugestão.';
+            if (error instanceof Error) errorMessage = error.message;
+            setAiExcerptMessage({
+                type: 'error',
+                text: errorMessage
+            });
+        } finally {
+            setAiExcerptLoading(false);
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -137,9 +244,26 @@ export const PostForm: React.FC<PostFormProps> = ({
         <form onSubmit={handleSubmit} className="space-y-6 max-w-5xl mx-auto pb-10">
             {/* Título */}
             <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                    Título da Publicação <span className="text-red-500">*</span>
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-medium text-slate-700">
+                        Título da Publicação <span className="text-red-500">*</span>
+                    </label>
+                    <button
+                        type="button"
+                        onClick={handleAISuggestion}
+                        disabled={aiLoading || formData.content.trim().length < 100}
+                        className={`
+                            flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all
+                            ${aiLoading || formData.content.trim().length < 100
+                                ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 shadow-sm hover:shadow-md'
+                            }
+                        `}
+                    >
+                        <Sparkles size={16} className={aiLoading ? 'animate-spin' : ''} />
+                        {aiLoading ? 'Gerando...' : 'Sugestão IA'}
+                    </button>
+                </div>
                 <input
                     name="title"
                     value={formData.title}
@@ -148,6 +272,19 @@ export const PostForm: React.FC<PostFormProps> = ({
                     placeholder="Ex: Inovação em Biotecnologia"
                     required
                 />
+                {/* Mensagem de feedback da IA */}
+                {aiMessage && (
+                    <div className={`
+                        mt-2 px-3 py-2 rounded-lg text-sm flex items-center gap-2
+                        ${aiMessage.type === 'success'
+                            ? 'bg-green-50 text-green-700 border border-green-200'
+                            : 'bg-red-50 text-red-700 border border-red-200'
+                        }
+                    `}>
+                        {aiMessage.type === 'error' && <AlertCircle size={16} />}
+                        {aiMessage.text}
+                    </div>
+                )}
             </div>
 
             {/* Grid de Configurações */}
@@ -208,7 +345,24 @@ export const PostForm: React.FC<PostFormProps> = ({
 
             {/* Resumo / Excerpt */}
             <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Resumo (Excerpt)</label>
+                <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-medium text-slate-700">Resumo (Excerpt)</label>
+                    <button
+                        type="button"
+                        onClick={handleAIExcerptSuggestion}
+                        disabled={aiExcerptLoading || formData.content.trim().length < 100}
+                        className={`
+                            flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all
+                            ${aiExcerptLoading || formData.content.trim().length < 100
+                                ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 shadow-sm hover:shadow-md'
+                            }
+                        `}
+                    >
+                        <Sparkles size={16} className={aiExcerptLoading ? 'animate-spin' : ''} />
+                        {aiExcerptLoading ? 'Gerando...' : 'Sugestão IA'}
+                    </button>
+                </div>
                 <textarea
                     name="excerpt"
                     value={formData.excerpt}
@@ -217,6 +371,19 @@ export const PostForm: React.FC<PostFormProps> = ({
                     className={inputClass}
                     placeholder="Breve descrição que aparecerá nos cards..."
                 />
+                {/* Mensagem de feedback da IA */}
+                {aiExcerptMessage && (
+                    <div className={`
+                        mt-2 px-3 py-2 rounded-lg text-sm flex items-center gap-2
+                        ${aiExcerptMessage.type === 'success'
+                            ? 'bg-green-50 text-green-700 border border-green-200'
+                            : 'bg-red-50 text-red-700 border border-red-200'
+                        }
+                    `}>
+                        {aiExcerptMessage.type === 'error' && <AlertCircle size={16} />}
+                        {aiExcerptMessage.text}
+                    </div>
+                )}
             </div>
 
             {/* Conteúdo */}
