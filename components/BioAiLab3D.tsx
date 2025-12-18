@@ -1,11 +1,31 @@
 "use client";
 
 import React, { Suspense, useEffect, useRef, useMemo } from "react";
-import { Canvas } from "@react-three/fiber";
+import { Canvas, useThree } from "@react-three/fiber"; // <--- ADICIONEI useThree
 import { OrbitControls, useGLTF, Html, Preload, Environment, Center } from "@react-three/drei";
 
 // Pré-carregamento imediato
 useGLTF.preload("/models/bioailab.glb");
+
+// --- O HACK DE INICIALIZAÇÃO (O RETORNO) ---
+// Esse componente força o desenho nos primeiros momentos
+function HackDeInicio() {
+  const { invalidate } = useThree();
+  
+  useEffect(() => {
+    invalidate(); // Desenha agora
+    const interval = setInterval(() => invalidate(), 100); // Desenha a cada 100ms
+    // Para de forçar depois de 2 segundos (tempo suficiente para carregar tudo)
+    const timeout = setTimeout(() => clearInterval(interval), 2000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [invalidate]);
+
+  return null;
+}
 
 function Model({ onLoad }: { onLoad?: () => void }) {
   const { scene } = useGLTF("/models/bioailab.glb");
@@ -20,10 +40,7 @@ function Model({ onLoad }: { onLoad?: () => void }) {
   return (
     <primitive 
       object={clonedScene} 
-      // --- CONTROLE DE ESCALA AGORA FUNCIONA ---
-      // Como removemos o Stage, este número agora é lei.
-      // Se ficar pequeno demais, aumente para 1 ou 2.
-      // Se ficar grande demais, diminua para 0.1 ou 0.05.
+      // Seus ajustes de escala
       scale={2.5} 
       rotation={[0, 0, 0]} 
     />
@@ -56,10 +73,12 @@ export const BioAiLab3D: React.FC = () => {
           powerPreference: "high-performance",
           antialias: true 
         }}
-        // CONTROLE DA CÂMERA
-        // Ajuste o terceiro número (Z) para afastar ou aproximar.
-        camera={{ position: [50, 2, 1000], fov: 45 }}
+        // Ajuste Z=1000 mantido, mas adicionei far: 10000 para garantir que renderize
+        camera={{ position: [5, 2, 1000], fov: 45, far: 10000 }}
       >
+        {/* --- INSERIR O HACK AQUI --- */}
+        <HackDeInicio />
+
         <Suspense
           fallback={
             <Html center className="pointer-events-none">
@@ -69,15 +88,11 @@ export const BioAiLab3D: React.FC = () => {
             </Html>
           }
         >
-          {/* ILUMINAÇÃO MANUAL (Substituindo o Stage) */}
-          {/* Environment: Dá os reflexos bonitos no material */}
           <Environment preset="city" />
           
-          {/* Luzes para dar volume e sombra */}
           <ambientLight intensity={0.5} />
           <directionalLight position={[10, 10, 5]} intensity={2} castShadow />
 
-          {/* O Center garante que o objeto gire pelo centro geométrico dele */}
           <Center>
             <Model />
           </Center>
