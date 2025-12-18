@@ -72,7 +72,7 @@ export const BioAiLab: React.FC = () => {
               {[
                 "Totalmente automatizado: acelera incubação e quantificação.",
                 "Identifica E. coli, Coliformes Totais, Salmonella e outros...",
-                "Conectividade IoT: Dados na nuvem acessíveis via App, e rastreabilidade.",
+                "Conectividade IoT: dados em nuvem, acesso via app e total rastreabilidade das análises",
                 "Dispensa contagem manual e reduz erro humano.",
               ].map((item, i) => (
                 <li

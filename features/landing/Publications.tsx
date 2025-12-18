@@ -6,9 +6,9 @@ import {
   Sprout,
   Waves,
   Gauge,
-  BrainCircuit,
   Biohazard,
   FileText,
+  Rocket
 } from "lucide-react";
 
 import { Section, SectionTitle } from "../../components/ui/Section";
@@ -86,11 +86,11 @@ export const Publications: React.FC = () => {
     },
     {
       category: "P&D SOB MEDIDA",
-      title: "Seu Desafio Aqui",
-      description: "Sua dor é única? Nossa engenharia desenvolve a solução tecnológica exata para o seu processo.",
-      icon: BrainCircuit,
+      title: "Sua dor é única?",
+      description: "Adaptamos o BioAiLab para resolver o seu desafio microbiológico específico.",
+      icon: Rocket,
       theme: "primary",
-      action: "Falar com Engenharia →",
+      action: "Falar com um Especialista →",
       href: "#contato"
     }
   ];
