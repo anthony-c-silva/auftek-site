@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
+import Link from "next/link";
 import { Edit, Trash2, Search, UserCircle, CheckCircle, Clock, FileText } from "lucide-react";
 import { Modal } from "../ui/Modal";
 import { PostForm } from "./PostForm";
@@ -129,7 +130,7 @@ export const AdminPostList: React.FC = () => {
 
     return (
         <>
-            <div className="bg-white rounded-xl shadow border border-slate-200 overflow-hidden">
+            <div className="rounded-xl shadow border border-slate-200 overflow-hidden">
 
                 <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row justify-between items-center gap-4">
                     <div className="relative w-full max-w-sm">
@@ -170,85 +171,92 @@ export const AdminPostList: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
+                <div className="overflow-x-auto bg-transparent">
+                    <table className="w-full text-left border-collapse bg-transparent">
                         <thead>
-                        <tr className="bg-slate-50 border-b border-slate-200">
-                            <th className="px-6 py-4 text-sm font-semibold text-slate-700">Status</th>
-                            <th className="px-6 py-4 text-sm font-semibold text-slate-700">Título</th>
-                            <th className="px-6 py-4 text-sm font-semibold text-slate-700">Redator</th>
+                            <tr className="bg-slate-50 border-b border-slate-200">
+                                <th className="px-6 py-4 text-sm font-semibold text-slate-700">Status</th>
+                                <th className="px-6 py-4 text-sm font-semibold text-slate-700">Título</th>
+                                <th className="px-6 py-4 text-sm font-semibold text-slate-700">Redator</th>
 
-                            <th className="px-6 py-4 text-sm font-semibold text-slate-700">
-                                {statusFilter === 'published' ? "Aprovado em" : "Data"}
-                            </th>
+                                <th className="px-6 py-4 text-sm font-semibold text-slate-700">
+                                    {statusFilter === 'published' ? "Aprovado em" : "Data"}
+                                </th>
 
-                            <th className="px-6 py-4 text-sm font-semibold text-slate-700 text-right">Ações</th>
-                        </tr>
+                                <th className="px-6 py-4 text-sm font-semibold text-slate-700 text-right">Ações</th>
+                            </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                        {filteredPosts.map((post) => (
-                            <tr key={post._id} className="hover:bg-slate-50 transition-colors">
-                                <td className="px-6 py-4">
-                                    {post.status === 'published' && (
-                                        <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold flex w-fit items-center gap-1">
-                                            <CheckCircle size={12}/> No Ar
-                                        </span>
-                                    )}
-                                    {post.status === 'pending' && (
-                                        <span className="bg-amber-100 text-amber-700 px-2 py-1 rounded text-xs font-bold flex w-fit items-center gap-1">
-                                            <Clock size={12}/> Pendente
-                                        </span>
-                                    )}
-                                    {post.status === 'draft' && (
-                                        <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-bold flex w-fit items-center gap-1">
-                                            <FileText size={12}/> Rascunho
-                                        </span>
-                                    )}
-                                </td>
-
-                                <td className="px-6 py-4">
-                                    <p className="font-medium text-slate-900 line-clamp-1">{post.title}</p>
-                                </td>
-
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-2">
-                                        <div className="bg-purple-100 p-1.5 rounded-full text-purple-600">
-                                            <UserCircle size={16} />
-                                        </div>
-                                        <span className="text-sm text-slate-900 font-medium">
-                                            {post.writer?.name || "—"}
-                                        </span>
-                                    </div>
-                                </td>
-
-                                <td className="px-6 py-4 text-sm text-slate-500">
-                                    {statusFilter === 'published'
-                                        ? formatDate(post.updatedAt)
-                                        : formatDate(post.createdAt)
-                                    }
-                                </td>
-
-                                <td className="px-6 py-4 text-right">
-                                    <div className="flex items-center justify-end gap-3">
-                                        {isAdmin && post.status === 'pending' && (
-                                            <button
-                                                onClick={() => handleApprove(post.slug)}
-                                                className="text-green-600 hover:bg-green-100 p-1.5 rounded transition-colors"
-                                                title="Aprovar e Publicar"
-                                            >
-                                                <CheckCircle size={20} />
-                                            </button>
+                            {filteredPosts.map((post) => (
+                                <tr key={post._id} className="hover:bg-slate-50 transition-colors">
+                                    <td className="px-6 py-4">
+                                        {post.status === 'published' && (
+                                            <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold flex w-fit items-center gap-1">
+                                                <CheckCircle size={12} /> No Ar
+                                            </span>
                                         )}
-                                        <button onClick={() => handleEditClick(post)} className="text-slate-400 hover:text-amber-500">
-                                            <Edit size={18} />
-                                        </button>
-                                        <button onClick={() => handleDelete(post.slug)} className="text-slate-400 hover:text-red-500">
-                                            <Trash2 size={18} />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
+                                        {post.status === 'pending' && (
+                                            <span className="bg-amber-100 text-amber-700 px-2 py-1 rounded text-xs font-bold flex w-fit items-center gap-1">
+                                                <Clock size={12} /> Pendente
+                                            </span>
+                                        )}
+                                        {post.status === 'draft' && (
+                                            <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-bold flex w-fit items-center gap-1">
+                                                <FileText size={12} /> Rascunho
+                                            </span>
+                                        )}
+                                    </td>
+
+                                    <td className="px-6 py-4">
+                                        <Link
+                                            href={`/blog/${post.slug}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="font-medium text-slate-900 hover:text-blue-600 transition-colors line-clamp-1 cursor-pointer"
+                                        >
+                                            {post.title}
+                                        </Link>
+                                    </td>
+
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-2">
+                                            <div className="bg-purple-100 p-1.5 rounded-full text-purple-600">
+                                                <UserCircle size={16} />
+                                            </div>
+                                            <span className="text-sm text-slate-900 font-medium">
+                                                {post.writer?.name || "—"}
+                                            </span>
+                                        </div>
+                                    </td>
+
+                                    <td className="px-6 py-4 text-sm text-slate-500">
+                                        {statusFilter === 'published'
+                                            ? formatDate(post.updatedAt)
+                                            : formatDate(post.createdAt)
+                                        }
+                                    </td>
+
+                                    <td className="px-6 py-4 text-right">
+                                        <div className="flex items-center justify-end gap-3">
+                                            {isAdmin && post.status === 'pending' && (
+                                                <button
+                                                    onClick={() => handleApprove(post.slug)}
+                                                    className="text-green-600 hover:bg-green-100 p-1.5 rounded transition-colors"
+                                                    title="Aprovar e Publicar"
+                                                >
+                                                    <CheckCircle size={20} />
+                                                </button>
+                                            )}
+                                            <button onClick={() => handleEditClick(post)} className="text-slate-400 hover:text-amber-500">
+                                                <Edit size={18} />
+                                            </button>
+                                            <button onClick={() => handleDelete(post.slug)} className="text-slate-400 hover:text-red-500">
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
                 </div>

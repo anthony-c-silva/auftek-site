@@ -106,7 +106,7 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Lista de Posts */}
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden min-h-[500px]">
+                <div className="bg-transparent">
                     <AdminPostList key={postRefreshKey} />
                 </div>
 
