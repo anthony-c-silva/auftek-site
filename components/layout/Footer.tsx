@@ -45,7 +45,7 @@ export const Footer: React.FC = () => {
     <footer className="bg-black border-t border-white/10 pt-16 pb-12">
       <div className="max-w-7xl mx-auto px-6">
         {/* GRID SUPERIOR */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-8">
           {/* COLUNA 1: Identidade */}
           <div className="col-span-1">
             <Logo className="h-7 w-auto text-white mb-6" />
@@ -122,12 +122,12 @@ export const Footer: React.FC = () => {
         </div>
 
         {/* RODAPÉ INFERIOR */}
-        <div className="pt-8 border-t border-white/5 flex flex-col items-center text-center gap-6 text-xs text-zinc-600">
+        <div className=" border-t border-white/5 flex flex-col items-center text-center gap-6 text-xs text-zinc-600">
           <div className="flex flex-col gap-1">
             <p className="font-bold text-zinc-500 uppercase tracking-wide">
-              {companyName}
+              {companyName} CNPJ: {cnpj}
             </p>
-            <p>CNPJ: {cnpj}</p>
+            <p></p>
           </div>
 
           <div className="flex flex-col items-center gap-4">
