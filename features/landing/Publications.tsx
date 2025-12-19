@@ -6,10 +6,11 @@ import {
   Sprout,
   Waves,
   Gauge,
-  BrainCircuit,
   Biohazard,
   FileText,
+  Rocket
 } from "lucide-react";
+import { FaBacteria } from "react-icons/fa";
 
 import { Section, SectionTitle } from "../../components/ui/Section";
 import { cn } from "../../lib/utils";
@@ -52,7 +53,7 @@ export const Publications: React.FC = () => {
       category: "INDÚSTRIA ALIMENTÍCIA",
       title: "Salmonella e Patógenos",
       description: "Libere lotes em horas, não dias. Segurança total com detecção rápida para eliminar riscos sanitários.",
-      icon: Biohazard,
+      icon: FaBacteria,
       theme: "red"
     },
     {
@@ -86,11 +87,11 @@ export const Publications: React.FC = () => {
     },
     {
       category: "P&D SOB MEDIDA",
-      title: "Seu Desafio Aqui",
-      description: "Sua dor é única? Nossa engenharia desenvolve a solução tecnológica exata para o seu processo.",
-      icon: BrainCircuit,
+      title: "Sua dor é única?",
+      description: "Adaptamos o BioAiLab para resolver o seu desafio microbiológico específico.",
+      icon: Rocket,
       theme: "primary",
-      action: "Falar com Engenharia →",
+      action: "Falar com um Especialista →",
       href: "#contato"
     }
   ];

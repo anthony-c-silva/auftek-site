@@ -48,7 +48,7 @@ export const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-8">
           {/* COLUNA 1: Identidade */}
           <div className="col-span-1">
-            <Logo className="h-7 w-auto text-white mb-6" />
+            <Logo className="h-14 w-auto text-white mb-6" />
             <p className="text-zinc-500 text-sm leading-relaxed">
               Inteligência artificial e automação para microbiologia e energia.
             </p>
@@ -101,19 +101,19 @@ export const Footer: React.FC = () => {
               {/* ÍCONES AUMENTADOS PARA TAMANHO 24px */}
               <SocialLink
                 href={linkedInLink}
-                icon={<Linkedin size={28} />}
+                icon={<Linkedin size={32} />}
                 label="LinkedIn"
                 hoverClass="hover:text-[#0077b5]"
               />
               <SocialLink
                 href={instagramLink}
-                icon={<Instagram size={28} />}
+                icon={<Instagram size={32} />}
                 label="Instagram"
                 hoverClass="hover:text-[#E1306C]"
               />
               <SocialLink
                 href={waLink}
-                icon={<WhatsAppIcon className="w-8 h-7" />}
+                icon={<WhatsAppIcon className="w-9 h-8" />}
                 label="WhatsApp"
                 hoverClass="hover:text-[#25D366]"
               />
@@ -125,14 +125,14 @@ export const Footer: React.FC = () => {
         <div className=" border-t border-white/5 flex flex-col items-center text-center gap-6 text-xs text-zinc-600">
           <div className="flex flex-col gap-1">
             <p className="font-bold text-zinc-500 uppercase tracking-wide">
-              {companyName} CNPJ: {cnpj}
+              {companyName} | CNPJ: {cnpj} | © {new Date().getFullYear()} Todos os direitos reservados.
             </p>
-            <p></p>
+           
           </div>
 
           <div className="flex flex-col items-center gap-4">
            
-            <p>© {new Date().getFullYear()} Todos os direitos reservados.</p>
+            <p></p>
           </div>
         </div>
       </div>

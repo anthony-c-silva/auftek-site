@@ -6,17 +6,6 @@ import { BioDashboard } from "../../components/BioDashboard";
 import { FaBacteria } from "react-icons/fa";
 import { ScrollReveal } from "../../components/ui/ScrollReveal";
 
-import dynamic from "next/dynamic";
-
-// Importação dinâmica desativando o Server-Side Rendering para este componente
-const BioAiLab3D = dynamic(
-  () => import("../../components/BioAiLab3D").then((mod) => mod.BioAiLab3D),
-  {
-    ssr: false,
-    loading: () => <div className="w-full h-full bg-transparent" />, // Placeholder enquanto carrega
-  }
-);
-
 export const BioAiLab: React.FC = () => {
   return (
     <Section id="bioailab" className="relative overflow-hidden !bg-auftek-dark">
@@ -35,7 +24,7 @@ export const BioAiLab: React.FC = () => {
 
       {/* --- CONTEÚDO --- */}
       <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center mb-24 relative z-10">
-        {/* LADO ESQUERDO: TEXTO */}
+        {/* LADO ESQUERDO: TEXTO (INTACTO) */}
         <ScrollReveal>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-auftek-green/10 text-auftek-green border border-auftek-green/20 text-xs font-bold mb-6 hover:bg-auftek-green/20 transition-colors cursor-default">
             <FaBacteria size={14} color="currentColor" />
@@ -72,7 +61,7 @@ export const BioAiLab: React.FC = () => {
               {[
                 "Totalmente automatizado: acelera incubação e quantificação.",
                 "Identifica E. coli, Coliformes Totais, Salmonella e outros...",
-                "Conectividade IoT: Dados na nuvem acessíveis via App, e rastreabilidade.",
+                "Conectividade IoT: dados em nuvem, acesso via app e total rastreabilidade das análises",
                 "Dispensa contagem manual e reduz erro humano.",
               ].map((item, i) => (
                 <li
@@ -91,20 +80,35 @@ export const BioAiLab: React.FC = () => {
           </div>
         </ScrollReveal>
 
-        {/* LADO DIREITO: APENAS O MODELO 3D (LIMPO) */}
+        {/* LADO DIREITO: VIDEO COM BORDA SOFT E TAMANHO REDUZIDO */}
         <ScrollReveal
           delay="200"
-          // Mantive apenas o posicionamento e altura total
-          className="relative flex justify-center lg:justify-end w-full h-full items-center"
+          // Mudei justify-end para center para centralizar o card menor
+          className="relative flex justify-center w-full h-full items-center"
         >
-          {/* Container limpo para o 3D.
-              Define o tamanho máximo e o aspecto quadrado, sem CSS visual extra.
-              Mantive os cursores para indicar interatividade. */}
-          <div className="w-full max-w-md aspect-square cursor-grab active:cursor-grabbing relative z-10">
-            <BioAiLab3D />
+          {/* ALTERAÇÕES NESTE BLOCO:
+              1. max-w-2xl mudou para max-w-lg (reduz o tamanho)
+              2. Adicionado border border-white/10 (borda sutil)
+              3. Adicionado rounded-2xl (bordas mais arredondadas no container)
+              4. Adicionado p-2 bg-white/5 (espaçamento interno e fundo sutil para efeito de moldura soft)
+          */}
+          <div className="w-full max-w-lg relative z-10 border border-white/10 rounded-2xl p-2 bg-white/5 backdrop-blur-sm overflow-hidden shadow-2xl shadow-auftek-blue/5">
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              // Ajustado rounded-lg para rounded-xl para acompanhar o container
+              className="w-full h-auto object-contain rounded-xl"
+            >
+              <source src="/images/bioailab.mp4" type="video/mp4" />
+              Seu navegador não suporta a tag de vídeo.
+            </video>
           </div>
         </ScrollReveal>
       </div>
+      
+      {/* RESTANTE DO CÓDIGO (INTACTO) */}
       <ScrollReveal
         delay="300"
         className="mt-20 border-t border-gray-800/50 pt-20"
