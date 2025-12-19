@@ -14,7 +14,7 @@ export async function GET() {
         // Validação de segurança
         if (!email || !password) {
             return NextResponse.json(
-                { error: "Defina SEED_ADMIN_EMAIL e SEED_ADMIN_PASSWORD no .env.local" },
+                { error: "Defina SEED_ADMIN_EMAIL e SEED_ADMIN_PASSWORD no ..env.local" },
                 { status: 500 }
             );
         }
