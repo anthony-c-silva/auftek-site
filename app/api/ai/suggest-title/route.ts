@@ -9,86 +9,151 @@ export async function POST(request: Request) {
         if (!user) return NextResponse.json({ error: "Acesso negado." }, { status: 401 });
 
         const body = await request.json();
-        const { content } = body;
-
+        const { content, strategy: providedStrategy } = body;
         const contentToAnalyze = content ? content.slice(0, 4500) : "";
 
         const apiKey = process.env.OPENAI_API_KEY || "lm-studio";
         const baseURL = process.env.OPENAI_BASE_URL || "http://127.0.0.1:1234/v1";
-
         const openai = new OpenAI({ apiKey, baseURL });
 
-        console.log(`⚡ [IA] Analisando texto com: ${baseURL}`);
+        let strategy = providedStrategy;
 
-        const finalPrompt = `
-    Aja como um Redator Sênior de SEO.
-    Sua tarefa é escrever um título de alta conversão (CTR) para o texto abaixo.
+        // =================================================================================
+        // FASE 1: O ESTRATEGISTA (Foco em Keyword CURTA)
+        // =================================================================================
+        if (!strategy) {
+            console.log("🔍 [Title V2] Extraindo estratégia...");
 
-    PASSO 1: ANALISE o texto e extraia a "Entidade Principal".
-    PASSO 2: Crie o título seguindo a fórmula: [Entidade Principal] + [Benefício ou Curiosidade].
+            const analysisPrompt = `
+        You are an SEO Expert. Analyze the text.
+        Return ONLY a valid JSON object.
+        
+        INSTRUCTIONS:
+        1. "primary_keyword": Extract the SHORTEST possible topic (Max 3 words).
+        2. "hook_angle": One word style (e.g. Curiosidade, Alerta, Dica, Futuro).
+        
+        Expected Format:
+        {
+          "primary_keyword": "Microbiologia IoT", 
+          "hook_angle": "Inovação"
+        }
+        
+        TEXT: "${contentToAnalyze.slice(0, 2000)}"
+        `;
 
-    EXEMPLOS:
-    - "Ferrari 296 GTB: Tudo sobre o novo motor híbrido V6"
-    - "Jejum Intermitente: Guia completo para iniciantes"
-    - "Next.js 14: As 5 novidades que mudam o desenvolvimento web"
+            const analysisCompletion = await openai.chat.completions.create({
+                model: "local-model",
+                messages: [{ role: "user", content: analysisPrompt }],
+                temperature: 0.1,
+                max_tokens: 300,
+            });
 
-    REGRAS OBRIGATÓRIAS:
-    1. Retorne APENAS o título final. Não coloque o pensamento ou raciocínio na resposta final.
-    2. Sem aspas.
-    3. Use entre 40 e 65 caracteres.
+            const rawResponse = analysisCompletion.choices[0]?.message?.content || "{}";
+            console.log("🤖 Raw Response (Fase 1):", rawResponse);
 
-    TEXTO DO USUÁRIO:
-    "${contentToAnalyze}"
+            try {
+                // --- PARSER BLINDADO ---
+                let cleanJson = rawResponse.replace(/```json|```/g, '');
+                // Remove barras invertidas antes de underscores (Correção do erro anterior)
+                cleanJson = cleanJson.replace(/\\_/g, '_');
 
-    TÍTULO OTIMIZADO:
-    `;
+                const firstBrace = cleanJson.indexOf('{');
+                const lastBrace = cleanJson.lastIndexOf('}');
 
-        const completion = await openai.chat.completions.create({
-            model: "local-model",
-            messages: [
-                { role: "user", content: finalPrompt }
-            ],
-            temperature: 0.6,
-            // AUMENTADO DE 80 PARA 1000
-            // Modelos "Thinking" (DeepSeek/QwQ) precisam de muitos tokens para pensar antes de responder.
-            // Se for pouco, ele corta o pensamento e devolve content vazio.
-            max_tokens: 1000,
-        });
+                if (firstBrace !== -1 && lastBrace !== -1) {
+                    cleanJson = cleanJson.substring(firstBrace, lastBrace + 1);
+                }
 
-        console.log("⚡ [IA] Resposta Bruta:", JSON.stringify(completion.choices[0], null, 2));
+                strategy = JSON.parse(cleanJson);
 
-        // Fallback: Alguns modelos colocam a resposta no 'content', outros vazam no 'reasoning' se falharem.
-        // Mas com 1000 tokens, o 'content' deve vir preenchido corretamente.
-        let finalTitle = completion.choices[0]?.message?.content || "";
+                // SEGURANÇA DE TAMANHO: Se a IA extraiu uma keyword gigante, cortamos na marra.
+                if (strategy.primary_keyword.split(' ').length > 5) {
+                    strategy.primary_keyword = strategy.primary_keyword.split(' ').slice(0, 4).join(' ');
+                }
 
-        if (!finalTitle) {
-            // Tenta salvar o dia pegando algo do reasoning se o content vier vazio (Raro com max_tokens alto)
-            const reasoning = (completion.choices[0]?.message as any)?.reasoning || "";
-            if (reasoning && reasoning.includes('"')) {
-                // Tenta achar algo entre aspas no pensamento
-                const match = reasoning.match(/"([^"]{10,70})"/);
-                if (match) finalTitle = match[1];
+                console.log("✅ JSON Extraído:", JSON.stringify(strategy));
+
+            } catch (e) {
+                console.error("❌ Erro JSON:", e);
+                strategy = { primary_keyword: "Tecnologia", hook_angle: "Novidade" };
             }
         }
 
-        if (!finalTitle) {
-            throw new Error("A IA pensou demais e não retornou o título final.");
+        // =================================================================================
+        // FASE 2: REDATOR (Foco em CONCISÃO)
+        // =================================================================================
+        console.log("✍️ [Title V2] Escrevendo título curto...");
+
+        const finalPrompt = `
+    Aja como Editor de Manchetes de Tecnologia (TechCrunch, The Verge).
+    Escreva UMA manchete curta para o Google.
+    
+    ESTRATÉGIA:
+    - Foco: "${strategy.primary_keyword}"
+    - Ângulo: "${strategy.hook_angle}"
+    
+    REGRAS DE TAMANHO (CRÍTICO):
+    1. Use MÁXIMO 8 PALAVRAS. (Seja breve!)
+    2. NÃO escreva títulos de artigos científicos (longos e chatos).
+    3. Escreva como notícia urgente ou curiosidade.
+    
+    Exemplos Bons (Curtos):
+    - "Como a IoT revoluciona a análise de leite"
+    - "Novo sensor detecta bactérias em tempo real"
+    - "O fim dos testes demorados na microbiologia"
+    
+    Exemplos Ruins (Muito Longos - NÃO FAÇA):
+    - "Determinação rápida e simples da contagem bacteriana total no leite cru usando sensor..."
+    
+    IDIOMA: Português do Brasil.
+    
+    TEXTO BASE:
+    """${contentToAnalyze}"""
+    
+    TÍTULO CURTO:
+    `;
+
+        const creationCompletion = await openai.chat.completions.create({
+            model: "local-model",
+            messages: [{ role: "user", content: finalPrompt }],
+            temperature: 0.7, // Um pouco menor para ele não viajar demais
+            max_tokens: 150,
+        });
+
+        let finalTitle = creationCompletion.choices[0]?.message?.content || "";
+
+        if (!finalTitle && (creationCompletion.choices[0]?.message as any)?.reasoning) {
+            const match = (creationCompletion.choices[0]?.message as any).reasoning.match(/"([^"]{30,70})"/);
+            if (match) finalTitle = match[1];
         }
 
-        // Limpeza
+        // =================================================================================
+        // FASE 3: LIMPEZA BLINDADA
+        // =================================================================================
+
+        finalTitle = finalTitle.split('\n')[0];
+        finalTitle = finalTitle.replace(/\s*[\(\[][a-zA-Z0-9\-\s]+[\)\]]$/, '');
+
+        // Remove aspas recursivamente
+        finalTitle = finalTitle.trim();
+        while (finalTitle.startsWith('"') || finalTitle.startsWith("'") || finalTitle.endsWith('"') || finalTitle.endsWith("'")) {
+            finalTitle = finalTitle.replace(/^["']/, '').replace(/["']$/, '').trim();
+        }
+
         finalTitle = finalTitle
-            .replace(/^["']|["']$/g, '')
-            .replace(/^Título:\s*/i, '')
-            .replace(/\n/g, ' ') // Remove quebras de linha se houver
+            .replace(/Title:/i, '')
+            .replace(/Título:/i, '')
+            .replace(/\.$/, '')
             .trim();
 
-        return NextResponse.json({ success: true, title: finalTitle });
+        return NextResponse.json({
+            success: true,
+            title: finalTitle,
+            strategy: strategy
+        });
 
     } catch (error: any) {
-        console.error("❌ Erro IA Local:", error);
-        return NextResponse.json(
-            { error: "Erro ao processar sugestão." },
-            { status: 500 }
-        );
+        console.error("❌ Erro Title V2:", error);
+        return NextResponse.json({ error: "Erro ao processar." }, { status: 500 });
     }
 }

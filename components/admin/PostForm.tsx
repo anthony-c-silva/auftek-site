@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { Save, AlertCircle, Sparkles } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
-// Interface simplificada apenas para o Front
 export interface PostData {
     _id?: string;
     title: string;
@@ -26,19 +25,25 @@ interface PostFormProps {
 }
 
 export const PostForm: React.FC<PostFormProps> = ({
-    initialData,
-    isEditing = false,
-    onSuccess,
-    onCancel
-}) => {
-    // useAuth apenas para saber se está carregando ou se tem permissão visual
+                                                      initialData,
+                                                      isEditing = false,
+                                                      onSuccess,
+                                                      onCancel
+                                                  }) => {
     const { user } = useAuth();
     const router = useRouter();
     const [loading, setLoading] = useState(false);
+
+    // Estados da IA (Loading e Mensagens)
     const [aiLoading, setAiLoading] = useState(false);
     const [aiMessage, setAiMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
     const [aiExcerptLoading, setAiExcerptLoading] = useState(false);
     const [aiExcerptMessage, setAiExcerptMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+    // Estados de Cache da IA (Estratégia JSON)
+    // Isso guarda a análise do texto para não precisar ler tudo de novo se o usuário clicar em "Gerar" novamente.
+    const [titleStrategy, setTitleStrategy] = useState<any>(null);
+    const [excerptStrategy, setExcerptStrategy] = useState<any>(null);
 
     const [formData, setFormData] = useState({
         title: "",
@@ -53,7 +58,6 @@ export const PostForm: React.FC<PostFormProps> = ({
 
     const [isFormValid, setIsFormValid] = useState(false);
 
-    // Popula dados na edição
     useEffect(() => {
         if (initialData) {
             setFormData({
@@ -69,7 +73,6 @@ export const PostForm: React.FC<PostFormProps> = ({
         }
     }, [initialData]);
 
-    // Validação Simplificada (Sem authorId)
     useEffect(() => {
         const isValid =
             formData.title.trim() !== "" &&
@@ -79,69 +82,65 @@ export const PostForm: React.FC<PostFormProps> = ({
     }, [formData]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        setFormData({ ...formData, [name]: value });
+
+        // LÓGICA DE INVALIDAÇÃO DE CACHE
+        // Se o usuário mudou o texto, a estratégia antiga não serve mais. Limpamos para forçar nova análise.
+        if (name === 'content') {
+            if (titleStrategy) setTitleStrategy(null);
+            if (excerptStrategy) setExcerptStrategy(null);
+        }
     };
 
+    // --- INTEGRAÇÃO V2: TÍTULO (COM CACHE) ---
     const handleAISuggestion = async () => {
-        // Limpar mensagem anterior
         setAiMessage(null);
 
-        // Validar se há conteúdo suficiente
         if (!formData.content || formData.content.trim().length < 100) {
-            setAiMessage({
-                type: 'error',
-                text: 'Escreva pelo menos 100 caracteres no conteúdo para gerar uma sugestão.'
-            });
+            setAiMessage({ type: 'error', text: 'Escreva pelo menos 100 caracteres no conteúdo.' });
             return;
         }
 
         setAiLoading(true);
 
         try {
+            // Envia o conteúdo E a estratégia cacheada (se existir)
             const response = await fetch('/api/ai/suggest-title', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ content: formData.content }),
+                body: JSON.stringify({
+                    content: formData.content,
+                    strategy: titleStrategy // Envia null na primeira vez, e o JSON na segunda
+                }),
             });
 
             const data = await response.json();
 
-            if (!response.ok) {
-                throw new Error(data.error || 'Erro ao gerar sugestão');
+            if (!response.ok) throw new Error(data.error || 'Erro ao gerar sugestão');
+
+            setFormData(prev => ({ ...prev, title: data.title }));
+
+            // Salva a estratégia retornada para usar na próxima vez (cache)
+            if (data.strategy) {
+                setTitleStrategy(data.strategy);
             }
 
-            // Atualizar o título com a sugestão
-            setFormData({ ...formData, title: data.title });
-            setAiMessage({
-                type: 'success',
-                text: '✨ Título gerado com sucesso!'
-            });
-
-            // Limpar mensagem de sucesso após 5 segundos
+            setAiMessage({ type: 'success', text: '✨ Título estratégico gerado!' });
             setTimeout(() => setAiMessage(null), 5000);
 
-        } catch (error: unknown) {
-            let errorMessage = 'Erro ao gerar sugestão.';
-            if (error instanceof Error) errorMessage = error.message;
-            setAiMessage({
-                type: 'error',
-                text: errorMessage
-            });
+        } catch (error: any) {
+            setAiMessage({ type: 'error', text: error.message || 'Erro ao gerar sugestão.' });
         } finally {
             setAiLoading(false);
         }
     };
 
     const handleAIExcerptSuggestion = async () => {
-        // Limpar mensagem anterior
         setAiExcerptMessage(null);
 
-        // Validar se há conteúdo suficiente
         if (!formData.content || formData.content.trim().length < 100) {
-            setAiExcerptMessage({
-                type: 'error',
-                text: 'Escreva pelo menos 100 caracteres no conteúdo para gerar uma sugestão.'
-            });
+            setAiExcerptMessage({ type: 'error', text: 'Escreva pelo menos 100 caracteres no conteúdo.' });
             return;
         }
 
@@ -153,33 +152,31 @@ export const PostForm: React.FC<PostFormProps> = ({
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     content: formData.content,
-                    title: formData.title || undefined
+                    title: formData.title || undefined,
+                    strategy: excerptStrategy // Envia o cache se existir
                 }),
             });
 
             const data = await response.json();
 
-            if (!response.ok) {
-                throw new Error(data.error || 'Erro ao gerar sugestão');
+            if (!response.ok) throw new Error(data.error || 'Erro ao gerar sugestão');
+
+            // Atualiza APENAS o Resumo (Excerpt)
+            setFormData(prev => ({
+                ...prev,
+                excerpt: data.excerpt
+            }));
+
+            // Salva o cache da estratégia (para uso interno ou futuro)
+            if (data.strategy) {
+                setExcerptStrategy(data.strategy);
             }
 
-            // Atualizar o resumo com a sugestão
-            setFormData({ ...formData, excerpt: data.excerpt });
-            setAiExcerptMessage({
-                type: 'success',
-                text: '✨ Resumo gerado com sucesso!'
-            });
-
-            // Limpar mensagem de sucesso após 5 segundos
+            setAiExcerptMessage({ type: 'success', text: '✨ Resumo gerado!' });
             setTimeout(() => setAiExcerptMessage(null), 5000);
 
-        } catch (error: unknown) {
-            let errorMessage = 'Erro ao gerar sugestão.';
-            if (error instanceof Error) errorMessage = error.message;
-            setAiExcerptMessage({
-                type: 'error',
-                text: errorMessage
-            });
+        } catch (error: any) {
+            setAiExcerptMessage({ type: 'error', text: error.message || 'Erro ao gerar sugestão.' });
         } finally {
             setAiExcerptLoading(false);
         }
@@ -191,9 +188,6 @@ export const PostForm: React.FC<PostFormProps> = ({
         setLoading(true);
 
         try {
-            // PAYLOAD LIMPO:
-            // Não enviamos authorId nem writer.
-            // O Backend pega o usuário da sessão (cookie) e preenche esses dados.
             const payload = {
                 title: formData.title,
                 content: formData.content,
@@ -219,16 +213,13 @@ export const PostForm: React.FC<PostFormProps> = ({
                 throw new Error(errorData.error || "Erro ao salvar");
             }
 
-            if (onSuccess) {
-                onSuccess();
-            } else {
+            if (onSuccess) onSuccess();
+            else {
                 router.push("/admin");
                 router.refresh();
             }
-        } catch (error: unknown) {
-            let errorMessage = "Erro desconhecido.";
-            if (error instanceof Error) errorMessage = error.message;
-            alert(errorMessage);
+        } catch (error: any) {
+            alert(error.message || "Erro desconhecido.");
         } finally {
             setLoading(false);
         }
@@ -240,6 +231,7 @@ export const PostForm: React.FC<PostFormProps> = ({
     };
 
     const inputClass = "w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-auftek-blue outline-none text-slate-900 bg-white placeholder:text-slate-500";
+
     return (
         <form onSubmit={handleSubmit} className="space-y-6 max-w-5xl mx-auto pb-10">
             {/* Título */}
@@ -255,9 +247,9 @@ export const PostForm: React.FC<PostFormProps> = ({
                         className={`
                             flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all
                             ${aiLoading || formData.content.trim().length < 100
-                                ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                                : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 shadow-sm hover:shadow-md'
-                            }
+                            ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                            : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 shadow-sm hover:shadow-md'
+                        }
                         `}
                     >
                         <Sparkles size={16} className={aiLoading ? 'animate-spin' : ''} />
@@ -272,15 +264,10 @@ export const PostForm: React.FC<PostFormProps> = ({
                     placeholder="Ex: Inovação em Biotecnologia"
                     required
                 />
-                {/* Mensagem de feedback da IA */}
                 {aiMessage && (
-                    <div className={`
-                        mt-2 px-3 py-2 rounded-lg text-sm flex items-center gap-2
-                        ${aiMessage.type === 'success'
-                            ? 'bg-green-50 text-green-700 border border-green-200'
-                            : 'bg-red-50 text-red-700 border border-red-200'
-                        }
-                    `}>
+                    <div className={`mt-2 px-3 py-2 rounded-lg text-sm flex items-center gap-2 ${
+                        aiMessage.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
+                    }`}>
                         {aiMessage.type === 'error' && <AlertCircle size={16} />}
                         {aiMessage.text}
                     </div>
@@ -303,7 +290,9 @@ export const PostForm: React.FC<PostFormProps> = ({
                     />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Tags</label>
+                    <div className="flex justify-between">
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Tags</label>
+                    </div>
                     <input
                         name="tags"
                         value={formData.tags}
@@ -325,7 +314,6 @@ export const PostForm: React.FC<PostFormProps> = ({
                         placeholder="Ex: 5 min"
                     />
                 </div>
-                {/* Se for Admin, mostra opção de Status */}
                 {user?.role === 'admin' && (
                     <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
@@ -354,9 +342,9 @@ export const PostForm: React.FC<PostFormProps> = ({
                         className={`
                             flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all
                             ${aiExcerptLoading || formData.content.trim().length < 100
-                                ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                                : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 shadow-sm hover:shadow-md'
-                            }
+                            ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                            : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 shadow-sm hover:shadow-md'
+                        }
                         `}
                     >
                         <Sparkles size={16} className={aiExcerptLoading ? 'animate-spin' : ''} />
@@ -371,15 +359,10 @@ export const PostForm: React.FC<PostFormProps> = ({
                     className={inputClass}
                     placeholder="Breve descrição que aparecerá nos cards..."
                 />
-                {/* Mensagem de feedback da IA */}
                 {aiExcerptMessage && (
-                    <div className={`
-                        mt-2 px-3 py-2 rounded-lg text-sm flex items-center gap-2
-                        ${aiExcerptMessage.type === 'success'
-                            ? 'bg-green-50 text-green-700 border border-green-200'
-                            : 'bg-red-50 text-red-700 border border-red-200'
-                        }
-                    `}>
+                    <div className={`mt-2 px-3 py-2 rounded-lg text-sm flex items-center gap-2 ${
+                        aiExcerptMessage.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'
+                    }`}>
                         {aiExcerptMessage.type === 'error' && <AlertCircle size={16} />}
                         {aiExcerptMessage.text}
                     </div>
