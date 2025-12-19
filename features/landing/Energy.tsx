@@ -26,7 +26,6 @@ const PRODUCTS = {
       "Validação de segurança de inversores",
       "Software de automação incluso",
     ],
-    // --- CARROSSEL APENAS PARA O PVAG POR ENQUANTO ---
     images: ["/images/PVAG.jpeg", "/images/PVAG2.jpeg", "/images/PVAG3.jpeg"],
     icon: Zap,
     youtubeLink:
@@ -56,9 +55,11 @@ const PRODUCTS = {
       "Alta precisão para certificação",
       "Design modular até 75KW",
     ],
-    // IRCCT mantido com imagem única por enquanto
+    // --- CARROSSEL IRCCT ATUALIZADO ---
     images: [
-      "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&q=80&w=800",
+      "/images/IRCCT.JPEG",
+     // "/images/IRCCT2.JPEG",
+     // "/images/IRCCT3.JPEG",
     ],
     icon: Cpu,
     youtubeLink:
@@ -279,23 +280,6 @@ export const Energy: React.FC = () => {
                   </div>
                 </>
               )}
-
-              {/* Tags Normativas */}
-              <div className="absolute bottom-8 left-8 right-8 z-20 pointer-events-none">
-                <p className="text-gray-300 text-sm mb-3 font-semibold uppercase tracking-wider">
-                  Conformidade Normativa
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {product.standardsTags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="px-3 py-1 bg-black/60 backdrop-blur-md border border-white/10 text-white text-xs font-bold rounded-md"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
             </div>
           </div>
         </div>

@@ -10,6 +10,7 @@ import {
   FileText,
   Rocket
 } from "lucide-react";
+import { FaBacteria } from "react-icons/fa";
 
 import { Section, SectionTitle } from "../../components/ui/Section";
 import { cn } from "../../lib/utils";
@@ -52,7 +53,7 @@ export const Publications: React.FC = () => {
       category: "INDÚSTRIA ALIMENTÍCIA",
       title: "Salmonella e Patógenos",
       description: "Libere lotes em horas, não dias. Segurança total com detecção rápida para eliminar riscos sanitários.",
-      icon: Biohazard,
+      icon: FaBacteria,
       theme: "red"
     },
     {
