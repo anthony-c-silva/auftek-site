@@ -10,48 +10,41 @@ export const Microbiology: React.FC = () => {
       theme: "red",
       title: "O Problema do Tempo",
       description:
-        "O fluxo atual é ineficiente: da coleta ao transporte e incubação, perde-se dias ou semanas. Se o resultado for positivo, o ciclo reinicia: tratamento da água e novo teste, dobrando o tempo de espera.",
+        "O fluxo tradicional leva dias ou até semanas entre coleta, transporte e resultado. Se o resultado for positivo, todo o ciclo recomeça, dobrando o seu tempo de espera.",
       footer: (
-        <div className="mt-auto border-t border-white/5">
+        <div>
+          {/* Timeline Visual */}
+          <div className="relative mb-2">
+            {/* Linha de Fundo */}
+            <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gradient-to-r from-blue-500 via-purple-500 to-red-500 -translate-y-1/2 rounded-full opacity-50"></div>
 
-          {/* Timeline de Barras Sólidas (Tamanhos Iguais) */}
-          <div className="flex w-full gap-1 h-2.5 mb-2">
-            {/* Barra 1 */}
-            <div className="flex-1 bg-blue-500/40 border border-blue-500/20 rounded-l-sm"></div>
-            {/* Barra 2 */}
-            <div className="flex-1 bg-purple-500/40 border border-purple-500/20"></div>
-            {/* Barra 3 (Pulsante para destaque) */}
-            <div className="flex-1 bg-red-500/60 border border-red-500/30 rounded-r-sm animate-pulse"></div>
-          </div>
+            {/* Pontos */}
+            <div className="relative flex justify-between items-center z-10">
+              {/* Ponto Coleta */}
+              <div className="flex flex-col items-center gap-2 group/point">
+                <div className="w-3 h-3 bg-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.5)] ring-4 ring-[#0e223b]"></div>
+              </div>
 
-          {/* Descrições das Etapas (Alinhadas com as barras) */}
-          <div className="flex w-full gap-1 mb-5">
-            <div className="flex-1 text-center">
-              <span className="block text-[10px] font-bold text-blue-400">
-                COLETA
-              </span>
-            </div>
-            <div className="flex-1 text-center">
-              <span className="block text-[10px] font-bold text-purple-400">
-                TRANSPORTE
-              </span>
-             
-            </div>
-            <div className="flex-1 text-center">
-              <span className="block text-[10px] font-bold text-red-400">
-                ANÁLISE
-              </span>
+              {/* Ponto Transporte (Meio - Decorativo) */}
+              <div className="w-2 h-2 bg-purple-500 rounded-full ring-4 ring-[#0e223b]"></div>
+
+              {/* Ponto Resultado */}
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-3 h-3 border-2 border-red-500 bg-[#0e223b] rounded-full ring-4 ring-[#0e223b]"></div>
+              </div>
             </div>
           </div>
 
-          {/* Alerta de Tempo Total */}
-          <div className="flex items-center justify-between bg-red-950/30 border border-red-500/20 rounded px-3 py-2">
-            <span className="text-xs text-gray-300 font-medium">
-              Ciclo Total:
-            </span>
-            <span className="text-sm font-bold text-red-400">
-              De 2 dias a 2 Semanas
-            </span>
+          {/* Legendas da Timeline */}
+          <div className="flex justify-between text-[10px] font-bold tracking-wider text-gray-500 mb-3 font-mono">
+            <span>COLETA</span>
+            <span className="text-center">TRANSPORTE</span>
+            <span>RESULTADO</span>
+          </div>
+
+          {/* Badge de Tempo (VERMELHO - Mantido) */}
+          <div className="inline-flex items-center justify-center w-full py-1.5 px-3 rounded bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold tracking-wide uppercase">
+            + 2 DIAS / SEMANAS
           </div>
         </div>
       ),
@@ -61,12 +54,12 @@ export const Microbiology: React.FC = () => {
       theme: "orange",
       title: "Impacto na Indústria",
       description:
-        "A demora nos laudos gera impacto financeiro direto. O atraso bloqueia a liberação de lotes e posterga o tratamento de água e efluentes. Isso eleva os custos operacionais, aumentando as despesas com armazenamento e exigindo maior consumo de energia e insumos para reprocesso.",
+        "A demora nos resultados trava a liberação de lotes, atrasa o tratamento de água e efluentes e gera custos operacionais elevados com armazenamento e reprocesso.",
       footer: (
         <div className="mt-auto pt-4">
           {/* Box de Citação (LARANJA - Ajustado) */}
           <div className="p-4 rounded-lg bg-orange-500/5 border border-orange-500/10 text-orange-400 text-sm leading-relaxed relative overflow-hidden">
-            <div className="absolute left-0 top-0 bottom-0 w-1"></div>
+            <div className="absolute left-0 top-0"></div>
             <p className="font-medium text-xs md:text-sm opacity-90">
               "Lotes retidos geram prejuízos diários de armazenagem e risco de
               perda de validade."
@@ -80,7 +73,7 @@ export const Microbiology: React.FC = () => {
       theme: "green",
       title: "A Necessidade",
       description:
-        "O mercado busca substituir a análise visual por métodos autônomos. A automação na contagem e identificação de colônias é necessária para garantir a integridade dos resultados, eliminando variações causadas pelo fator humano e acelerando a liberação técnica.",
+        "O mercado precisa de métodos rápidos, autônomos e que eliminem o erro humano na contagem e identificação de colônias.",
       footer: (
         <div className="mt-auto pt-4">
           {/* Box de Solução (VERDE - Ajustado) */}
