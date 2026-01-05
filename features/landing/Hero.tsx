@@ -21,14 +21,8 @@ const IMAGES = {
 export const Hero: React.FC = () => {
   return (
       <div className="relative w-full">
-        {/* MUDANÇAS CRÍTICAS DE LAYOUT:
-            1. 'min-h-[100dvh]': Garante que o container cresça se o conteúdo for maior que a tela.
-            2. 'sticky top-0': Mantém o efeito de parallax quando a tela for alta o suficiente.
-            3. 'overflow-hidden': Mantém o fundo contido, mas como usamos min-h, o container cresce junto.
-        */}
         <div className="sticky top-0 min-h-[100dvh] flex flex-col items-center justify-center overflow-hidden bg-auftek-dark">
 
-          {/* --- CAMADA DE FUNDO --- */}
           <div className="absolute inset-0 w-full h-full">
             <div
                 className="absolute inset-0 bg-cover bg-center z-0 opacity-20 transition-transform duration-[20s] hover:scale-105"
@@ -44,14 +38,6 @@ export const Hero: React.FC = () => {
               <Activity className="absolute bottom-[20%] left-[8%] lg:bottom-1/3 lg:left-[15%] text-purple-500/10 w-8 h-8 sm:w-14 sm:h-14 lg:w-20 lg:h-20 animate-float" />
             </div>
           </div>
-
-          {/* --- CONTEÚDO PRINCIPAL --- */}
-          {/* AJUSTE DE POSICIONAMENTO:
-              1. 'pt-24': Padding de segurança para o Header (aprox 96px).
-              2. 'pb-20': Espaço em baixo para garantir que os botões não toquem a borda.
-              3. 'justify-center': O conteúdo se centraliza automaticamente no espaço disponível.
-              4. 'flex-grow': Ocupa todo o espaço possível, empurrando a seta para baixo.
-          */}
           <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex-grow flex flex-col items-center justify-center pt-24 pb-20 text-center">
 
             <div className="animate-fade-in-up">
@@ -69,13 +55,9 @@ export const Hero: React.FC = () => {
 
             <div className="max-w-3xl w-full space-y-6 mb-8 animate-fade-in-up delay-200">
               <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-200 font-light leading-relaxed px-4">
-                Transformamos análises de{" "}
-                <span className="text-white font-semibold border-b-2 border-red-500/30">
-                dias
-              </span>{" "}
-                em resultados de{" "}
+                Entregamos análises microbiológicas em tempo real, com laudos em {""}
                 <span className="text-auftek-green font-semibold border-b-2 border-auftek-green/30">
-                poucas horas
+                 poucas horas
               </span>
                 .
               </p>
@@ -83,15 +65,7 @@ export const Hero: React.FC = () => {
               <p className="text-sm sm:text-base text-gray-400 font-light max-w-xl mx-auto hidden sm:block">
                 Instrumentação inovadora com IA e IoT para saneamento, energia e indústria.
               </p>
-
-              <div className="flex justify-center mt-4">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
-                  <span className="text-xs text-gray-400 italic">Lema:</span>
-                  <span className="text-xs sm:text-sm text-auftek-blue font-medium tracking-wide uppercase">
-                  It’s time to save time
-                </span>
-                </div>
-              </div>
+              
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 w-full justify-center px-4 animate-fade-in-up delay-300">
@@ -118,7 +92,6 @@ export const Hero: React.FC = () => {
             </div>
           </div>
 
-          {/* Seta reposicionada (agora dentro do fluxo, mas absoluta em relação ao fundo) */}
           <div className="absolute bottom-6 w-full flex flex-col items-center z-20 pointer-events-none">
             <div
                 className="flex flex-col items-center gap-2 animate-bounce cursor-pointer opacity-70 hover:opacity-100 transition-opacity pointer-events-auto"

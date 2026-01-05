@@ -10,8 +10,9 @@ import {
 } from "lucide-react";
 import { Section } from "../../components/ui/Section";
 import { Button } from "../../components/ui/Button";
+// Importando sua função de scroll personalizada
+import { scrollToElement } from "../../hooks/useScroll";
 
-// --- DADOS DOS PRODUTOS ---
 const PRODUCTS = {
   pvag: {
     id: "pvag",
@@ -19,7 +20,6 @@ const PRODUCTS = {
     subtitle: "Arco Elétrico DC",
     description:
       "Sistema modular de precisão para emulação controlada de arcos elétricos em corrente contínua. Essencial para ensaios de segurança e certificação conforme a IEC 63027 e Portaria 140 Inmetro.",
-
     points: [
       "Emulação precisa de arcos em DC",
       "Atende aos requisitos da Portaria nº 140",
@@ -31,7 +31,7 @@ const PRODUCTS = {
     youtubeLink:
       "https://www.youtube.com/playlist?list=PLikkF_yABojGV-2xLF1zsSfi1CkttXdyR",
     whatsappMessage:
-      "Olá! Gostaria de um orçamento para o PVAG LAB.",
+      "Olá! Gostaria de receber um orçamento para o sistema PVAG LAB.",
     theme: {
       primary: "text-yellow-500",
       bg: "bg-yellow-500",
@@ -61,7 +61,7 @@ const PRODUCTS = {
     youtubeLink:
       "https://www.youtube.com/playlist?list=PLikkF_yABojGV-2xLF1zsSfi1CkttXdyR",
     whatsappMessage:
-      "Olá! Gostaria de um orçamento para o sistema IRCCT.",
+      "Olá! Gostaria de receber um orçamento para o sistema IRCCT.",
     theme: {
       primary: "text-cyan-400",
       bg: "bg-cyan-400",
@@ -82,13 +82,11 @@ export const Energy: React.FC = () => {
   const Icon = product.icon;
   const theme = product.theme;
 
-  // Reseta o carrossel ao trocar de aba
   const handleTabChange = (tab: "pvag" | "ircct") => {
     setActiveTab(tab);
     setCurrentImageIndex(0);
   };
 
-  // Funções de navegação
   const nextImage = () => {
     setCurrentImageIndex((prev) =>
       prev === product.images.length - 1 ? 0 : prev + 1
@@ -99,6 +97,14 @@ export const Energy: React.FC = () => {
     setCurrentImageIndex((prev) =>
       prev === 0 ? product.images.length - 1 : prev - 1
     );
+  };
+
+  const handleQuoteClick = () => {
+    const event = new CustomEvent("prefillContact", {
+      detail: product.whatsappMessage,
+    });
+    window.dispatchEvent(event);
+    scrollToElement("#contato");
   };
 
   return (
@@ -209,15 +215,9 @@ export const Energy: React.FC = () => {
               <div className="flex flex-col gap-4 mt-auto">
                 <Button
                   className={`${theme.bg} ${theme.hoverBg} text-black font-bold px-4 py-4 rounded-full flex items-center justify-center gap-2 transition-all hover:scale-105 shadow-lg shadow-black/20`}
-                  onClick={() => {
-                    const phone = "555591261525";
-                    const url = `https://wa.me/${phone}?text=${encodeURIComponent(
-                      product.whatsappMessage
-                    )}`;
-                    window.open(url, "_blank");
-                  }}
+                  onClick={handleQuoteClick}
                 >
-                  Orçamento no WhatsApp <ArrowRight size={18} />
+                  Solicitar Orçamento <ArrowRight size={18} />
                 </Button>
 
                 <Button
@@ -238,14 +238,12 @@ export const Energy: React.FC = () => {
               <div className="absolute inset-0 bg-gradient-to-t from-[#112240] via-transparent to-transparent z-10"></div>
 
               <img
-                // Usamos o índice na key para forçar a animação suave de fade ao trocar foto
                 key={`${product.id}-${currentImageIndex}`}
                 src={product.images[currentImageIndex]}
                 alt={product.title}
                 className="w-full h-full object-cover opacity-80 animate-in fade-in duration-500"
               />
 
-              {/* CONTROLES DO CARROSSEL (Só aparecem se houver > 1 imagem) */}
               {product.images.length > 1 && (
                 <>
                   <button
@@ -261,7 +259,6 @@ export const Energy: React.FC = () => {
                     <ChevronRight size={24} />
                   </button>
 
-                  {/* Indicadores (Bolinhas) */}
                   <div className="absolute top-4 right-4 z-30 flex gap-2">
                     {product.images.map((_, idx) => (
                       <div

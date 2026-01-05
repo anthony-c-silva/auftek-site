@@ -8,7 +8,8 @@ import {
   Gauge,
   Biohazard,
   FileText,
-  Rocket
+  Rocket,
+  Drumstick
 } from "lucide-react";
 
 import { Section, SectionTitle } from "../../components/ui/Section";
@@ -52,7 +53,7 @@ export const Publications: React.FC = () => {
       category: "INDÚSTRIA ALIMENTÍCIA",
       title: "Salmonella e Patógenos",
       description: "Libere lotes em horas, não dias. Segurança total com detecção rápida para eliminar riscos sanitários.",
-      icon: Biohazard,
+      icon: Drumstick,
       theme: "red"
     },
     {

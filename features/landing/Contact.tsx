@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Button } from "../../components/ui/Button";
 import { ScrollReveal } from "../../components/ui/ScrollReveal";
 
@@ -22,6 +22,27 @@ export const Contact: React.FC = () => {
   const [status, setStatus] = useState<FormStatus>("idle");
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // --- ESCUTA O EVENTO DO COMPONENTE ENERGY ---
+  useEffect(() => {
+    const handlePrefill = (event: Event) => {
+      // TypeScript precisa de 'CustomEvent' para acessar 'detail'
+      const customEvent = event as CustomEvent<string>;
+      if (customEvent.detail) {
+        setFormData((prev) => ({
+          ...prev,
+          mensagem: customEvent.detail,
+        }));
+      }
+    };
+
+    window.addEventListener("prefillContact", handlePrefill);
+
+    return () => {
+      window.removeEventListener("prefillContact", handlePrefill);
+    };
+  }, []);
+  // ---------------------------------------------
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
@@ -35,20 +56,16 @@ export const Contact: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    // 1. UI OTIMISTA
     setStatus("success");
 
     const payload = { ...formData };
 
-    // 2. Envio Backend
     fetch("/api/opportunities", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     })
       .then(async (response) => {
-        // 3. VERIFICAÇÃO TARDIA
         if (response.status === 409) {
           setStatus("duplicate");
         } else {
@@ -70,12 +87,8 @@ export const Contact: React.FC = () => {
       id="contato"
       className="relative z-20 bg-auftek-dark text-white text-center px-6 py-24 border-t border-white/10 overflow-hidden"
     >
-      {/* Background Noise */}
       <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5 pointer-events-none"></div>
 
-      {/* --- AJUSTE AQUI --- */}
-      {/* Antes estava 'top-0'. Mudei para 'top-1/2' e aumentei um pouco o tamanho */}
-      {/* Isso centraliza o brilho atrás do formulário, eliminando a quebra no topo */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 w-[700px] h-[500px] bg-auftek-blue/15 rounded-full blur-[120px] pointer-events-none -translate-y-1/2"></div>
 
       <div className="max-w-4xl mx-auto relative z-10">
