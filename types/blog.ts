@@ -6,13 +6,22 @@ export enum CategoryType {
 }
 
 export interface Author {
+    _id?: string;
     id?: string;
     name: string;
     photoUrl: string;
+    education?: string;
+    bio?: string;
+
+    socialLinks?: {
+        linkedin?: string;
+        instagram?: string;
+        github?: string;
+        lattes?: string;
+    };
+
     linkedin?: string;
     lattes?: string;
-    education: string;
-    bio?: string;
 }
 
 export interface BlogPost {
@@ -34,6 +43,4 @@ export interface BlogPost {
     };
     authorId: string;
     createdAt?: string;
-
 }
-

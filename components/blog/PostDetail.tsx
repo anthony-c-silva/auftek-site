@@ -11,8 +11,6 @@ interface PostDetailProps {
 }
 
 const PostDetail: React.FC<PostDetailProps> = ({ post }) => {
-    // REMOVIDO: A lógica antiga de dividir por \n não serve mais para HTML
-    // const contentArray = ...
 
     return (
         <article className="min-h-screen bg-white">
@@ -69,7 +67,6 @@ const PostDetail: React.FC<PostDetailProps> = ({ post }) => {
                 </div>
             </div>
 
-            {/* CORPO DO TEXTO */}
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
 
                 {/* Excerpt (Resumo) em destaque */}
@@ -79,10 +76,6 @@ const PostDetail: React.FC<PostDetailProps> = ({ post }) => {
                     </div>
                 )}
 
-                {/* AQUI ESTÁ A MÁGICA:
-                   1. dangerouslySetInnerHTML: Renderiza o HTML do TipTap
-                   2. prose: Aplica estilos bonitos em tags p, h1, img, ul, etc.
-                */}
                 <div
                     className="
                         prose prose-slate prose-lg max-w-none

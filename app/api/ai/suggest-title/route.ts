@@ -25,20 +25,20 @@ export async function POST(request: Request) {
             console.log("🔍 [Title V2] Extraindo estratégia...");
 
             const analysisPrompt = `
-        You are an SEO Expert. Analyze the text.
-        Return ONLY a valid JSON object.
+        Você é um Estrategista de SEO. Analise o texto.
+        Retorne APENAS um objeto JSON válido.
         
         INSTRUCTIONS:
-        1. "primary_keyword": Extract the SHORTEST possible topic (Max 3 words).
-        2. "hook_angle": One word style (e.g. Curiosidade, Alerta, Dica, Futuro).
+        1. "palavra-chave-primaria": Extraia o tópico MAIS CURTO possível (máx. 3 palavras).
+        2. "gancho-de-abordagem": “Estilo em uma palavra (ex.: Curiosidade, Alerta, Dica, Futuro).
         
-        Expected Format:
+        Exemplo de formato esperado:
         {
-          "primary_keyword": "Microbiologia IoT", 
-          "hook_angle": "Inovação"
+          "palavra-chave-primaria": "Microbiologia IoT", 
+          "gancho-de-abordagem": "Inovação"
         }
         
-        TEXT: "${contentToAnalyze.slice(0, 2000)}"
+        TEXTO: "${contentToAnalyze.slice(0, 2000)}"
         `;
 
             const analysisCompletion = await openai.chat.completions.create({

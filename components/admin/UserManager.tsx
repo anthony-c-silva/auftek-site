@@ -1,13 +1,11 @@
 "use client";
-
 import React, { useState, useEffect, useMemo } from "react";
 import {
-    UserPlus, Search, Edit2, Trash2, Shield, User,
-    Briefcase, Save, X, Lock, Image as ImageIcon
+    UserPlus, Search, Edit2, Trash2, User,
+    Briefcase, Save, X, Lock, Github, BookOpen, Linkedin, Instagram
 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 
-// Tipo completo unificado
 interface UserData {
     _id: string;
     name: string;
@@ -20,6 +18,7 @@ interface UserData {
         linkedin?: string;
         instagram?: string;
         github?: string;
+        lattes?: string;
     };
     createdAt?: string;
 }
@@ -30,29 +29,27 @@ export function UserManager() {
     const [searchTerm, setSearchTerm] = useState("");
     const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'author'>('all');
 
-    // Estado do Modal (Create/Edit)
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
-    // Estado do Formulário
     const initialFormState = {
         name: "",
         email: "",
-        password: "", // Opcional na edição
+        password: "",
         role: "author",
         photoUrl: "",
         education: "",
         bio: "",
         linkedin: "",
         instagram: "",
-        github: ""
+        github: "",
+        lattes: "",
     };
 
     const [formData, setFormData] = useState<any>(initialFormState);
     const [editingId, setEditingId] = useState<string | null>(null);
 
-    // --- FETCH ---
     const fetchUsers = async () => {
         setLoading(true);
         try {
@@ -72,7 +69,6 @@ export function UserManager() {
         fetchUsers();
     }, []);
 
-    // --- FILTROS ---
     const filteredUsers = useMemo(() => {
         return users.filter(user => {
             const matchesSearch =
@@ -85,7 +81,6 @@ export function UserManager() {
         });
     }, [users, searchTerm, roleFilter]);
 
-    // --- ACTIONS ---
     const handleOpenCreate = () => {
         setFormData(initialFormState);
         setIsEditing(false);
@@ -97,14 +92,15 @@ export function UserManager() {
         setFormData({
             name: user.name,
             email: user.email,
-            password: "", // Senha vazia na edição (só preenche se quiser trocar)
+            password: "",
             role: user.role,
             photoUrl: user.photoUrl || "",
             education: user.education || "",
             bio: user.bio || "",
             linkedin: user.socialLinks?.linkedin || "",
             instagram: user.socialLinks?.instagram || "",
-            github: user.socialLinks?.github || ""
+            github: user.socialLinks?.github || "",
+            lattes: user.socialLinks?.lattes || ""
         });
         setIsEditing(true);
         setEditingId(user._id);
@@ -131,7 +127,8 @@ export function UserManager() {
                 socialLinks: {
                     linkedin: formData.linkedin,
                     instagram: formData.instagram,
-                    github: formData.github
+                    github: formData.github,
+                    lattes: formData.lattes
                 }
             };
 
@@ -159,12 +156,12 @@ export function UserManager() {
         }
     };
 
-    const inputClass = "w-full p-2 border border-slate-300 rounded text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-slate-900";    const labelClass = "block text-xs font-bold text-slate-500 uppercase mb-1";
+    const inputClass = "w-full p-2 border border-slate-300 rounded text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-slate-900";
+    const labelClass = "block text-xs font-bold text-slate-500 uppercase mb-1";
 
     return (
         <div className="space-y-6">
 
-            {/* --- HEADER & FILTERS --- */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
                 <div className="flex gap-2">
                     <button
@@ -207,7 +204,6 @@ export function UserManager() {
                 </div>
             </div>
 
-            {/* --- TABLE --- */}
             <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
                 <table className="w-full text-left text-sm">
                     <thead className="bg-slate-50 border-b border-slate-200 text-slate-500">
@@ -273,7 +269,6 @@ export function UserManager() {
                 </table>
             </div>
 
-            {/* --- MODAL DE CRIAÇÃO/EDIÇÃO --- */}
             {isModalOpen && (
                 <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
                     <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -289,7 +284,6 @@ export function UserManager() {
 
                         <form onSubmit={handleSubmit} className="p-6 space-y-6">
 
-                            {/* Bloco 1: Credenciais */}
                             <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                                 <h3 className="font-bold text-slate-700 mb-3 flex items-center gap-2 text-sm uppercase"><Lock size={14}/> Credenciais de Acesso</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -339,9 +333,8 @@ export function UserManager() {
                                 </div>
                             </div>
 
-                            {/* Bloco 2: Perfil Público */}
                             <div className="border-t pt-6">
-                                <h3 className="font-bold text-slate-700 mb-3 flex items-center gap-2 text-sm uppercase"><User size={14}/> Perfil Público (Author)</h3>
+                                <h3 className="font-bold text-slate-700 mb-3 flex items-center gap-2 text-sm uppercase"><User size={14}/> Perfil Público</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="md:col-span-2">
                                         <label className={labelClass}>Foto de Perfil (URL)</label>
@@ -374,14 +367,56 @@ export function UserManager() {
                                         />
                                     </div>
 
-                                    {/* Redes Sociais */}
                                     <div>
                                         <label className={labelClass}>LinkedIn URL</label>
-                                        <input value={formData.linkedin} onChange={e => setFormData({...formData, linkedin: e.target.value})} className={inputClass} />
+                                        <div className="relative">
+                                            <Linkedin className="absolute left-2 top-2.5 text-slate-400" size={16} />
+                                            <input
+                                                value={formData.linkedin}
+                                                onChange={e => setFormData({...formData, linkedin: e.target.value})}
+                                                className={`${inputClass} pl-8`}
+                                                placeholder="linkedin.com/in/..."
+                                            />
+                                        </div>
                                     </div>
+
                                     <div>
                                         <label className={labelClass}>Instagram URL</label>
-                                        <input value={formData.instagram} onChange={e => setFormData({...formData, instagram: e.target.value})} className={inputClass} />
+                                        <div className="relative">
+                                            <Instagram className="absolute left-2 top-2.5 text-slate-400" size={16} />
+                                            <input
+                                                value={formData.instagram}
+                                                onChange={e => setFormData({...formData, instagram: e.target.value})}
+                                                className={`${inputClass} pl-8`}
+                                                placeholder="instagram.com/..."
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className={labelClass}>Lattes URL</label>
+                                        <div className="relative">
+                                            <BookOpen className="absolute left-2 top-2.5 text-slate-400" size={16} />
+                                            <input
+                                                value={formData.lattes}
+                                                onChange={e => setFormData({...formData, lattes: e.target.value})}
+                                                className={`${inputClass} pl-8`}
+                                                placeholder="http://lattes.cnpq.br/..."
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className={labelClass}>GitHub URL</label>
+                                        <div className="relative">
+                                            <Github className="absolute left-2 top-2.5 text-slate-400" size={16} />
+                                            <input
+                                                value={formData.github}
+                                                onChange={e => setFormData({...formData, github: e.target.value})}
+                                                className={`${inputClass} pl-8`}
+                                                placeholder="github.com/..."
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>

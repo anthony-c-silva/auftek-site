@@ -12,7 +12,6 @@ export async function GET() {
         }
 
         await connectDB();
-        // Trazemos todos os usuários ordenados por criação
         const users = await User.find({ deletedAt: null }).select("-password").sort({ createdAt: -1 });
         return NextResponse.json(users);
     } catch (error) {
@@ -36,7 +35,14 @@ export async function POST(request: Request) {
 
         await connectDB();
 
-        const userExists = await User.findOne({ email });
+        const userExists = await User.findOne({
+            email,
+            deletedAt: null //Só impede cadastro se existir um ATIVO com esse email
+        });
+
+        if (userExists) {
+            return NextResponse.json({ error: "Email já cadastrado" }, { status: 400 });
+        }
         if (userExists) {
             return NextResponse.json({ error: "Email já cadastrado" }, { status: 400 });
         }

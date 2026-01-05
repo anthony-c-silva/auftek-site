@@ -49,7 +49,6 @@ export async function DELETE(request: Request, { params }: RouteParams) {
             return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
         }
 
-        // CORREÇÃO: Aguardamos o params antes de usar
         const { id } = await params;
 
         await connectDB();

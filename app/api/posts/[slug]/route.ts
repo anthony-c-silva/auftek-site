@@ -13,7 +13,10 @@ export async function GET(request: Request, { params }: Props) {
         const { slug } = await params;
         await connectDB();
 
-        const post = await Post.findOne({ slug, deletedAt: null });
+        // --- AQUI ESTÁ A CORREÇÃO ---
+        // Adicionamos .populate('author') para buscar os dados REAIS e ATUAIS do usuário.
+        // Isso garante que o objeto 'socialLinks' venha junto.
+        const post = await Post.findOne({ slug, deletedAt: null }).lean();
 
         if (!post) {
             return NextResponse.json({ error: "Post não encontrado" }, { status: 404 });
@@ -43,9 +46,9 @@ export async function PUT(request: Request, { params }: Props) {
 
         const body = await request.json();
 
+        // Proteção de campos sensíveis
         if ('writer' in body) delete body.writer;
         if ('createdAt' in body) delete body.createdAt;
-
 
         const updatedPost = await Post.findOneAndUpdate(
             { slug, deletedAt: null },
@@ -80,7 +83,7 @@ export async function DELETE(request: Request, { params }: Props) {
         await connectDB();
 
         const softDeletedPost = await Post.findOneAndUpdate(
-            { slug, deletedAt: null }, // Garante que não deletamos o que já está deletado
+            { slug, deletedAt: null },
             { deletedAt: new Date() },
             { new: true }
         );

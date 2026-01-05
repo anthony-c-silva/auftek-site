@@ -2,7 +2,6 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import Post from "@/lib/models/Post";
-// REMOVIDO: import Author from "@/lib/models/Author"; (Não existe mais)
 import { getAuthenticatedUser } from "@/lib/auth-server";
 
 function generateSlug(text: string) {

@@ -21,6 +21,7 @@ export interface IPost extends Document {
             linkedin?: string;
             instagram?: string;
             github?: string;
+            lattes?: string;
         };
     };
 
@@ -53,7 +54,8 @@ const PostSchema: Schema = new Schema(
             socialLinks: {
                 linkedin: String,
                 instagram: String,
-                github: String
+                github: String,
+                lattes: String
             }
         },
 

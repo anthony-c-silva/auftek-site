@@ -30,13 +30,13 @@ export async function POST(request: Request) {
             console.log("🧠 [Excerpt V2] Calculando estratégia...");
 
             const strategyPrompt = `
-        You are an SEO Strategist. Analyze the text.
-        Return ONLY a valid JSON object.
+        Você é um Estrategista de SEO. Analise o texto.
+        Retorne APENAS um objeto JSON válido.
         
         INSTRUCTIONS:
-        1. "primary_keyword": Main topic.
-        2. "secondary_keywords": Array of 3 to 5 related technical terms (for Tags).
-        3. "user_pain_point": Identify the NEGATIVE difficulty (e.g., "Slowness", "Imprecision"). DO NOT describe the task.
+        1. "palavra-chave-primaria": Main topic.
+        2. "palavra-chave-secundaria": Array of 3 to 5 related technical terms (for Tags).
+        3. "dificuldade-do-usuario": Identifique a dificuldade NEGATIVA (ex.: “Lentidão”, “Imprecisão”). NÃO descreva a tarefa..
         
         TEXT: "${contentToAnalyze.slice(0, 2000)}"
         `;
@@ -93,8 +93,7 @@ export async function POST(request: Request) {
             1. SIMPLIFIQUE TERMOS TÉCNICOS LONGOS. (Ex: Em vez de "Sensor Elétrico de Ressonância...", use "Novo Sensor" ou "Tecnologia RFD").
             2. Use frases CURTAS. Máximo 20 palavras por frase.
             3. OBRIGATÓRIO: Termine a frase com PONTO FINAL. Não deixe o pensamento incompleto.
-            4. LIMITE: Máximo 140 caracteres.
-            5. Idioma: Português do Brasil.
+            4. Idioma: Português do Brasil.
             
             TEXTO BASE: """${contentToAnalyze}"""
             
