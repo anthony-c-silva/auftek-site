@@ -19,20 +19,19 @@ const PRODUCTS = {
     subtitle: "Arco Elétrico DC",
     description:
       "Sistema modular de precisão para emulação controlada de arcos elétricos em corrente contínua. Essencial para ensaios de segurança e certificação conforme a IEC 63027 e Portaria 140 Inmetro.",
-    standardsTags: ["IEC 63027", "Portaria 140", "ISO 17025"],
+
     points: [
       "Emulação precisa de arcos em DC",
-      "Controle total de parâmetros elétricos",
-      "Validação de segurança de inversores",
-      "Software de automação incluso",
+      "Atende aos requisitos da Portaria nº 140",
+      "Sistema modular para ensaios em inversores e micro inversores",
+      "Projetado para uso em laboratórios de certificação e ensaios de conformidade",
     ],
-    // --- CARROSSEL APENAS PARA O PVAG POR ENQUANTO ---
     images: ["/images/PVAG.jpeg", "/images/PVAG2.jpeg", "/images/PVAG3.jpeg"],
     icon: Zap,
     youtubeLink:
       "https://www.youtube.com/playlist?list=PLikkF_yABojGV-2xLF1zsSfi1CkttXdyR",
     whatsappMessage:
-      "Olá! Gostaria de um orçamento para o PVAG LAB (Gerador de Arco).",
+      "Olá! Gostaria de um orçamento para o PVAG LAB.",
     theme: {
       primary: "text-yellow-500",
       bg: "bg-yellow-500",
@@ -48,15 +47,13 @@ const PRODUCTS = {
     title: "IRCCT System",
     subtitle: "Fuga de Corrente",
     description:
-      "Sistema automatizado para testes de corrente residual (RCD) e resistência de isolação. Garante que inversores sem transformador operem dentro dos limites seguros conforme IEC 62109-2.",
-    standardsTags: ["IEC 62109-2", "IEC 63112", "ISO 17025"],
+      "Sistema modular de alta precisão para ensaios de corrente residual e resistência de isolação em inversores fotovoltaicos sem transformador, conforme as normas IEC 62109-2 e IEC 63112, atendendo à Portaria Inmetro nº 140.",
     points: [
-      "Testes de corrente residual (RCD)",
-      "Monitoramento de resistência de isolação",
-      "Alta precisão para certificação",
-      "Design modular até 75KW",
+      "Ensaios de corrente residual contínua e variação rápida",
+      "Conformidade com IEC 62109-2 e IEC 63112",
+      "Aplicável aos resíduos de segurança da Portaria inmetro nº 140",
+      "Sistema modular para inversores até 75 KW",
     ],
-    // IRCCT mantido com imagem única por enquanto
     images: [
       "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&q=80&w=800",
     ],
@@ -64,7 +61,7 @@ const PRODUCTS = {
     youtubeLink:
       "https://www.youtube.com/playlist?list=PLikkF_yABojGV-2xLF1zsSfi1CkttXdyR",
     whatsappMessage:
-      "Olá! Gostaria de um orçamento para o sistema IRCCT (Corrente Residual).",
+      "Olá! Gostaria de um orçamento para o sistema IRCCT.",
     theme: {
       primary: "text-cyan-400",
       bg: "bg-cyan-400",
@@ -118,7 +115,7 @@ export const Energy: React.FC = () => {
             Divisão de Energia
           </h4>
           <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
-            Soluções para Fotovoltaica
+            Soluções para a acreditação de inversores
           </h2>
           <p className="text-gray-400 max-w-2xl mx-auto text-lg">
             Instrumentação avançada para acreditação de inversores, garantindo
@@ -279,23 +276,6 @@ export const Energy: React.FC = () => {
                   </div>
                 </>
               )}
-
-              {/* Tags Normativas */}
-              <div className="absolute bottom-8 left-8 right-8 z-20 pointer-events-none">
-                <p className="text-gray-300 text-sm mb-3 font-semibold uppercase tracking-wider">
-                  Conformidade Normativa
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {product.standardsTags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="px-3 py-1 bg-black/60 backdrop-blur-md border border-white/10 text-white text-xs font-bold rounded-md"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
             </div>
           </div>
         </div>

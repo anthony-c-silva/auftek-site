@@ -33,8 +33,8 @@ export const SOLUTIONS = [
   },
   {
       icon: Zap,
-      title: 'Energia Fotovoltaica',
-      description: 'Ensaios de segurança elétrica, emulação de arco e performance para inversores (normas IEC/Inmetro).',
+      title: ' Acreditação de inversores',
+      description: 'Instrumentação para acreditação de inversores com emulação de arco elétrico e fuga de corrente residual.',
       href: '#energia', 
       theme: 'yellow'
   },

@@ -26,17 +26,14 @@ export const Footer: React.FC = () => {
     "CEP: 97105-900",
   ];
 
-  const fullAddressSearch =
-    "Av. Roraima 1000 Prédio 2 Sala 13 PULSAR UFSM Santa Maria RS";
   const companyName = "AUFTEK SERVICOS DE TECNOLOGIA LTDA";
   const cnpj = "35.789.235/0001-99";
   const email = "adriano.marques@auftek.com";
   const whatsappNumber = "555591261525";
 
   // Links
-  const mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-    fullAddressSearch
-  )}`;
+  const placeId = "ChIJQ04ZPaQqJa8RsEreb80pxHI";
+  const mapsLink = `https://www.google.com/maps/search/?api=1&query=AUFTEK+TECNOLOGIA&query_place_id=${placeId}`;
   const waLink = `https://wa.me/${whatsappNumber}?text=Olá!%20Vim%20pelo%20site.`;
   const linkedInLink = "https://br.linkedin.com/company/auftek";
   const instagramLink = "https://www.instagram.com/aufteksm";
