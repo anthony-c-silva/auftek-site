@@ -18,23 +18,25 @@ export const NAV_LINKS = [
   { name: 'Quem Somos', href: '#quem-somos' },
   { name: 'BioAiLab', href: '#bioailab' },
   { name: 'Energia', href: '#energia' },
+  { name: 'Contato', href: '#contato'},
   { name: 'Publicações', href: '#publicacoes' },
   { name: 'Parceiros', href: '#parceiros' },
-  { name: 'Sistema', href: 'https://bioailab.com.br/'}
+  { name: 'Sistema', href: 'https://bioailab.com.br/'},
+
 ];
 
 export const SOLUTIONS = [
   {
       icon: Microscope,
-      title: 'Microbiologia Digital',
-      description: 'Automação e digitalização de processos microbiológicos com análise de dados em tempo real e IA.',
+      title: 'Microbiologia em Tempo real',
+      description: 'Automação e digitalização de processos microbiológicos com análise de dados em tempo real.',
       href: '#bioailab', 
       theme: 'green' 
   },
   {
       icon: Zap,
-      title: 'Energia Fotovoltaica',
-      description: 'Ensaios de segurança elétrica, emulação de arco e performance para inversores (normas IEC/Inmetro).',
+      title: ' Acreditação de inversores',
+      description: 'Instrumentação para acreditação de inversores com emulação de arco elétrico e fuga de corrente residual.',
       href: '#energia', 
       theme: 'yellow'
   },
@@ -42,7 +44,7 @@ export const SOLUTIONS = [
       icon: FlaskConical, 
       title: 'Pesquisa e Desenvolvimento',
       description: 'Desenvolvimento de hardware e software sob medida para desafios complexos da indústria.',
-      href: '#quem-somos', 
+      href: '#contato', 
       theme: 'blue'
   },
 ];

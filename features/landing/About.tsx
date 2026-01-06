@@ -8,8 +8,7 @@ export const About: React.FC = () => {
         <div>
           <SectionTitle>Quem Somos</SectionTitle>
           <p className="text-gray-300 text-lg leading-relaxed mb-6">
-            A <strong className="text-white">Auftek Tecnologia</strong>{" "}
-            transforma ciência em instrumentação inteligente. Somos uma deeptech
+            Transformamos ciência em instrumentação inteligente. Somos uma deeptech
             focada em resolver gargalos críticos em análises laboratoriais e
             controle de qualidade.
           </p>
