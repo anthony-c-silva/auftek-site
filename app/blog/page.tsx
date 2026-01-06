@@ -6,8 +6,7 @@ import Newsletter from '@/components/blog/Newsletter';
 import BlogList from '@/components/blog/BlogList'; 
 import { BlogPost } from '@/types/blog';
 
-
-export const dynamic = 'force-dynamic'; 
+export const revalidate = 60;
 export const metadata: Metadata = {
     title: 'Blog | Auftek Tecnologia',
     description: 'Artigos sobre IA, IoT, Eficiência Energética e Inovação Industrial.',

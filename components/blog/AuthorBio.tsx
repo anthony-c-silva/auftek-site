@@ -4,7 +4,7 @@ import { Author } from '@/types/blog';
 import { Linkedin, BookOpen, Github, Instagram } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 
-// Função auxiliar para garantir que o link funcione e tenha https
+// formata link das redes do usuario para https
 const formatUrl = (url?: string) => {
     if (!url) return "";
     if (url.startsWith("http://") || url.startsWith("https://")) {

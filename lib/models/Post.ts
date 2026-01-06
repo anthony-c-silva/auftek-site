@@ -9,8 +9,18 @@ export interface IPost extends Document {
     readTime?: string;
     excerpt?: string;
 
-    status: 'published' | 'pending' | 'draft';
+    status: 'published' | 'pending' | 'draft' | 're-evaluation' | 'rejected';
     approvedBy?: mongoose.Types.ObjectId;
+    rejectionReason?: string;
+
+    pendingChanges?: {
+        title?: string;
+        content?: string;
+        excerpt?: string;
+        coverImage?: string;
+        tags?: string[];
+        slug?: string;
+    };
 
     author: {
         name: string;
@@ -39,13 +49,31 @@ const PostSchema: Schema = new Schema(
     {
         title: { type: String, required: [true, "O título é obrigatório"], trim: true },
         slug: { type: String, required: true, unique: true, index: true },
-        excerpt: { type: String, required: false },
+        excerpt: { type: String, required: [true, "O resumo é obrigatório"], trim: true },
         content: { type: String, required: [true, "O conteúdo é obrigatório"] },
         coverImage: { type: String, required: [true, "A imagem de capa é obrigatória"] },
         tags: { type: [String], default: [] },
         readTime: { type: String, required: false },
-        status: { type: String, enum: ['published', 'pending', 'draft'], default: 'pending', index: true },
+
+        // ATUALIZADO: Enum expandido
+        status: {
+            type: String,
+            enum: ['published', 'pending', 'draft', 're-evaluation', 'rejected'],
+            default: 'pending',
+            index: true
+        },
+
         approvedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+        rejectionReason: { type: String, default: '' },
+        pendingChanges: {
+            title: String,
+            content: String,
+            excerpt: String,
+            coverImage: String,
+            slug: String,
+            tags: [String]
+        },
+
         author: {
             name: { type: String, required: true },
             photoUrl: { type: String, default: '' },

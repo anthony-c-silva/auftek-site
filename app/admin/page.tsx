@@ -8,10 +8,8 @@ import {
     LogOut,
     PlusCircle,
     Users,
-    Settings // Ícone opcional para representar gestão
 } from "lucide-react";
 
-// Componentes
 import { AdminPostList } from "@/components/admin/AdminPostList";
 import { UserManager } from "@/components/admin/UserManager";
 import { PostForm } from "@/components/admin/PostForm";

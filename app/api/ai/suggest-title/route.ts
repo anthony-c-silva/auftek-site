@@ -22,20 +22,20 @@ export async function POST(request: Request) {
         // FASE 1: O ESTRATEGISTA (Foco em Keyword CURTA)
         // =================================================================================
         if (!strategy) {
-            console.log("🔍 [Title V2] Extraindo estratégia...");
+            console.log("Extraindo estratégia...");
 
             const analysisPrompt = `
         Você é um Estrategista de SEO. Analise o texto.
         Retorne APENAS um objeto JSON válido.
         
         INSTRUCTIONS:
-        1. "palavra-chave-primaria": Extraia o tópico MAIS CURTO possível (máx. 3 palavras).
-        2. "gancho-de-abordagem": “Estilo em uma palavra (ex.: Curiosidade, Alerta, Dica, Futuro).
+        1. "primary_keyword": Extraia o tópico MAIS CURTO possível (máx. 3 palavras).
+        2. "hook_angle": “Estilo em uma palavra (ex.: Curiosidade, Alerta, Dica, Futuro).
         
         Exemplo de formato esperado:
         {
-          "palavra-chave-primaria": "Microbiologia IoT", 
-          "gancho-de-abordagem": "Inovação"
+          "primary_keyword": "Microbiologia IoT", 
+          "hook_angle": "Inovação"
         }
         
         TEXTO: "${contentToAnalyze.slice(0, 2000)}"
@@ -54,7 +54,6 @@ export async function POST(request: Request) {
             try {
                 // --- PARSER BLINDADO ---
                 let cleanJson = rawResponse.replace(/```json|```/g, '');
-                // Remove barras invertidas antes de underscores (Correção do erro anterior)
                 cleanJson = cleanJson.replace(/\\_/g, '_');
 
                 const firstBrace = cleanJson.indexOf('{');
@@ -64,10 +63,17 @@ export async function POST(request: Request) {
                     cleanJson = cleanJson.substring(firstBrace, lastBrace + 1);
                 }
 
-                strategy = JSON.parse(cleanJson);
+                const parsedStrategy = JSON.parse(cleanJson);
+
+                // --- FIX: Normalize Keys (Portuguese -> English) ---
+                // The prompt asks for "palavra-chave-primaria", but code uses "primary_keyword"
+                strategy = {
+                    primary_keyword: parsedStrategy["palavra-chave-primaria"] || parsedStrategy.primary_keyword || "Tecnologia",
+                    hook_angle: parsedStrategy["gancho-de-abordagem"] || parsedStrategy.hook_angle || "Novidade"
+                };
 
                 // SEGURANÇA DE TAMANHO: Se a IA extraiu uma keyword gigante, cortamos na marra.
-                if (strategy.primary_keyword.split(' ').length > 5) {
+                if (strategy.primary_keyword && strategy.primary_keyword.split(' ').length > 5) {
                     strategy.primary_keyword = strategy.primary_keyword.split(' ').slice(0, 4).join(' ');
                 }
 
@@ -75,6 +81,7 @@ export async function POST(request: Request) {
 
             } catch (e) {
                 console.error("❌ Erro JSON:", e);
+                // Fallback safe object
                 strategy = { primary_keyword: "Tecnologia", hook_angle: "Novidade" };
             }
         }
@@ -86,7 +93,7 @@ export async function POST(request: Request) {
 
         const finalPrompt = `
     Aja como Editor de Manchetes de Tecnologia (TechCrunch, The Verge).
-    Escreva UMA manchete curta para o Google.
+    Escreva UM título para o Google.
     
     ESTRATÉGIA:
     - Foco: "${strategy.primary_keyword}"
