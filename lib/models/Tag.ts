@@ -3,7 +3,6 @@ import mongoose, { Schema, Document, Model } from "mongoose";
 export interface ITag extends Document {
     name: string;
     slug: string;
-    color?: string;
     createdAt: Date;
 }
 
@@ -22,10 +21,6 @@ const TagSchema: Schema = new Schema(
             lowercase: true,
             trim: true
         },
-        color: {
-            type: String,
-            default: 'slate'
-        }
     },
     { timestamps: true }
 );

@@ -8,13 +8,18 @@ type Props = {
     params: Promise<{ slug: string }>;
 };
 
-// 1. GET (Ler Post)
+// 1. GET (Ler Post Único)
 export async function GET(request: Request, { params }: Props) {
     try {
         const { slug } = await params;
         await connectDB();
+
+        // Usamos lean() para performance.
+        // O authorId já está no schema se precisar popular no futuro.
         const post = await Post.findOne({ slug, deletedAt: null }).lean();
+
         if (!post) return NextResponse.json({ error: "Post não encontrado" }, { status: 404 });
+
         return NextResponse.json(post);
     } catch (error: unknown) {
         console.error("Erro GET:", error);
@@ -36,19 +41,30 @@ export async function PUT(request: Request, { params }: Props) {
 
         if (!post) return NextResponse.json({ error: "Post não encontrado." }, { status: 404 });
 
-        // Captura o status antigo para logs
-        const oldStatus = post.status;
+        // --- SELF-HEALING (Correção Automática de Posts Antigos) ---
+        // Se o post não tem authorId e quem edita é o autor (não admin), salvamos o ID agora.
+        if (!post.authorId && user.role !== 'admin') {
+            post.authorId = user._id;
+        }
 
-        // =====================================================================
-        // 1. ADMIN APROVANDO (Merge)
-        // =====================================================================
+        const oldStatus = post.status;
+        const targetAuthorId = post.authorId || null;
+
+        // Limpeza de campos imutáveis via edição direta
+        delete body.writer;
+        delete body.createdAt;
+        delete body._id;
+        delete body.author;
+        delete body.authorId;
+
+        // --- LÓGICA DE APROVAÇÃO (ADMIN) ---
         if (
             user.role === 'admin' &&
             body.status === 'published' &&
             post.pendingChanges &&
             Object.keys(post.pendingChanges).length > 0
         ) {
-            // Aplica as mudanças do pendingChanges no post oficial
+            // Merge das alterações pendentes
             if (post.pendingChanges.title) post.title = post.pendingChanges.title;
             if (post.pendingChanges.content) post.content = post.pendingChanges.content;
             if (post.pendingChanges.excerpt) post.excerpt = post.pendingChanges.excerpt;
@@ -63,37 +79,23 @@ export async function PUT(request: Request, { params }: Props) {
 
             await post.save();
 
-            // LOG: Aprovação
             await logActivity({
-                userId: user._id,           // Quem aprovou (Admin)
-                targetUserId: post.author,  // De quem é o post (Autor)
+                userId: user._id,
+                targetUserId: targetAuthorId,
                 action: 'APPROVE_EDIT',
                 resourceId: post._id,
-                details: `Aprovou alterações pendentes. Post publicado.`
+                details: `Aprovou alterações pendentes.`
             });
 
             return NextResponse.json(post);
         }
 
-        // =====================================================================
-        // 2. EDIÇÃO OU REJEIÇÃO
-        // =====================================================================
-        delete body.writer;
-        delete body.createdAt;
-        delete body._id;
-        delete body.author;
-
-        const isProtectedState =
-            post.status === 'published' ||
-            post.status === 're-evaluation' ||
-            post.status === 'rejected';
-
+        // --- LÓGICA DE EDIÇÃO / REJEIÇÃO ---
         const isAdminRejecting = user.role === 'admin' && body.status === 'rejected';
+        const isProtectedState = ['published', 're-evaluation', 'rejected'].includes(post.status);
 
-        // --- CENÁRIO A: Ciclo de Correção (Cria Shadow Draft) ---
+        // Se o post já foi publicado/rejeitado e não é o admin rejeitando agora -> Cria Rascunho (Shadow Draft)
         if (isProtectedState && !isAdminRejecting) {
-
-            // Mescla o que já existia no pendingChanges com as novas edições
             const currentPending = post.pendingChanges || {};
 
             post.pendingChanges = {
@@ -105,43 +107,33 @@ export async function PUT(request: Request, { params }: Props) {
                 slug: body.slug ?? currentPending.slug ?? post.slug
             };
 
-            // Independente do que o front mandou, se o autor editou um post recusado,
-            // o status VIRA 're-evaluation' e limpamos o motivo da recusa.
             post.status = 're-evaluation';
             post.rejectionReason = undefined;
-
             await post.save();
 
-            // LOG: Revisão enviada pelo autor
             await logActivity({
                 userId: user._id,
-                // Aqui não precisa de targetUser pois o autor age sobre si mesmo
                 action: 'SUBMIT_REVISION',
                 resourceId: post._id,
-                details: `Enviou nova revisão (Status anterior: ${oldStatus})`
+                details: `Enviou nova revisão.`
             });
         }
-
-        // --- CENÁRIO B: Edição Direta ou Admin Rejeitando ---
+        // Edição direta (Rascunhos ou Rejeição do Admin)
         else {
             if (isAdminRejecting) {
-                // Se já tinha mudanças pendentes, mantemos elas mas marcamos como rejeitado
                 post.status = 'rejected';
                 post.rejectionReason = body.rejectionReason;
-
                 await post.save();
 
-                // LOG: Rejeição pelo Admin
                 await logActivity({
-                    userId: user._id,          // Quem rejeitou (Admin)
-                    targetUserId: post.author, // Quem sofreu a rejeição (Autor)
+                    userId: user._id,
+                    targetUserId: targetAuthorId,
                     action: 'REJECT_POST',
                     resourceId: post._id,
                     details: `Motivo: ${body.rejectionReason}`
                 });
-            }
-            else {
-                // Edição Comum (Rascunho ou Novo Post)
+            } else {
+                // Atualização normal de rascunho
                 if (body.title) post.title = body.title;
                 if (body.content) post.content = body.content;
                 if (body.excerpt) post.excerpt = body.excerpt;
@@ -149,8 +141,8 @@ export async function PUT(request: Request, { params }: Props) {
                 if (body.tags) post.tags = body.tags;
                 if (body.slug) post.slug = body.slug;
 
-                // Controle de status simples
                 if (body.status) {
+                    // Autor não pode forçar 'published' diretamente se não for admin
                     if (body.status === 'published' && user.role !== 'admin') {
                         post.status = 'pending';
                     } else {
@@ -159,30 +151,18 @@ export async function PUT(request: Request, { params }: Props) {
                 }
 
                 post.pendingChanges = undefined;
-
                 await post.save();
-
-                // LOG: Edição simples
-                if (oldStatus !== post.status) {
-                    await logActivity({
-                        userId: user._id,
-                        action: 'CHANGE_STATUS',
-                        resourceId: post._id,
-                        details: `Mudou de ${oldStatus} para ${post.status}`
-                    });
-                }
             }
         }
 
         return NextResponse.json(post);
-
     } catch (error: unknown) {
         console.error("Erro PUT:", error);
         return NextResponse.json({ error: "Erro ao atualizar" }, { status: 500 });
     }
 }
 
-// 3. DELETE (Soft Delete)
+// 3. DELETE (Soft Delete) - A função que estava faltando ou incorreta
 export async function DELETE(request: Request, { params }: Props) {
     try {
         const user = await getAuthenticatedUser();
@@ -191,6 +171,7 @@ export async function DELETE(request: Request, { params }: Props) {
         const { slug } = await params;
         await connectDB();
 
+        // Soft delete: apenas preenche o deletedAt
         const softDeletedPost = await Post.findOneAndUpdate(
             { slug, deletedAt: null },
             { deletedAt: new Date() },
@@ -201,34 +182,20 @@ export async function DELETE(request: Request, { params }: Props) {
             return NextResponse.json({ error: "Post não encontrado." }, { status: 404 });
         }
 
-        // ==========================================================
-        // AJUSTE: Identificação Visual do Autor
-        // ==========================================================
-        // Como o Post não tem o ID do autor (apenas os dados copiados),
-        // pegamos o NOME para registrar no histórico.
-        const authorData = softDeletedPost.author as any;
-        const authorName = authorData?.name || "Autor Desconhecido";
+        // Se tiver authorId (novo schema), usa ele. Se for legado, null.
+        const targetUserId = softDeletedPost.authorId || null;
 
-        // Tenta achar um ID se existir (caso raro no seu schema atual), senão null
-        let safeTargetUserId = null;
-        if (authorData && (typeof authorData === 'string' || authorData._bsontype === 'ObjectID')) {
-            safeTargetUserId = authorData;
-        } else if (authorData && authorData._id) {
-            safeTargetUserId = authorData._id;
-        }
-
-        // LOG: Agora o detalhe dirá "Post de [Nome] movido..."
         await logActivity({
             userId: user._id,
-            targetUserId: safeTargetUserId,
+            targetUserId: targetUserId,
             action: 'DELETE_POST',
             resourceId: softDeletedPost._id,
-            details: `Publicação de "${authorName}" movido para a lixeira` // <--- AQUI ESTÁ A SOLUÇÃO
+            details: `Post excluído (Soft Delete)`
         });
 
-        return NextResponse.json({ message: "Publicação excluída" });
+        return NextResponse.json({ message: "Post excluído" });
     } catch (error: unknown) {
         console.error("Erro DELETE:", error);
-        return NextResponse.json({ error: "Erro ao excluir publicação" }, { status: 500 });
+        return NextResponse.json({ error: "Erro ao excluir post" }, { status: 500 });
     }
 }

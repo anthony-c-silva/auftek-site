@@ -26,24 +26,20 @@ export async function GET(request: Request) {
         const isAdmin = user.role === 'admin';
         let filter: any = { deletedAt: null };
 
-        // Se passar ?status=pending na URL, filtramos por isso (Útil para o Painel Admin)
         if (statusParam) {
             filter.status = statusParam;
         }
 
         // 3. Restrições de Visibilidade
         if (!isAdmin) {
-            // Se o usuário pediu um status específico, garantimos que ele só veja OS DELE naquele status
-            // Se não pediu status, ele vê: Publicados (Geral) OU Os dele (Qualquer status)
-
             if (statusParam) {
-                // Ex: Quero ver meus rascunhos
-                filter['writer.email'] = user.email;
+                // Filtra pelos posts DO USUÁRIO usando o novo campo authorId
+                filter.authorId = user._id;
             } else {
-                // Feed Misto
+                // Feed Misto: Públicos OU Meus
                 filter.$or = [
                     { status: 'published' },
-                    { 'writer.email': user.email }
+                    { authorId: user._id }
                 ];
             }
         }
@@ -72,7 +68,7 @@ export async function POST(request: Request) {
             finalSlug = generateSlug(body.title);
         }
 
-        // 2. Monta Autor (Snapshot)
+        // 2. Monta Autor (Snapshot para exibição rápida no frontend)
         const authorData = {
             name: user.name,
             photoUrl: user.photoUrl || "",
@@ -82,23 +78,26 @@ export async function POST(request: Request) {
         };
 
         // 3. Define Status Seguro
-        // Admin: Pode criar como quiser (published, draft, etc)
-        // User: Só pode criar 'draft' ou 'pending'.
         let postStatus = 'pending';
-
         if (user.role === 'admin') {
             postStatus = body.status || 'published';
         } else {
-            // Se o usuário mandou 'draft', respeitamos. Se mandou 'published', forçamos 'pending'.
             postStatus = body.status === 'draft' ? 'draft' : 'pending';
         }
 
         const newPost = await Post.create({
             ...body,
             slug: finalSlug,
-            author: authorData,
+
+            // ========================================================
+            // A CORREÇÃO ESTÁ AQUI:
+            // Injetamos o ID do usuário logado no campo obrigatório
+            // ========================================================
+            authorId: user._id,
+
+            author: authorData, // Snapshot visual
             status: postStatus,
-            writer: { name: user.name, email: user.email },
+            writer: { name: user.name, email: user.email }, // Mantido apenas se tiver legado usando isso
             approvedBy: postStatus === 'published' ? user._id : null,
 
             pendingChanges: undefined,
@@ -109,6 +108,7 @@ export async function POST(request: Request) {
 
     } catch (error: any) {
         console.error("Erro ao criar post:", error);
+        // Tratamento para slug duplicado
         if (error.code === 11000) {
             return NextResponse.json({ error: "Já existe um post com este título/slug." }, { status: 400 });
         }

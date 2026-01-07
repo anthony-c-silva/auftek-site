@@ -1,6 +1,10 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
 export interface IPost extends Document {
+    _id: mongoose.Types.ObjectId;
+
+    authorId: mongoose.Types.ObjectId;
+
     title: string;
     slug: string;
     content: string;
@@ -47,6 +51,13 @@ export interface IPost extends Document {
 
 const PostSchema: Schema = new Schema(
     {
+        authorId: {
+            type: Schema.Types.ObjectId,
+            ref: 'User',
+            required: [true, "O ID do autor é obrigatório"],
+            index: true
+        },
+
         title: { type: String, required: [true, "O título é obrigatório"], trim: true },
         slug: { type: String, required: true, unique: true, index: true },
         excerpt: { type: String, required: [true, "O resumo é obrigatório"], trim: true },
@@ -55,7 +66,6 @@ const PostSchema: Schema = new Schema(
         tags: { type: [String], default: [] },
         readTime: { type: String, required: false },
 
-        // ATUALIZADO: Enum expandido
         status: {
             type: String,
             enum: ['published', 'pending', 'draft', 're-evaluation', 'rejected'],
@@ -65,6 +75,7 @@ const PostSchema: Schema = new Schema(
 
         approvedBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
         rejectionReason: { type: String, default: '' },
+
         pendingChanges: {
             title: String,
             content: String,
