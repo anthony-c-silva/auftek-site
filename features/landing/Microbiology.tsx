@@ -42,7 +42,7 @@ export const Microbiology: React.FC = () => {
             <span>RESULTADO</span>
           </div>
 
-          {/* Badge de Tempo (VERMELHO - Mantido) */}
+          {/* Badge de Tempo */}
           <div className="inline-flex items-center justify-center w-full py-1.5 px-3 rounded bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold tracking-wide uppercase">
             + 2 DIAS / SEMANAS
           </div>
@@ -57,10 +57,10 @@ export const Microbiology: React.FC = () => {
         "A demora nos resultados trava a liberação de lotes, atrasa o tratamento de água e efluentes e gera custos operacionais elevados com armazenamento e reprocesso.",
       footer: (
         <div className="mt-auto pt-4">
-          {/* Box de Citação (LARANJA - Ajustado) */}
+          {/* Box de Citação */}
           <div className="p-4 rounded-lg bg-orange-500/5 border border-orange-500/10 text-orange-400 text-sm leading-relaxed relative overflow-hidden">
             <div className="absolute left-0 top-0"></div>
-            <p className="font-medium text-xs md:text-sm opacity-90">
+            <p className="font-medium text-xs opacity-90">
               "Lotes retidos geram prejuízos diários de armazenagem e risco de
               perda de validade."
             </p>
@@ -76,9 +76,9 @@ export const Microbiology: React.FC = () => {
         "O mercado precisa de métodos rápidos, autônomos e que eliminem o erro humano na contagem e identificação de colônias.",
       footer: (
         <div className="mt-auto pt-4">
-          {/* Box de Solução (VERDE - Ajustado) */}
+          {/* Box de Solução */}
           <div className="p-4 rounded-lg bg-auftek-green/5 border border-auftek-green/10 text-auftek-green text-sm leading-relaxed">
-            <p className="font-medium text-xs md:text-sm opacity-90">
+            <p className="font-medium text-xs opacity-90">
               Decisões baseadas em dados em tempo real, não em estimativas
               laboratoriais tardias.
             </p>
@@ -157,11 +157,13 @@ export const Microbiology: React.FC = () => {
                     <Icon className={styles.iconColor} size={24} />
                   </div>
 
+                  {/* TÍTULO PADRONIZADO */}
                   <h3 className="text-xl font-bold text-white mb-4">
                     {card.title}
                   </h3>
 
-                  <p className="text-gray-400 leading-relaxed mb-6">
+                  {/* DESCRIÇÃO PADRONIZADA */}
+                  <p className="text-sm text-gray-400 leading-relaxed mb-6">
                     {card.description}
                   </p>
                 </div>

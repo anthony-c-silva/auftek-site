@@ -51,22 +51,37 @@ export const SOLUTIONS = [
 
 export const TEAM_MEMBERS = [
     {
-        name: 'Dr. Roberto Silva',
+        name: 'Adriano Marques Jaime',
         role: 'CEO & Founder',
         image: 'https://picsum.photos/200/200?random=1',
     },
     {
-        name: 'Dra. Ana Souza',
+        name: 'Charles Haab',
         role: 'Head de P&D',
         image: 'https://picsum.photos/200/200?random=2',
     },
     {
-        name: 'Eng. Carlos Mendes',
+        name: 'Anthony',
         role: 'Engenharia de Hardware',
         image: 'https://picsum.photos/200/200?random=3',
     },
     {
-        name: 'Mariana Lima',
+        name: 'Gertrudes',
+        role: 'Operações e Qualidade',
+        image: 'https://picsum.photos/200/200?random=4',
+    },
+        {
+        name: 'Gertrudes',
+        role: 'Operações e Qualidade',
+        image: 'https://picsum.photos/200/200?random=4',
+    },
+        {
+        name: 'Gertrudes',
+        role: 'Operações e Qualidade',
+        image: 'https://picsum.photos/200/200?random=4',
+    },
+        {
+        name: 'Gertrudes',
         role: 'Operações e Qualidade',
         image: 'https://picsum.photos/200/200?random=4',
     },

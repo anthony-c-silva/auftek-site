@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import { Section } from "../../components/ui/Section";
 import { Button } from "../../components/ui/Button";
-// Importando sua função de scroll personalizada
 import { scrollToElement } from "../../hooks/useScroll";
 
 const PRODUCTS = {
