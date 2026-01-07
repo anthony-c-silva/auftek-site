@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation';
 interface User {
     name: string;
     email: string;
-    role: 'admin' | 'redator';
+    role: 'admin' | 'author' | string;
+    photoUrl?: string;
 }
 
 interface AuthContextType {
@@ -33,14 +34,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 if (res.ok) {
                     const data = await res.json();
                     const userData = data.user;
-
-                    const userRole = userData.role || 'redator';
+                    const userRole = userData.role || 'author';
 
                     setIsAdmin(userRole === 'admin');
                     setUser({
                         name: userData.name,
                         email: userData.email,
-                        role: userRole
+                        role: userRole,
+                        photoUrl: userData.photoUrl || ""
                     });
                 } else {
                     setIsAdmin(false);
@@ -69,15 +70,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (res.ok) {
                 const data = await res.json();
 
-                // Assumindo que o login retorna a mesma estrutura de user
                 const userData = data.user || {};
-                const userRole = userData.role || 'redator';
+                const userRole = userData.role || 'author';
 
                 setIsAdmin(userRole === 'admin');
+
+                // CORREÇÃO AQUI: Adicionado photoUrl
                 setUser({
                     name: userData.name || "Usuário",
                     email: email,
-                    role: userRole
+                    role: userRole,
+                    photoUrl: userData.photoUrl || ""
                 });
 
                 router.push('/admin');

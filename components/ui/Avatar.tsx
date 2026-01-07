@@ -18,13 +18,7 @@ const COLORS = [
 
 export const Avatar: React.FC<AvatarProps> = ({ src, alt, size = 40, className = "" }) => {
     const [error, setError] = useState(false);
-
-    // SOLUÇÃO DO ESLINT:
-    // Guardamos qual foi a última URL que tentamos carregar.
     const [lastSrc, setLastSrc] = useState(src);
-
-    // Se a URL mudou (ex: você editou o post e trocou a foto),
-    // nós resetamos o erro IMEDIATAMENTE, sem usar useEffect.
     if (src !== lastSrc) {
         setLastSrc(src);
         setError(false);

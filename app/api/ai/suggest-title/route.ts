@@ -1,6 +1,5 @@
-// app/api/ai/suggest-title/route.ts
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
+import openai from "@/lib/openai";
 import { getAuthenticatedUser } from "@/lib/auth-server";
 
 export async function POST(request: Request) {
@@ -12,145 +11,83 @@ export async function POST(request: Request) {
         const { content, strategy: providedStrategy } = body;
         const contentToAnalyze = content ? content.slice(0, 4500) : "";
 
-        const apiKey = process.env.OPENAI_API_KEY || "lm-studio";
-        const baseURL = process.env.OPENAI_BASE_URL || "http://127.0.0.1:1234/v1";
-        const openai = new OpenAI({ apiKey, baseURL });
-
         let strategy = providedStrategy;
 
         // =================================================================================
-        // FASE 1: O ESTRATEGISTA (Foco em Keyword CURTA)
+        // FASE 1: O ESTRATEGISTA (JSON Mode Nativo)
         // =================================================================================
         if (!strategy) {
-            console.log("Extraindo estratégia...");
-
             const analysisPrompt = `
-        Você é um Estrategista de SEO. Analise o texto.
-        Retorne APENAS um objeto JSON válido.
-        
-        INSTRUCTIONS:
-        1. "primary_keyword": Extraia o tópico MAIS CURTO possível (máx. 3 palavras).
-        2. "hook_angle": “Estilo em uma palavra (ex.: Curiosidade, Alerta, Dica, Futuro).
-        
-        Exemplo de formato esperado:
-        {
-          "primary_keyword": "Microbiologia IoT", 
-          "hook_angle": "Inovação"
-        }
-        
-        TEXTO: "${contentToAnalyze.slice(0, 2000)}"
-        `;
+            Analise o texto abaixo para SEO.
+            Retorne APENAS um objeto JSON válido com estas chaves:
+            1. "primary_keyword": O tópico mais curto possível (máx 3 palavras).
+            2. "hook_angle": Estilo em uma palavra (ex: Curiosidade, Alerta, Dica, Futuro).
+            
+            Texto: "${contentToAnalyze.slice(0, 2000)}"
+            `;
 
             const analysisCompletion = await openai.chat.completions.create({
-                model: "local-model",
-                messages: [{ role: "user", content: analysisPrompt }],
-                temperature: 0.1,
-                max_tokens: 300,
+                model: "gpt-4o-mini",
+                messages: [
+                    { role: "system", content: "Você é um especialista em SEO. Retorne JSON." },
+                    { role: "user", content: analysisPrompt }
+                ],
+                temperature: 0.3,
+                response_format: { type: "json_object" }
             });
 
             const rawResponse = analysisCompletion.choices[0]?.message?.content || "{}";
-            console.log("🤖 Raw Response (Fase 1):", rawResponse);
 
             try {
-                // --- PARSER BLINDADO ---
-                let cleanJson = rawResponse.replace(/```json|```/g, '');
-                cleanJson = cleanJson.replace(/\\_/g, '_');
+                const parsedStrategy = JSON.parse(rawResponse);
 
-                const firstBrace = cleanJson.indexOf('{');
-                const lastBrace = cleanJson.lastIndexOf('}');
-
-                if (firstBrace !== -1 && lastBrace !== -1) {
-                    cleanJson = cleanJson.substring(firstBrace, lastBrace + 1);
-                }
-
-                const parsedStrategy = JSON.parse(cleanJson);
-
-                // --- FIX: Normalize Keys (Portuguese -> English) ---
-                // The prompt asks for "palavra-chave-primaria", but code uses "primary_keyword"
                 strategy = {
-                    primary_keyword: parsedStrategy["palavra-chave-primaria"] || parsedStrategy.primary_keyword || "Tecnologia",
-                    hook_angle: parsedStrategy["gancho-de-abordagem"] || parsedStrategy.hook_angle || "Novidade"
+                    primary_keyword: parsedStrategy.primary_keyword || "Tecnologia",
+                    hook_angle: parsedStrategy.hook_angle || "Novidade"
                 };
 
-                // SEGURANÇA DE TAMANHO: Se a IA extraiu uma keyword gigante, cortamos na marra.
                 if (strategy.primary_keyword && strategy.primary_keyword.split(' ').length > 5) {
                     strategy.primary_keyword = strategy.primary_keyword.split(' ').slice(0, 4).join(' ');
                 }
 
-                console.log("✅ JSON Extraído:", JSON.stringify(strategy));
-
             } catch (e) {
-                console.error("❌ Erro JSON:", e);
-                // Fallback safe object
+                console.error("Erro Parse JSON OpenAI:", e);
                 strategy = { primary_keyword: "Tecnologia", hook_angle: "Novidade" };
             }
         }
 
         // =================================================================================
-        // FASE 2: REDATOR (Foco em CONCISÃO)
+        // FASE 2: REDATOR
         // =================================================================================
-        console.log("✍️ [Title V2] Escrevendo título curto...");
-
         const finalPrompt = `
-    Aja como Editor de Manchetes de Tecnologia (TechCrunch, The Verge).
-    Escreva UM título para o Google.
-    
-    ESTRATÉGIA:
-    - Foco: "${strategy.primary_keyword}"
-    - Ângulo: "${strategy.hook_angle}"
-    
-    REGRAS DE TAMANHO (CRÍTICO):
-    1. Use MÁXIMO 8 PALAVRAS. (Seja breve!)
-    2. NÃO escreva títulos de artigos científicos (longos e chatos).
-    3. Escreva como notícia urgente ou curiosidade.
-    
-    Exemplos Bons (Curtos):
-    - "Como a IoT revoluciona a análise de leite"
-    - "Novo sensor detecta bactérias em tempo real"
-    - "O fim dos testes demorados na microbiologia"
-    
-    Exemplos Ruins (Muito Longos - NÃO FAÇA):
-    - "Determinação rápida e simples da contagem bacteriana total no leite cru usando sensor..."
-    
-    IDIOMA: Português do Brasil.
-    
-    TEXTO BASE:
-    """${contentToAnalyze}"""
-    
-    TÍTULO CURTO:
-    `;
+        Aja como Editor de Manchetes de Tecnologia. Escreva UM título para o Google.
+        
+        ESTRATÉGIA:
+        - Foco: "${strategy.primary_keyword}"
+        - Ângulo: "${strategy.hook_angle}"
+        
+        REGRAS:
+        1. Use MÁXIMO 8 PALAVRAS.
+        2. Seja urgente ou curioso. Nada de títulos acadêmicos.
+        3. Idioma: Português do Brasil.
+        4. Retorne APENAS o texto do título, sem aspas.
+        
+        TEXTO BASE:
+        """${contentToAnalyze}"""
+        `;
 
         const creationCompletion = await openai.chat.completions.create({
-            model: "local-model",
+            model: "gpt-4o-mini",
             messages: [{ role: "user", content: finalPrompt }],
-            temperature: 0.7, // Um pouco menor para ele não viajar demais
-            max_tokens: 150,
+            temperature: 0.7,
+            max_tokens: 100,
         });
 
         let finalTitle = creationCompletion.choices[0]?.message?.content || "";
 
-        if (!finalTitle && (creationCompletion.choices[0]?.message as any)?.reasoning) {
-            const match = (creationCompletion.choices[0]?.message as any).reasoning.match(/"([^"]{30,70})"/);
-            if (match) finalTitle = match[1];
-        }
-
-        // =================================================================================
-        // FASE 3: LIMPEZA BLINDADA
-        // =================================================================================
-
-        finalTitle = finalTitle.split('\n')[0];
-        finalTitle = finalTitle.replace(/\s*[\(\[][a-zA-Z0-9\-\s]+[\)\]]$/, '');
-
-        // Remove aspas recursivamente
-        finalTitle = finalTitle.trim();
-        while (finalTitle.startsWith('"') || finalTitle.startsWith("'") || finalTitle.endsWith('"') || finalTitle.endsWith("'")) {
-            finalTitle = finalTitle.replace(/^["']/, '').replace(/["']$/, '').trim();
-        }
-
         finalTitle = finalTitle
-            .replace(/Title:/i, '')
+            .replace(/^["']|["']$/g, '')
             .replace(/Título:/i, '')
-            .replace(/\.$/, '')
             .trim();
 
         return NextResponse.json({
@@ -160,7 +97,7 @@ export async function POST(request: Request) {
         });
 
     } catch (error: any) {
-        console.error("❌ Erro Title V2:", error);
-        return NextResponse.json({ error: "Erro ao processar." }, { status: 500 });
+        console.error("OpenAI API Error:", error);
+        return NextResponse.json({ error: "Erro ao processar com IA." }, { status: 500 });
     }
 }

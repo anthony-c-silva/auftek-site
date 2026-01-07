@@ -48,7 +48,7 @@ export default function LoginPage() {
                     </div>
                 </div>
 
-                <h1 className="text-2xl font-bold text-white text-center mb-2">Acesso Administrativo</h1>
+                <h1 className="text-2xl font-bold text-white text-center mb-2">Acessar sua conta</h1>
                 <p className="text-slate-400 text-center mb-8 text-sm">Entre com suas credenciais de gestão</p>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -96,7 +96,7 @@ export default function LoginPage() {
                         type="submit"
                         className="w-full bg-auftek-blue text-white font-bold py-3 rounded-lg hover:bg-blue-600 transition-colors shadow-lg shadow-blue-900/20 mt-4 active:scale-95 duration-100"
                     >
-                        Acessar Painel
+                        Iniciar Sessão
                     </button>
                 </form>
 
