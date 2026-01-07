@@ -7,6 +7,8 @@ import { ScrollReveal } from "../../components/ui/ScrollReveal";
 interface FormData {
   nome: string;
   email: string;
+  cnpj: string;
+  endereco: string;
   mensagem: string;
 }
 
@@ -16,6 +18,8 @@ export const Contact: React.FC = () => {
   const [formData, setFormData] = useState<FormData>({
     nome: "",
     email: "",
+    cnpj: "",
+    endereco: "",
     mensagem: "",
   });
 
@@ -71,7 +75,7 @@ export const Contact: React.FC = () => {
         } else {
           if (response.ok) {
             timeoutRef.current = setTimeout(() => {
-              setFormData({ nome: "", email: "", mensagem: "" });
+              setFormData({ nome: "", email: "", cnpj: "", endereco: "", mensagem: "" });
               setStatus("idle");
             }, 4000);
           }
@@ -144,6 +148,36 @@ export const Contact: React.FC = () => {
                     Este e-mail já enviou uma solicitação recentemente.
                   </p>
                 )}
+              </div>
+
+               <div className="space-y-1 text-left">
+                <label className="text-xs text-gray-400 ml-1 uppercase tracking-wide font-bold">
+                  CNPJ
+                </label>
+                <input
+                  type="text"
+                  name="cnpj"
+                  value={formData.cnpj}
+                  onChange={handleChange}
+                  placeholder="000-000-000/0000"
+                  required
+                  className="w-full px-4 py-3.5 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-auftek-blue/50 focus:bg-black/40 transition-all"
+                />
+              </div>
+
+               <div className="space-y-1 text-left">
+                <label className="text-xs text-gray-400 ml-1 uppercase tracking-wide font-bold">
+                  Endereco
+                </label>
+                <input
+                  type="text"
+                  name="endereco"
+                  value={formData.endereco}
+                  onChange={handleChange}
+                  placeholder="RS, Santa maria, camobi, rua erly de almeida lima 122"
+                  required
+                  className="w-full px-4 py-3.5 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-auftek-blue/50 focus:bg-black/40 transition-all"
+                />
               </div>
 
               <div className="space-y-1 text-left">

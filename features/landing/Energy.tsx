@@ -8,22 +8,22 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { Section } from "../../components/ui/Section";
+import { Section, SectionTitle } from "../../components/ui/Section";
 import { Button } from "../../components/ui/Button";
 import { scrollToElement } from "../../hooks/useScroll";
 
 const PRODUCTS = {
   pvag: {
     id: "pvag",
-    title: "Gerador de Arco (PVAG)",
-    subtitle: "Arco Elétrico DC",
+    title: "PVAG Lab",
+    subtitle: "Gerador de arco elétrico DC",
     description:
       "Sistema modular de precisão para emulação controlada de arcos elétricos em corrente contínua. Essencial para ensaios de segurança e certificação conforme a IEC 63027 e Portaria 140 Inmetro.",
     points: [
       "Emulação precisa de arcos em DC",
-      "Atende aos requisitos da Portaria nº 140",
+      "Atende aos requisitos da Norma IEC 63027",
       "Sistema modular para ensaios em inversores e micro inversores",
-      "Projetado para uso em laboratórios de certificação e ensaios de conformidade",
+      "Projetado para uso em laboratórios de acreditação e ensaios de conformidade",
     ],
     images: ["/images/PVAG.jpeg", "/images/PVAG2.jpeg", "/images/PVAG3.jpeg"],
     icon: Zap,
@@ -44,7 +44,7 @@ const PRODUCTS = {
   ircct: {
     id: "ircct",
     title: "IRCCT System",
-    subtitle: "Fuga de Corrente",
+    subtitle: "Fuga de Corrente residual",
     description:
       "Sistema modular de alta precisão para ensaios de corrente residual e resistência de isolação em inversores fotovoltaicos sem transformador, conforme as normas IEC 62109-2 e IEC 63112, atendendo à Portaria Inmetro nº 140.",
     points: [
@@ -112,20 +112,12 @@ export const Energy: React.FC = () => {
       className="bg-[#0e223b] py-20 transition-colors duration-500"
     >
       <div className="max-w-6xl mx-auto px-4">
-        {/* Cabeçalho */}
-        <div className="text-center mb-10">
-          <h4
-            className={`font-bold tracking-widest text-sm mb-3 uppercase transition-colors duration-300 ${theme.primary}`}
-          >
-            Divisão de Energia
-          </h4>
-          <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
-            Soluções para a acreditação de inversores
-          </h2>
-          <p className="text-gray-400 max-w-2xl mx-auto text-lg">
-            Instrumentação avançada para acreditação de inversores, garantindo
-            segurança e conformidade normativa.
-          </p>
+        {/* --- CABEÇALHO PADRONIZADO AQUI --- */}
+        {/* Envolva em uma div para aplicar o mb-10 */}
+        <div className="mb-10">
+          <SectionTitle align="center" subtitle="Soluções em Energia">
+            Instrumentação para acreditação de inversores
+          </SectionTitle>
         </div>
 
         {/* Switcher */}
@@ -150,7 +142,7 @@ export const Energy: React.FC = () => {
                   : "text-gray-400 hover:text-gray-200"
               }`}
             >
-              <Zap size={18} /> PVAG LAB
+              <Zap size={18} /> PVAG Lab
             </button>
 
             <button

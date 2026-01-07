@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import {
-  Zap,
+  Hourglass,
   Cloud,
   Cpu,
   Smartphone,
@@ -15,10 +15,10 @@ import { cn } from "../../lib/utils";
 // Dados dos Cards
 const features = [
   {
-    icon: Zap,
+    icon: Hourglass,
     theme: "amber",
     label: "OTIMIZAÇÃO",
-    title: "Redução de Ciclo",
+    title: "Redução de Tempo",
     description:
       "Diminuição do tempo de análise de dias/semanas (método tradicional) para horas.",
   },
@@ -41,10 +41,10 @@ const features = [
   {
     icon: Smartphone,
     theme: "purple",
-    label: "INTERFACE",
-    title: "Monitoramento via App",
+    label: "Multiplataformas",
+    title: "Monitoramento via App ou WEB",
     description:
-      "Visualização de resultados em tempo real diretamente na palma da sua mão.",
+      "Visualização de resultados em tempo real diretamente na palma da sua mão, onde estiver.",
   },
 ];
 
@@ -84,17 +84,16 @@ export const BioAiLab: React.FC = () => {
         };
       case "emerald":
         return {
-          borderHover: "hover:border-emerald-500/80",
-          iconBox:
-            "bg-emerald-500/10 text-emerald-500 group-hover:bg-emerald-500/20",
-          label: "text-emerald-500",
+          borderHover: "hover:border-teal-300/60",
+          iconBox: "bg-teal-400/10 text-teal-300 group-hover:bg-teal-400/20", // Tom Verde Menta (Pastel)
+          label: "text-teal-300",
         };
       case "purple":
         return {
-          borderHover: "hover:border-purple-500/80",
+          borderHover: "hover:border-violet-300/60",
           iconBox:
-            "bg-purple-500/10 text-purple-500 group-hover:bg-purple-500/20",
-          label: "text-purple-500",
+            "bg-violet-400/10 text-violet-300 group-hover:bg-violet-400/20", // Tom Lavanda (Pastel)
+          label: "text-violet-300",
         };
       default:
         return {

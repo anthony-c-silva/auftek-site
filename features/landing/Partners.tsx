@@ -99,6 +99,12 @@ const SUPPORTERS_LIST = [
     logo: "/images/apoios/Ventiur.png",
     url: "https://ventiur.net/",
   },
+    {
+    name: "founders",
+    logo: "/images/apoios/founders-hub.svg",
+    url: "https://ventiur.net/",
+  },
+
 ];
 
 // --- COMPONENTE CARROSSEL REUTILIZÁVEL ---
