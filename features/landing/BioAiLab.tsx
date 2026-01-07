@@ -112,17 +112,20 @@ export const BioAiLab: React.FC = () => {
           <div className="flex flex-col justify-center text-left">
             <SectionTitle align="left">
               A Solução:{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-auftek-blue to-cyan-400">
-                BioAiLab®
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-auftek-blue to-cyan-400 relative inline-block">
+                BioAiLab
+                <sup className="text-[0.5em] ml-2 text-cyan-400 font-bold">
+                  ®
+                </sup>
               </span>
             </SectionTitle>
 
             <p className="text-lg md:text-xl text-gray-300 font-light leading-relaxed max-w-lg">
-              O BioAILab monitora análises microbiológicas em tempo real através
-              de uma IA treinada para modelagem preditiva do crescimento. Esta
-              tecnologia reduz o tempo de resultado para menos de 48 horas, em
-              contraste com os métodos tradicionais que levam de 2 a 14 dias. O
-              gerenciamento dos dados é realizado via aplicativo móvel.
+              O BioAILab realiza o monitoramento microbiológico em tempo real
+              utilizando uma IA treinada para modelagem preditiva. Essa
+              tecnologia antecipa curvas de crescimento, reduzindo o tempo de
+              resultado de dias/semanas em até 48 horas. Todo o gerenciamento de
+              dados é centralizado e acessível via aplicativo móvel e web.
             </p>
           </div>
 
