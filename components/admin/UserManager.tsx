@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
     UserPlus, Search, Edit2, Trash2, User,
-    Briefcase, Save, X, Lock, Github, BookOpen, Linkedin, Instagram
+    Briefcase, Save, X, Lock, Github, BookOpen, Linkedin, Instagram, Check
 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 
@@ -49,6 +49,28 @@ export function UserManager() {
 
     const [formData, setFormData] = useState<any>(initialFormState);
     const [editingId, setEditingId] = useState<string | null>(null);
+
+    // --- LÓGICA DE SENHA ---
+    const getStrength = (pass: string) => {
+        const criteria = {
+            length: pass.length >= 8,
+            hasUpper: /[A-Z]/.test(pass),
+            hasLower: /[a-z]/.test(pass),
+            hasNumber: /[0-9]/.test(pass),
+            hasSpecial: /[!@#$%^&*(),.?":{}|<>]/.test(pass)
+        };
+        const score = Object.values(criteria).filter(Boolean).length;
+        return { criteria, score };
+    };
+
+    const passwordStrength = useMemo(() => {
+        return getStrength(formData.password);
+    }, [formData.password]);
+
+    const isPasswordValid = () => {
+        if (isEditing && formData.password === "") return true;
+        return passwordStrength.score === 5;
+    };
 
     const fetchUsers = async () => {
         setLoading(true);
@@ -119,6 +141,12 @@ export function UserManager() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!isPasswordValid()) {
+            alert("A senha não atende aos requisitos de segurança.");
+            return;
+        }
+
         setIsSaving(true);
 
         try {
@@ -159,9 +187,17 @@ export function UserManager() {
     const inputClass = "w-full p-2 border border-slate-300 rounded text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-slate-900";
     const labelClass = "block text-xs font-bold text-slate-500 uppercase mb-1";
 
+    const getBarColor = () => {
+        const s = passwordStrength.score;
+        if (s <= 1) return "bg-red-500";
+        if (s <= 2) return "bg-orange-500";
+        if (s <= 3) return "bg-yellow-500";
+        if (s <= 4) return "bg-blue-500";
+        return "bg-green-500";
+    };
+
     return (
         <div className="space-y-6">
-
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
                 <div className="flex gap-2">
                     <button
@@ -287,6 +323,7 @@ export function UserManager() {
                             <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
                                 <h3 className="font-bold text-slate-700 mb-3 flex items-center gap-2 text-sm uppercase"><Lock size={14}/> Credenciais de Acesso</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {/* 1. Nome (Linha Inteira) */}
                                     <div className="md:col-span-2">
                                         <label className={labelClass}>Nome Completo <span className="text-red-500">*</span></label>
                                         <input
@@ -296,6 +333,8 @@ export function UserManager() {
                                             className={inputClass}
                                         />
                                     </div>
+
+                                    {/* 2. Email (Esquerda) */}
                                     <div>
                                         <label className={labelClass}>Email <span className="text-red-500">*</span></label>
                                         <input
@@ -306,19 +345,8 @@ export function UserManager() {
                                             className={inputClass}
                                         />
                                     </div>
-                                    <div>
-                                        <label className={labelClass}>
-                                            {isEditing ? "Nova Senha (opcional)" : "Senha Inicial *"}
-                                        </label>
-                                        <input
-                                            type="password"
-                                            required={!isEditing}
-                                            placeholder={isEditing ? "Manter atual" : ""}
-                                            value={formData.password}
-                                            onChange={e => setFormData({...formData, password: e.target.value})}
-                                            className={inputClass}
-                                        />
-                                    </div>
+
+                                    {/* 3. Função (Direita) */}
                                     <div>
                                         <label className={labelClass}>Função / Permissão</label>
                                         <select
@@ -329,6 +357,62 @@ export function UserManager() {
                                             <option value="author">Autor (Padrão)</option>
                                             <option value="admin">Administrador (Total)</option>
                                         </select>
+                                    </div>
+
+                                    {/* 4. Senha (Abaixo) */}
+                                    <div className="md:col-span-2">
+                                        {/* AQUI ESTÁ A CORREÇÃO DO ASTERISCO */}
+                                        <label className={labelClass}>
+                                            {isEditing ? (
+                                                "Nova Senha (opcional)"
+                                            ) : (
+                                                <>
+                                                    Senha <span className="text-red-500">*</span>
+                                                </>
+                                            )}
+                                        </label>
+                                        <input
+                                            type="password"
+                                            required={!isEditing}
+                                            placeholder={isEditing ? "Manter atual" : "Digite uma senha forte"}
+                                            value={formData.password}
+                                            onChange={e => setFormData({...formData, password: e.target.value})}
+                                            className={`${inputClass} ${formData.password && !isPasswordValid() ? 'border-red-300 ring-2 ring-red-100' : ''}`}
+                                        />
+
+                                        {formData.password && (
+                                            <div className="mt-2 space-y-2 animate-fade-in">
+                                                <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                                                    <div
+                                                        className={`h-full transition-all duration-500 ${getBarColor()}`}
+                                                        style={{ width: `${(passwordStrength.score / 5) * 100}%` }}
+                                                    />
+                                                </div>
+
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs text-slate-500">
+                                                    <div className={`flex items-center gap-1.5 ${passwordStrength.criteria.length ? 'text-green-600 font-medium' : ''}`}>
+                                                        {passwordStrength.criteria.length ? <Check size={10} /> : <div className="w-2.5 h-2.5 rounded-full bg-slate-300" />}
+                                                        Mínimo 8 caracteres
+                                                    </div>
+                                                    <div className={`flex items-center gap-1.5 ${passwordStrength.criteria.hasUpper ? 'text-green-600 font-medium' : ''}`}>
+                                                        {passwordStrength.criteria.hasUpper ? <Check size={10} /> : <div className="w-2.5 h-2.5 rounded-full bg-slate-300" />}
+                                                        Letra maiúscula
+                                                    </div>
+                                                    <div className={`flex items-center gap-1.5 ${passwordStrength.criteria.hasLower ? 'text-green-600 font-medium' : ''}`}>
+                                                        {passwordStrength.criteria.hasLower ? <Check size={10} /> : <div className="w-2.5 h-2.5 rounded-full bg-slate-300" />}
+                                                        Letra minúscula
+                                                    </div>
+                                                    <div className={`flex items-center gap-1.5 ${passwordStrength.criteria.hasNumber ? 'text-green-600 font-medium' : ''}`}>
+                                                        {passwordStrength.criteria.hasNumber ? <Check size={10} /> : <div className="w-2.5 h-2.5 rounded-full bg-slate-300" />}
+                                                        Número
+                                                    </div>
+                                                    <div className={`flex items-center gap-1.5 ${passwordStrength.criteria.hasSpecial ? 'text-green-600 font-medium' : ''}`}>
+                                                        {passwordStrength.criteria.hasSpecial ? <Check size={10} /> : <div className="w-2.5 h-2.5 rounded-full bg-slate-300" />}
+                                                        Caractere especial (!@#)
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -431,8 +515,13 @@ export function UserManager() {
                                 </button>
                                 <button
                                     type="submit"
-                                    disabled={isSaving}
-                                    className="px-6 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 shadow-md flex items-center gap-2"
+                                    disabled={isSaving || !isPasswordValid()}
+                                    className={`
+                                        px-6 py-2 rounded-lg font-bold shadow-md flex items-center gap-2 transition-all
+                                        ${isSaving || !isPasswordValid()
+                                        ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                                        : 'bg-blue-600 text-white hover:bg-blue-700'}
+                                    `}
                                 >
                                     {isSaving ? "Salvando..." : <><Save size={18}/> Salvar Usuário</>}
                                 </button>

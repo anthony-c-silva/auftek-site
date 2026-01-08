@@ -87,7 +87,7 @@ export default function LoginPage() {
                     {error && (
                         <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-3 animate-pulse">
                             <p className="text-red-400 text-sm text-center font-medium">
-                                Credenciais inválidas. Verifique e tente novamente.
+                                Credenciais inválidas. Tente novamente mais tarde.
                             </p>
                         </div>
                     )}
