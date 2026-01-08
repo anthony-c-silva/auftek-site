@@ -32,6 +32,7 @@ export interface PostData {
     readTime?: string;
     excerpt?: string;
     status?: string;
+    category?: 'general' | 'case_study'; // NOVO
 }
 
 interface PostFormProps {
@@ -46,10 +47,11 @@ interface FormState {
     slug: string;
     excerpt: string;
     content: string;
-    tags: string[]; // Mudamos de string para string[]
+    tags: string[];
     coverImage: string;
     readTime: string;
     status: string;
+    category: 'general' | 'case_study'; // NOVO
 }
 
 export const PostForm: React.FC<PostFormProps> = ({
@@ -62,7 +64,7 @@ export const PostForm: React.FC<PostFormProps> = ({
     const router = useRouter();
     const [loading, setLoading] = useState(false);
 
-    // Estados da IA (Originais)
+    // Estados da IA
     const [aiLoading, setAiLoading] = useState(false);
     const [aiMessage, setAiMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
     const [aiExcerptLoading, setAiExcerptLoading] = useState(false);
@@ -72,7 +74,7 @@ export const PostForm: React.FC<PostFormProps> = ({
     const [titleStrategy, setTitleStrategy] = useState<AIStrategy | null>(null);
     const [excerptStrategy, setExcerptStrategy] = useState<AIStrategy | null>(null);
 
-    // --- NOVOS ESTADOS PARA O TAG MANAGER ---
+    // Estados para o Tag Manager
     const [availableTags, setAvailableTags] = useState<TagData[]>([]);
     const [showTagManager, setShowTagManager] = useState(false);
 
@@ -81,10 +83,11 @@ export const PostForm: React.FC<PostFormProps> = ({
         slug: "",
         excerpt: "",
         content: "",
-        tags: [], // Inicializa como array vazio
+        tags: [],
         coverImage: "",
         readTime: "",
-        status: "pending"
+        status: "pending",
+        category: "general" // Padrão inicial
     });
 
     const [isFormValid, setIsFormValid] = useState(false);
@@ -97,11 +100,11 @@ export const PostForm: React.FC<PostFormProps> = ({
                 slug: initialData.slug || "",
                 excerpt: initialData.excerpt || "",
                 content: initialData.content || "",
-                // Garante que tags seja array
                 tags: Array.isArray(initialData.tags) ? initialData.tags : [],
                 coverImage: initialData.coverImage || "",
                 readTime: initialData.readTime || "",
-                status: initialData.status || "pending"
+                status: initialData.status || "pending",
+                category: initialData.category || "general" // Carrega categoria existente
             });
         }
     }, [initialData]);
@@ -149,7 +152,7 @@ export const PostForm: React.FC<PostFormProps> = ({
         if (excerptStrategy) setExcerptStrategy(null);
     };
 
-    // --- HANDLERS ESPECÍFICOS PARA TAGS ---
+    // Handlers Tags
     const handleAddTag = (tagName: string) => {
         if (tagName && !formData.tags.includes(tagName)) {
             setFormData(prev => ({ ...prev, tags: [...prev.tags, tagName] }));
@@ -171,7 +174,7 @@ export const PostForm: React.FC<PostFormProps> = ({
         handleAddTag(newTag.name);
     };
 
-    // Handlers de IA (Mantidos originais)
+    // Handlers IA
     const handleAISuggestion = async () => {
         setAiMessage(null);
         const cleanContent = formData.content.replace(/<[^>]*>?/gm, '');
@@ -239,7 +242,8 @@ export const PostForm: React.FC<PostFormProps> = ({
                 readTime: formData.readTime,
                 excerpt: formData.excerpt,
                 status: formData.status,
-                tags: formData.tags, // Envia o array diretamente
+                tags: formData.tags,
+                category: formData.category, // Envia a categoria selecionada
                 ...(formData.slug ? { slug: formData.slug } : {})
             };
 
@@ -276,8 +280,6 @@ export const PostForm: React.FC<PostFormProps> = ({
 
     const inputClass = "w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-auftek-blue outline-none text-slate-900 bg-white placeholder:text-slate-500";
 
-    // --- RENDERIZAÇÃO ---
-    // Envolvemos tudo em <> para separar o Form do TagManager (Correção do erro de hidratação)
     return (
         <>
             <form onSubmit={handleSubmit} className="space-y-6 max-w-5xl mx-auto pb-10">
@@ -360,7 +362,6 @@ export const PostForm: React.FC<PostFormProps> = ({
                         <div className="border border-slate-300 rounded-lg p-3 bg-white space-y-3 min-h-[140px]">
                             <div className="flex gap-2">
                                 <select
-                                    // CORREÇÃO AQUI: Mudança de text-slate-400 para text-slate-700
                                     className="flex-1 p-2 border border-slate-200 rounded text-sm bg-slate-50 text-slate-700 outline-none focus:ring-2 focus:ring-purple-500"
                                     onChange={(e) => {
                                         if (e.target.value) {
@@ -380,7 +381,6 @@ export const PostForm: React.FC<PostFormProps> = ({
                                     }
                                 </select>
 
-                                {/* CORREÇÃO AQUI: Apenas UM botão condicional */}
                                 {user?.role === 'admin' && (
                                     <button
                                         type="button"
@@ -449,7 +449,27 @@ export const PostForm: React.FC<PostFormProps> = ({
                     )}
                 </div>
 
-                {/* --- SEÇÃO DE RESUMO (SUBTÍTULO) ORIGINAL RESTAURADA --- */}
+                {/* --- SEÇÃO DE CATEGORIA (NOVO CHECKBOX) --- */}
+                <div className="flex items-center gap-3 p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                    <input
+                        type="checkbox"
+                        id="isCaseStudy"
+                        checked={formData.category === 'case_study'}
+                        onChange={(e) => setFormData(prev => ({
+                            ...prev,
+                            category: e.target.checked ? 'case_study' : 'general'
+                        }))}
+                        className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 border-gray-300 cursor-pointer"
+                    />
+                    <label htmlFor="isCaseStudy" className="text-sm font-medium text-slate-700 cursor-pointer select-none">
+                        Publicar como relato de caso
+                        <span className="block text-xs text-slate-500 font-normal mt-0.5">
+                            Marque esta opção para exibir este post na aba "Casos de Sucesso".
+                        </span>
+                    </label>
+                </div>
+
+                {/* Resumo */}
                 <div>
                     <div className="flex items-center justify-between mb-1">
                         <label className="block text-sm font-medium text-slate-700">Resumo (Excerpt)</label>
@@ -523,7 +543,7 @@ export const PostForm: React.FC<PostFormProps> = ({
                 </div>
             </form>
 
-            {/* MODAL MOVIDO PARA FORA DO FORMULÁRIO (CORREÇÃO DE ERRO) */}
+            {/* Modal de Tags */}
             {showTagManager && (
                 <TagManager
                     isModal={true}

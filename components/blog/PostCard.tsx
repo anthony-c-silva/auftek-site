@@ -20,6 +20,12 @@ const PostCard: React.FC<PostCardProps> = ({ post, featured, onClick, className 
   // Helper para data
   const displayDate = post.date || (post.createdAt ? new Date(post.createdAt).toLocaleDateString('pt-BR') : "");
 
+  // Lógica para definir o que aparece no Badge (Etiqueta sobre a imagem)
+  // Prioridade: 1. Primeira Tag (Assunto) -> 2. Categoria (Fallback)
+  const badgeLabel = (post.tags && post.tags.length > 0)
+      ? post.tags[0]
+      : (post.category === 'case_study' ? 'Case' : 'Artigo');
+
   return (
       <article
           onClick={onClick}
@@ -47,9 +53,9 @@ const PostCard: React.FC<PostCardProps> = ({ post, featured, onClick, className 
               </div>
           )}
 
-          {/* Badge de Categoria */}
+          {/* Badge (Etiqueta) */}
           <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-auftek-blue uppercase tracking-wider shadow-sm">
-            {post.category || "Artigo"}
+            {badgeLabel}
           </div>
         </Link>
 
@@ -61,14 +67,10 @@ const PostCard: React.FC<PostCardProps> = ({ post, featured, onClick, className 
               <time>{displayDate}</time>
             </div>
 
-            {/* --- CORREÇÃO AQUI: Tempo de Leitura Dinâmico --- */}
             <div className="flex items-center gap-1">
               <Clock size={14} />
-              {/* Mostra o que veio do banco ou um fallback se estiver vazio */}
               <span>{post.readTime || "Leitura rápida"}</span>
             </div>
-            {/* ----------------------------------------------- */}
-
           </div>
 
           <Link href={`/blog/${post.slug}`} className="group-hover:text-auftek-blue transition-colors" onClick={(e) => e.stopPropagation()}>

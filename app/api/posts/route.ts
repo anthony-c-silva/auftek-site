@@ -12,31 +12,51 @@ export async function GET(request: Request) {
         await connectDB();
         const user = await getAuthenticatedUser();
         const { searchParams } = new URL(request.url);
-        const statusParam = searchParams.get('status');
 
+        const statusParam = searchParams.get('status');
+        const categoryParam = searchParams.get('category');
+
+        // ==========================================================
         // 1. Visitante (Público)
+        // ==========================================================
         if (!user) {
-            return NextResponse.json(await Post.find({
+            const publicFilter: any = {
                 deletedAt: null,
                 status: 'published'
-            }).sort({ createdAt: -1 }));
+            };
+
+            // Se o visitante clicou na aba "Cases", filtramos aqui
+            if (categoryParam) {
+                publicFilter.category = categoryParam;
+            }
+
+            return NextResponse.json(await Post.find(publicFilter).sort({ createdAt: -1 }));
         }
 
-        // 2. Filtros base
+        // ==========================================================
+        // 2. Usuário Logado (Admin ou Autor)
+        // ==========================================================
         const isAdmin = user.role === 'admin';
         let filter: any = { deletedAt: null };
 
+        // Filtro de Status (ex: Painel Admin vendo pendentes)
         if (statusParam) {
             filter.status = statusParam;
         }
 
-        // 3. Restrições de Visibilidade
+        // Filtro de Categoria (ex: Painel filtrando só Cases)
+        if (categoryParam) {
+            filter.category = categoryParam; // <--- NOVO: Aplica o filtro
+        }
+
+        // Restrições de Visibilidade (Quem vê o quê)
         if (!isAdmin) {
             if (statusParam) {
-                // Filtra pelos posts DO USUÁRIO usando o novo campo authorId
+                // Se pediu status específico, vê apenas os SEUS posts naquele status
                 filter.authorId = user._id;
             } else {
-                // Feed Misto: Públicos OU Meus
+                // Feed Misto: Tudo que é público OU tudo que é meu (mesmo rascunho)
+                // Nota: O filtro de categoria acima (filter.category) continua valendo para ambas as condições
                 filter.$or = [
                     { status: 'published' },
                     { authorId: user._id }
@@ -68,7 +88,7 @@ export async function POST(request: Request) {
             finalSlug = generateSlug(body.title);
         }
 
-        // 2. Monta Autor (Snapshot para exibição rápida no frontend)
+        // 2. Monta Autor (Snapshot)
         const authorData = {
             name: user.name,
             photoUrl: user.photoUrl || "",
@@ -85,19 +105,22 @@ export async function POST(request: Request) {
             postStatus = body.status === 'draft' ? 'draft' : 'pending';
         }
 
+        // 4. Valida Categoria (NOVO)
+        // Garante que só entra 'general' ou 'case_study'. Se vier lixo, vira 'general'.
+        const validCategories = ['general', 'case_study'];
+        const finalCategory = validCategories.includes(body.category) ? body.category : 'general';
+
         const newPost = await Post.create({
             ...body,
             slug: finalSlug,
-
-            // ========================================================
-            // A CORREÇÃO ESTÁ AQUI:
-            // Injetamos o ID do usuário logado no campo obrigatório
-            // ========================================================
             authorId: user._id,
-
-            author: authorData, // Snapshot visual
+            author: authorData,
             status: postStatus,
-            writer: { name: user.name, email: user.email }, // Mantido apenas se tiver legado usando isso
+
+            // Aqui salvamos a categoria validada
+            category: finalCategory,
+
+            writer: { name: user.name, email: user.email },
             approvedBy: postStatus === 'published' ? user._id : null,
 
             pendingChanges: undefined,
@@ -108,7 +131,6 @@ export async function POST(request: Request) {
 
     } catch (error: any) {
         console.error("Erro ao criar post:", error);
-        // Tratamento para slug duplicado
         if (error.code === 11000) {
             return NextResponse.json({ error: "Já existe um post com este título/slug." }, { status: 400 });
         }

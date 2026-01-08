@@ -2,13 +2,13 @@ import mongoose, { Schema, Document, Model } from "mongoose";
 
 export interface IPost extends Document {
     _id: mongoose.Types.ObjectId;
-
     authorId: mongoose.Types.ObjectId;
 
     title: string;
     slug: string;
     content: string;
     coverImage: string;
+    category: 'general' | 'case_study';
     tags: string[];
     readTime?: string;
     excerpt?: string;
@@ -24,6 +24,7 @@ export interface IPost extends Document {
         coverImage?: string;
         tags?: string[];
         slug?: string;
+        category?: 'general' | 'case_study';
     };
 
     author: {
@@ -58,6 +59,15 @@ const PostSchema: Schema = new Schema(
             index: true
         },
 
+        // NOVO: Definição da Categoria no Banco
+        category: {
+            type: String,
+            enum: ['general', 'case_study'], // general = Insights, case_study = Casos de Sucesso
+            default: 'general',
+            required: true,
+            index: true
+        },
+
         title: { type: String, required: [true, "O título é obrigatório"], trim: true },
         slug: { type: String, required: true, unique: true, index: true },
         excerpt: { type: String, required: [true, "O resumo é obrigatório"], trim: true },
@@ -82,7 +92,8 @@ const PostSchema: Schema = new Schema(
             excerpt: String,
             coverImage: String,
             slug: String,
-            tags: [String]
+            tags: [String],
+            category: String // Adicionado aqui também
         },
 
         author: {

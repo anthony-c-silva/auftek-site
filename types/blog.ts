@@ -1,10 +1,3 @@
-export enum CategoryType {
-    ALL = "Todos",
-    MICROBIOLOGY = "Microbiologia",
-    ENERGY = "Energia",
-    IOT_AI = "IoT & IA"
-}
-
 export interface Author {
     _id?: string;
     id?: string;
@@ -24,6 +17,12 @@ export interface Author {
     lattes?: string;
 }
 
+export enum CategoryType {
+    ALL = 'all',
+    GENERAL = 'general',
+    CASE_STUDY = 'case_study'
+}
+
 export interface BlogPost {
     _id?: string;
     id: string;
@@ -34,7 +33,7 @@ export interface BlogPost {
     imageUrl: string;
     date: string;
     readTime?: string;
-    category: string;
+    category: 'general' | 'case_study';
     tags: string[];
     author: Author;
     writer?: {
