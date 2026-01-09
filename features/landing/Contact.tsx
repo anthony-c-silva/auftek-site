@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import { Button } from "../../components/ui/Button";
-import { ScrollReveal } from "../../components/ui/ScrollReveal";
+import { SectionTitle } from "../../components/ui/Section";
 
 interface FormData {
   nome: string;
@@ -25,8 +25,6 @@ export const Contact: React.FC = () => {
 
   const [status, setStatus] = useState<FormStatus>("idle");
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // --- LÓGICA DE PREENCHIMENTO REMOVIDA AQUI ---
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -78,133 +76,127 @@ export const Contact: React.FC = () => {
       id="contato"
       className="relative z-20 bg-auftek-dark text-white text-center px-6 py-24 border-t border-white/10 overflow-hidden"
     >
+      {/* Background Effects */}
       <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5 pointer-events-none"></div>
-
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 w-[700px] h-[500px] bg-auftek-blue/15 rounded-full blur-[120px] pointer-events-none -translate-y-1/2"></div>
 
       <div className="max-w-4xl mx-auto relative z-10">
-        <ScrollReveal>
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">
-            Pronto para economizar tempo?
-          </h2>
-          <p className="text-xl text-gray-400 mb-12 max-w-2xl mx-auto font-light">
-            Descubra como a Auftek pode otimizar seu laboratório ou sua planta
-            de energia hoje mesmo.
-          </p>
-        </ScrollReveal>
+        {/* TÍTULO PADRONIZADO */}
+        <SectionTitle align="center" subtitle="Fale hoje mesmo com um especialista">
+          Entre em Contato
+        </SectionTitle>
 
-        <ScrollReveal delay="200">
-          <div className="bg-white/5 backdrop-blur-xl p-8 md:p-10 rounded-3xl border border-white/10 shadow-2xl max-w-lg mx-auto relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-br from-auftek-blue/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+        {/* FORMULÁRIO (Sem ScrollReveal) */}
+        <div className="mt-10 bg-white/5 backdrop-blur-xl p-8 md:p-10 rounded-3xl border border-white/10 shadow-2xl max-w-lg mx-auto relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-auftek-blue/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
-            <form className="space-y-5 relative z-10" onSubmit={handleSubmit}>
-              <div className="space-y-1 text-left">
-                <label className="text-xs text-gray-400 ml-1 uppercase tracking-wide font-bold">
-                  Nome
-                </label>
-                <input
-                  type="text"
-                  name="nome"
-                  value={formData.nome}
-                  onChange={handleChange}
-                  placeholder="Seu Nome"
-                  required
-                  className="w-full px-4 py-3.5 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-auftek-blue/50 focus:bg-black/40 transition-all"
-                />
-              </div>
+          <form className="space-y-5 relative z-10" onSubmit={handleSubmit}>
+            <div className="space-y-1 text-left">
+              <label className="text-xs text-gray-400 ml-1 uppercase tracking-wide font-bold">
+                Nome
+              </label>
+              <input
+                type="text"
+                name="nome"
+                value={formData.nome}
+                onChange={handleChange}
+                placeholder="Seu Nome"
+                required
+                className="w-full px-4 py-3.5 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-auftek-blue/50 focus:bg-black/40 transition-all"
+              />
+            </div>
 
-              <div className="space-y-1 text-left">
-                <label className="text-xs text-gray-400 ml-1 uppercase tracking-wide font-bold">
-                  Email Corporativo
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="seu@empresa.com"
-                  required
-                  className={`w-full px-4 py-3.5 rounded-xl bg-black/20 border text-white placeholder-white/30 focus:outline-none transition-all ${
+            <div className="space-y-1 text-left">
+              <label className="text-xs text-gray-400 ml-1 uppercase tracking-wide font-bold">
+                Email Corporativo
+              </label>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="seu@empresa.com"
+                required
+                className={`w-full px-4 py-3.5 rounded-xl bg-black/20 border text-white placeholder-white/30 focus:outline-none transition-all ${
+                  status === "duplicate"
+                    ? "border-amber-500 focus:border-amber-500 bg-amber-900/20"
+                    : "border-white/10 focus:border-auftek-blue/50 focus:bg-black/40"
+                }`}
+              />
+              {status === "duplicate" && (
+                <p className="text-xs text-amber-500 font-bold mt-1 ml-1 animate-pulse">
+                  Este e-mail já enviou uma solicitação recentemente.
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-1 text-left">
+              <label className="text-xs text-gray-400 ml-1 uppercase tracking-wide font-bold">
+                CNPJ
+              </label>
+              <input
+                type="text"
+                name="cnpj"
+                value={formData.cnpj}
+                onChange={handleChange}
+                placeholder="000-000-000/0000"
+                required
+                className="w-full px-4 py-3.5 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-auftek-blue/50 focus:bg-black/40 transition-all"
+              />
+            </div>
+
+            <div className="space-y-1 text-left">
+              <label className="text-xs text-gray-400 ml-1 uppercase tracking-wide font-bold">
+                Endereco
+              </label>
+              <input
+                type="text"
+                name="endereco"
+                value={formData.endereco}
+                onChange={handleChange}
+                placeholder="Rua, Número, Cidade - UF"
+                required
+                className="w-full px-4 py-3.5 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-auftek-blue/50 focus:bg-black/40 transition-all"
+              />
+            </div>
+
+            <div className="space-y-1 text-left">
+              <label className="text-xs text-gray-400 ml-1 uppercase tracking-wide font-bold">
+                Mensagem
+              </label>
+              <textarea
+                name="mensagem"
+                value={formData.mensagem}
+                onChange={handleChange}
+                placeholder="Como podemos ajudar?"
+                rows={4}
+                className="w-full px-4 py-3.5 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-auftek-blue/50 focus:bg-black/40 transition-all resize-none"
+              ></textarea>
+            </div>
+
+            <Button
+              variant="primary"
+              type="submit"
+              disabled={status === "success"}
+              className={`w-full py-4 text-lg mt-4 shadow-lg shadow-auftek-blue/25 hover:shadow-auftek-blue/40 transition-all duration-300 
+                  ${
+                    status === "success"
+                      ? "!bg-green-600 !border-green-500 hover:!bg-green-700 cursor-default"
+                      : ""
+                  }
+                  ${
                     status === "duplicate"
-                      ? "border-amber-500 focus:border-amber-500 bg-amber-900/20"
-                      : "border-white/10 focus:border-auftek-blue/50 focus:bg-black/40"
-                  }`}
-                />
-                {status === "duplicate" && (
-                  <p className="text-xs text-amber-500 font-bold mt-1 ml-1 animate-pulse">
-                    Este e-mail já enviou uma solicitação recentemente.
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-1 text-left">
-                <label className="text-xs text-gray-400 ml-1 uppercase tracking-wide font-bold">
-                  CNPJ
-                </label>
-                <input
-                  type="text"
-                  name="cnpj"
-                  value={formData.cnpj}
-                  onChange={handleChange}
-                  placeholder="000-000-000/0000"
-                  required
-                  className="w-full px-4 py-3.5 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-auftek-blue/50 focus:bg-black/40 transition-all"
-                />
-              </div>
-
-              <div className="space-y-1 text-left">
-                <label className="text-xs text-gray-400 ml-1 uppercase tracking-wide font-bold">
-                  Endereco
-                </label>
-                <input
-                  type="text"
-                  name="endereco"
-                  value={formData.endereco}
-                  onChange={handleChange}
-                  placeholder="RS, Santa maria, camobi, rua erly de almeida lima 122"
-                  required
-                  className="w-full px-4 py-3.5 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-auftek-blue/50 focus:bg-black/40 transition-all"
-                />
-              </div>
-
-              <div className="space-y-1 text-left">
-                <label className="text-xs text-gray-400 ml-1 uppercase tracking-wide font-bold">
-                  Mensagem
-                </label>
-                <textarea
-                  name="mensagem"
-                  value={formData.mensagem}
-                  onChange={handleChange}
-                  placeholder="Como podemos ajudar?"
-                  rows={4}
-                  className="w-full px-4 py-3.5 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-auftek-blue/50 focus:bg-black/40 transition-all resize-none"
-                ></textarea>
-              </div>
-
-              <Button
-                variant="primary"
-                type="submit"
-                disabled={status === "success"}
-                className={`w-full py-4 text-lg mt-4 shadow-lg shadow-auftek-blue/25 hover:shadow-auftek-blue/40 transition-all duration-300 
-                      ${
-                        status === "success"
-                          ? "!bg-green-600 !border-green-500 hover:!bg-green-700 cursor-default"
-                          : ""
-                      }
-                      ${
-                        status === "duplicate"
-                          ? "!bg-amber-600 !border-amber-500 hover:!bg-amber-700"
-                          : ""
-                      }
-                    `}
-              >
-                {status === "idle" && "Solicitar Contato"}
-                {status === "success" && "Solicitação Enviada!"}
-                {status === "duplicate" && "E-mail já Registrado"}
-              </Button>
-            </form>
-          </div>
-        </ScrollReveal>
+                      ? "!bg-amber-600 !border-amber-500 hover:!bg-amber-700"
+                      : ""
+                  }
+                `}
+            >
+              {status === "idle" && "Solicitar Contato"}
+              {status === "success" && "Solicitação Enviada!"}
+              {status === "duplicate" && "E-mail já Registrado"}
+            </Button>
+          </form>
+        </div>
       </div>
     </section>
   );

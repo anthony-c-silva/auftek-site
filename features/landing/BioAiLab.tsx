@@ -1,58 +1,20 @@
 "use client";
 import React from "react";
 import {
-  Hourglass,
-  Cloud,
-  Cpu,
-  Smartphone,
+  Brain,
+  Zap,
+  BarChart3,
+  Rocket,
   ArrowRight,
   ExternalLink,
 } from "lucide-react";
 import { Section, SectionTitle } from "../../components/ui/Section";
-import { BioDashboard } from "../../components/BioDashboard";
-import { Button } from "../../components/ui/Button"; // Importando o componente Button
+import { Button } from "../../components/ui/Button";
 import { cn } from "../../lib/utils";
-
-// Dados dos Cards
-const features = [
-  {
-    icon: Hourglass,
-    theme: "amber",
-    label: "OTIMIZAÇÃO",
-    title: "Redução de Tempo",
-    description:
-      "Diminuição do tempo de análise de dias/semanas (método tradicional) para horas.",
-  },
-  {
-    icon: Cloud,
-    theme: "blue",
-    label: "RASTREABILIDADE",
-    title: "Backup em Nuvem",
-    description:
-      "Armazenamento automático do histórico de análises garantindo segurança nos dados e acesso remoto.",
-  },
-  {
-    icon: Cpu,
-    theme: "emerald",
-    label: "AUTOMAÇÃO",
-    title: "IA Embarcada",
-    description:
-      "Processamento por Inteligência Artificial que padroniza a contagem e identificação, eliminando o erro humano.",
-  },
-  {
-    icon: Smartphone,
-    theme: "purple",
-    label: "Multiplataformas",
-    title: "Monitoramento via App ou WEB",
-    description:
-      "Visualização de resultados em tempo real diretamente na palma da sua mão, onde estiver.",
-  },
-];
 
 export const BioAiLab: React.FC = () => {
   // Lógica do botão de orçamento
   const handleQuoteClick = () => {
-    // 1. Rola suavemente até a seção de contato
     const contactSection = document.getElementById("contato");
     if (contactSection) {
       contactSection.scrollIntoView({ behavior: "smooth" });
@@ -66,128 +28,103 @@ export const BioAiLab: React.FC = () => {
     }, 100);
   };
 
-  const getThemeStyles = (theme: string) => {
-    switch (theme) {
-      case "amber":
-        return {
-          borderHover: "hover:border-amber-500/80",
-          iconBox: "bg-amber-500/10 text-amber-500 group-hover:bg-amber-500/20",
-          label: "text-amber-500",
-        };
-      case "blue":
-        return {
-          borderHover: "hover:border-blue-500/80",
-          iconBox: "bg-blue-500/10 text-blue-500 group-hover:bg-blue-500/20",
-          label: "text-blue-500",
-        };
-      case "emerald":
-        return {
-          borderHover: "hover:border-teal-300/60",
-          iconBox: "bg-teal-400/10 text-teal-300 group-hover:bg-teal-400/20",
-          label: "text-teal-300",
-        };
-      case "purple":
-        return {
-          borderHover: "hover:border-violet-300/60",
-          iconBox:
-            "bg-violet-400/10 text-violet-300 group-hover:bg-violet-400/20",
-          label: "text-violet-300",
-        };
-      default:
-        return {
-          borderHover: "hover:border-gray-500",
-          iconBox: "bg-gray-800 text-gray-400",
-          label: "text-gray-400",
-        };
-    }
-  };
+  const TOPICS = [
+    {
+      icon: Brain,
+      title: "Automação via Inteligência Artificial",
+      description:
+        "O sistema automatiza a leitura das amostras, dispensando a contagem manual de colônias e padronizando a interpretação dos resultados.",
+    },
+    {
+      icon: Zap,
+      title: "Operação Simplificada",
+      description:
+        "Reduz etapas manuais de preparação. O equipamento ocupa pouco espaço físico e integra-se à rotina laboratorial existente.",
+    },
+    {
+      icon: BarChart3,
+      title: "Acesso Remoto e Rastreabilidade",
+      description:
+        "Visualização dos dados via plataforma web ou mobile, com armazenamento de histórico na nuvem para consulta posterior.",
+    },
+    {
+      icon: Rocket,
+      title: "Otimização do Fluxo Produtivo",
+      description:
+        "Permite a liberação antecipada de lotes e o monitoramento de processos industriais em intervalos menores de tempo.",
+    },
+  ];
 
   return (
     <Section id="bioailab" className="relative overflow-hidden bg-auftek-dark">
       <div className="relative z-10 container mx-auto px-4">
-        {/* --- GRID SUPERIOR --- */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center mb-16 lg:mb-24">
-          <div className="flex flex-col justify-center text-left">
-            <SectionTitle align="left">
-              A Solução:{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-auftek-blue to-cyan-400 relative inline-block">
-                BioAiLab
-                <sup className="text-[0.5em] ml-2 text-cyan-400 font-bold">
-                  ®
-                </sup>
-              </span>
-            </SectionTitle>
+        {/* --- CABEÇALHO DA SEÇÃO --- */}
+        <div className="text-center mb-16">
+          <SectionTitle align="center">
+            A Solução:{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-auftek-blue to-cyan-400 relative inline-block">
+              BioAiLab
+              <sup className="text-[0.5em] ml-2 text-cyan-400 font-bold">®</sup>
+            </span>
+          </SectionTitle>
 
-            <p className="text-lg md:text-xl text-gray-300 font-light leading-relaxed max-w-lg">
-              O BioAILab realiza o monitoramento microbiológico em tempo real
-              utilizando uma IA treinada para modelagem preditiva. Essa
-              tecnologia antecipa curvas de crescimento, reduzindo o tempo de
-              resultado de dias/semanas em até 48 horas. Todo o gerenciamento de
-              dados é centralizado e acessível via aplicativo móvel e web.
-            </p>
+          <h3 className="text-2xl md:text-3xl font-bold text-white mt-6 mb-4">
+            Resultados em horas, não semanas.
+          </h3>
+          <p className="text-lg text-gray-400 max-w-3xl mx-auto leading-relaxed">
+            O BioAiLab monitora o crescimento bacteriano e fornece dados
+            quantitativos a partir de 8 horas, reduzindo o tempo de espera
+            comparado aos métodos tradicionais.
+          </p>
+        </div>
+
+        {/* --- CONTEÚDO DIVIDIDO (Tópicos vs Imagem) --- */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center mb-16">
+          {/* Lado Esquerdo: Tópicos */}
+          <div className="flex flex-col space-y-10">
+            <h4 className="text-xl font-bold text-auftek-blue uppercase tracking-wider mb-2 border-b border-gray-800 pb-4 inline-block w-full">
+              Por que escolher o BioAiLab®?
+            </h4>
+
+            <div className="space-y-8">
+              {TOPICS.map((topic, index) => (
+                <div key={index} className="flex gap-4 group">
+                  <div className="shrink-0 mt-1">
+                    <div className="w-10 h-10 rounded-lg bg-auftek-blue/10 flex items-center justify-center text-auftek-blue group-hover:bg-auftek-blue group-hover:text-white transition-all duration-300">
+                      <topic.icon size={20} />
+                    </div>
+                  </div>
+                  <div>
+                    <h5 className="text-lg font-bold text-white mb-2 group-hover:text-auftek-blue transition-colors">
+                      {topic.title}
+                    </h5>
+                    <p className="text-gray-400 text-sm leading-relaxed">
+                      {topic.description}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="relative w-full flex justify-center items-center h-full min-h-[300px] lg:min-h-[400px]">
+          {/* Lado Direito: Imagem */}
+          <div className="relative w-full flex justify-center items-center h-full min-h-[400px]">
+            {/* Efeito de brilho de fundo */}
             <div className="absolute inset-0 flex justify-center items-center">
-              <div className="w-[300px] h-[300px] bg-auftek-blue/20 blur-[100px] rounded-full"></div>
+              <div className="w-[350px] h-[350px] bg-auftek-blue/15 blur-[120px] rounded-full animate-pulse-slow"></div>
             </div>
+
             <img
               src="/images/BioAiLabIlustration.svg"
               alt="Equipamento BioAiLab"
-              className="relative z-10 w-full max-w-[280px] lg:max-w-[240px] h-auto object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-700"
+              className="relative z-10 w-full max-w-[320px] lg:max-w-[400px] h-auto object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-700"
             />
           </div>
         </div>
 
-        {/* --- GRID INFERIOR: CARDS --- */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16 md:mb-24">
-          {features.map((feature, idx) => {
-            const styles = getThemeStyles(feature.theme);
-            const Icon = feature.icon;
-
-            return (
-              <div
-                key={idx}
-                className={cn(
-                  "group relative flex flex-col justify-start h-full bg-slate-900/60 border border-slate-700/50 backdrop-blur-sm rounded-2xl p-6 transition-all duration-300",
-                  "hover:-translate-y-2 hover:shadow-xl",
-                  styles.borderHover
-                )}
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <div
-                    className={cn(
-                      "w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-colors",
-                      styles.iconBox
-                    )}
-                  >
-                    <Icon size={20} strokeWidth={2} />
-                  </div>
-                  <span
-                    className={cn(
-                      "text-xs font-bold tracking-[0.15em] uppercase",
-                      styles.label
-                    )}
-                  >
-                    {feature.label}
-                  </span>
-                </div>
-
-                <h4 className="text-xl font-bold text-white mb-2">
-                  {feature.title}
-                </h4>
-
-                <p className="text-sm text-gray-400 leading-relaxed">
-                  {feature.description}
-                </p>
-              </div>
-            );
-          })}
-        </div>
-
         {/* --- RODAPÉ: BOTÕES --- */}
-        <div className="flex flex-col md:flex-row items-center justify-center gap-6 mt-16 pb-8">
-          {/* Botão Acessar Sistema (Link Externo - Cor ajustada para Auftek Blue) */}
+        <div className="flex flex-col md:flex-row items-center justify-center gap-6 pb-8 border-t border-gray-800 pt-12">
+          {/* Botão Acessar Sistema */}
           <a
             href="https://bioailab.com.br/"
             target="_blank"
@@ -197,7 +134,7 @@ export const BioAiLab: React.FC = () => {
             Acessar Sistema <ExternalLink size={18} />
           </a>
 
-          {/* Botão Solicitar Orçamento (Componente Button - Variant Primary) */}
+          {/* Botão Solicitar Orçamento */}
           <Button
             variant="primary"
             onClick={handleQuoteClick}
