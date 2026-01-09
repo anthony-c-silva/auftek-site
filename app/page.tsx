@@ -8,6 +8,7 @@ import { Solutions } from '../features/landing/Solutions';
 import { Microbiology } from '../features/landing/Microbiology';
 import { BioAiLab } from '../features/landing/BioAiLab';
 import { Publications } from '../features/landing/Publications';
+import { Historys } from '../features/landing/historys'
 import { Energy } from '../features/landing/Energy';
 import { Partners } from '../features/landing/Partners';
 // import { Team } from '../features/landing/Team';
@@ -24,6 +25,7 @@ export default function Home() {
         <Microbiology />
         <BioAiLab />
         <Publications />
+        <Historys />
         <Energy />
         <Partners />
         {/* <Team /> */}

@@ -53,9 +53,8 @@ const PRODUCTS = {
       "Aplicável aos resíduos de segurança da Portaria inmetro nº 140",
       "Sistema modular para inversores até 75 KW",
     ],
-    images: [
-      "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&q=80&w=800",
-    ],
+    // IMAGENS ATUALIZADAS AQUI:
+    images: ["/images/IRCCT1.jpg", "/images/IRCCT2.jpg"],
     icon: Cpu,
     youtubeLink:
       "https://www.youtube.com/playlist?list=PLikkF_yABojGV-2xLF1zsSfi1CkttXdyR",
@@ -113,7 +112,6 @@ export const Energy: React.FC = () => {
     >
       <div className="max-w-6xl mx-auto px-4">
         {/* --- CABEÇALHO PADRONIZADO AQUI --- */}
-        {/* Envolva em uma div para aplicar o mb-10 */}
         <div className="mb-10">
           <SectionTitle align="center" subtitle="Soluções em Energia">
             Instrumentação para acreditação de inversores

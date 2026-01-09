@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Section, SectionTitle } from "../../components/ui/Section";
 import { BioDashboard } from "../../components/BioDashboard";
+import { Button } from "../../components/ui/Button"; // Importando o componente Button
 import { cn } from "../../lib/utils";
 
 // Dados dos Cards
@@ -57,11 +58,8 @@ export const BioAiLab: React.FC = () => {
       contactSection.scrollIntoView({ behavior: "smooth" });
     }
 
-    // 2. Dispara o evento customizado para preencher a mensagem
-    // O seu componente Contact.tsx já tem um listener para 'prefillContact'
     const message = "Olá! Gostaria de receber um orçamento para o BioAiLab.";
 
-    // Pequeno timeout para garantir que a rolagem iniciou e a UX fique fluida
     setTimeout(() => {
       const event = new CustomEvent("prefillContact", { detail: message });
       window.dispatchEvent(event);
@@ -85,14 +83,14 @@ export const BioAiLab: React.FC = () => {
       case "emerald":
         return {
           borderHover: "hover:border-teal-300/60",
-          iconBox: "bg-teal-400/10 text-teal-300 group-hover:bg-teal-400/20", // Tom Verde Menta (Pastel)
+          iconBox: "bg-teal-400/10 text-teal-300 group-hover:bg-teal-400/20",
           label: "text-teal-300",
         };
       case "purple":
         return {
           borderHover: "hover:border-violet-300/60",
           iconBox:
-            "bg-violet-400/10 text-violet-300 group-hover:bg-violet-400/20", // Tom Lavanda (Pastel)
+            "bg-violet-400/10 text-violet-300 group-hover:bg-violet-400/20",
           label: "text-violet-300",
         };
       default:
@@ -187,27 +185,26 @@ export const BioAiLab: React.FC = () => {
           })}
         </div>
 
-        {/* --- RODAPÉ: DASHBOARD E BOTÕES --- */}
-
-        {/* ÁREA DOS BOTÕES */}
+        {/* --- RODAPÉ: BOTÕES --- */}
         <div className="flex flex-col md:flex-row items-center justify-center gap-6 mt-16 pb-8">
-          {/* Botão Acessar Sistema */}
+          {/* Botão Acessar Sistema (Link Externo - Cor ajustada para Auftek Blue) */}
           <a
             href="https://bioailab.com.br/"
             target="_blank"
             rel="noopener noreferrer"
-            className="group border border-auftek-blue/40 hover:border-auftek-blue text-auftek-blue hover:bg-auftek-blue/10 font-bold px-8 py-4 rounded-full flex items-center justify-center gap-2 transition-all w-full md:w-auto"
+            className="group border border-auftek-blue text-auftek-blue hover:bg-auftek-blue/10 font-bold px-8 py-4 rounded-full flex items-center justify-center gap-2 transition-all w-full md:w-auto"
           >
             Acessar Sistema <ExternalLink size={18} />
           </a>
 
-          {/* Botão Solicitar Orçamento (Interativo) */}
-          <button
+          {/* Botão Solicitar Orçamento (Componente Button - Variant Primary) */}
+          <Button
+            variant="primary"
             onClick={handleQuoteClick}
-            className="bg-auftek-blue hover:bg-cyan-400 text-black font-bold px-8 py-4 rounded-full flex items-center justify-center gap-2 transition-all hover:scale-105 shadow-[0_0_20px_rgba(6,182,212,0.2)] hover:shadow-[0_0_30px_rgba(6,182,212,0.4)] w-full md:w-auto"
+            className="w-full md:w-auto px-8 py-4 rounded-full flex items-center justify-center gap-2 transition-all hover:scale-105 shadow-lg shadow-auftek-blue/20 hover:shadow-auftek-blue/40"
           >
             Solicitar Orçamento <ArrowRight size={18} />
-          </button>
+          </Button>
         </div>
       </div>
     </Section>

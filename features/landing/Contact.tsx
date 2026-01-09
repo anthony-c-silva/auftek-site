@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { Button } from "../../components/ui/Button";
 import { ScrollReveal } from "../../components/ui/ScrollReveal";
 
@@ -26,26 +26,7 @@ export const Contact: React.FC = () => {
   const [status, setStatus] = useState<FormStatus>("idle");
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // --- ESCUTA O EVENTO DO COMPONENTE ENERGY ---
-  useEffect(() => {
-    const handlePrefill = (event: Event) => {
-      // TypeScript precisa de 'CustomEvent' para acessar 'detail'
-      const customEvent = event as CustomEvent<string>;
-      if (customEvent.detail) {
-        setFormData((prev) => ({
-          ...prev,
-          mensagem: customEvent.detail,
-        }));
-      }
-    };
-
-    window.addEventListener("prefillContact", handlePrefill);
-
-    return () => {
-      window.removeEventListener("prefillContact", handlePrefill);
-    };
-  }, []);
-  // ---------------------------------------------
+  // --- LÓGICA DE PREENCHIMENTO REMOVIDA AQUI ---
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -75,7 +56,13 @@ export const Contact: React.FC = () => {
         } else {
           if (response.ok) {
             timeoutRef.current = setTimeout(() => {
-              setFormData({ nome: "", email: "", cnpj: "", endereco: "", mensagem: "" });
+              setFormData({
+                nome: "",
+                email: "",
+                cnpj: "",
+                endereco: "",
+                mensagem: "",
+              });
               setStatus("idle");
             }, 4000);
           }
@@ -150,7 +137,7 @@ export const Contact: React.FC = () => {
                 )}
               </div>
 
-               <div className="space-y-1 text-left">
+              <div className="space-y-1 text-left">
                 <label className="text-xs text-gray-400 ml-1 uppercase tracking-wide font-bold">
                   CNPJ
                 </label>
@@ -165,7 +152,7 @@ export const Contact: React.FC = () => {
                 />
               </div>
 
-               <div className="space-y-1 text-left">
+              <div className="space-y-1 text-left">
                 <label className="text-xs text-gray-400 ml-1 uppercase tracking-wide font-bold">
                   Endereco
                 </label>
@@ -198,7 +185,7 @@ export const Contact: React.FC = () => {
                 variant="primary"
                 type="submit"
                 disabled={status === "success"}
-                className={`w-full py-4 text-lg mt-4 shadow-lg shadow-auftek-blue/25 hover:shadow-auftek-blue/40 transition-all duration-300
+                className={`w-full py-4 text-lg mt-4 shadow-lg shadow-auftek-blue/25 hover:shadow-auftek-blue/40 transition-all duration-300 
                       ${
                         status === "success"
                           ? "!bg-green-600 !border-green-500 hover:!bg-green-700 cursor-default"
