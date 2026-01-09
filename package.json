@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@google-analytics/data": "^5.2.1",
     "@next/third-parties": "^16.1.1",
     "@tiptap/extension-bubble-menu": "^3.14.0",
     "@tiptap/extension-image": "^3.14.0",
@@ -28,7 +29,7 @@
     "openai": "^6.14.0",
     "react": "19.2.1",
     "react-dom": "19.2.1",
-    "recharts": "^3.5.1",
+    "recharts": "^3.6.0",
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {

@@ -8,12 +8,15 @@ import {
     LogOut,
     PlusCircle,
     Users,
+    BarChart3, // 1. Novo ícone importado
 } from "lucide-react";
 
 import { AdminPostList } from "@/components/admin/AdminPostList";
 import { UserManager } from "@/components/admin/UserManager";
 import { PostForm } from "@/components/admin/PostForm";
 import { Modal } from "@/components/ui/Modal";
+// 2. Import do componente que criamos
+import { AnalyticsModal } from "@/components/admin/AnalyticsModal";
 
 export default function AdminDashboard() {
     const { user, logout, isLoading } = useAuth();
@@ -21,6 +24,8 @@ export default function AdminDashboard() {
 
     const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
     const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+    // 3. Novo estado para o Analytics
+    const [isAnalyticsModalOpen, setIsAnalyticsModalOpen] = useState(false);
     const [postRefreshKey, setPostRefreshKey] = useState(0);
 
     useEffect(() => {
@@ -41,7 +46,7 @@ export default function AdminDashboard() {
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col">
 
-            {/* Header / Navbar (Agora mais limpo) */}
+            {/* Header / Navbar */}
             <header className="bg-white border-b border-slate-200 sticky top-0 z-10 shadow-sm px-6 h-16 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <div className="bg-blue-600 p-1.5 rounded-lg">
@@ -80,16 +85,27 @@ export default function AdminDashboard() {
                     {/* GRUPO DE AÇÕES */}
                     <div className="flex gap-3 w-full md:w-auto">
 
-                        {/* Botão de Equipe (Movido para cá) */}
                         {isAdmin && (
-                            <button
-                                onClick={() => setIsTeamModalOpen(true)}
-                                className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-slate-300 bg-white text-slate-700 font-bold hover:bg-slate-50 hover:text-blue-600 transition shadow-sm active:scale-[0.98]"
-                            >
-                                <Users size={18} />
-                                <span className="hidden sm:inline">Gerenciar Equipe</span>
-                                <span className="inline sm:hidden">Equipe</span>
-                            </button>
+                            <>
+                                {/* 4. Botão Analytics (Novo) */}
+                                <button
+                                    onClick={() => setIsAnalyticsModalOpen(true)}
+                                    className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-slate-300 bg-white text-slate-700 font-bold hover:bg-slate-50 hover:text-blue-600 transition shadow-sm active:scale-[0.98]"
+                                >
+                                    <BarChart3 size={18} />
+                                    <span className="hidden sm:inline">Analytics</span>
+                                </button>
+
+                                {/* Botão de Equipe */}
+                                <button
+                                    onClick={() => setIsTeamModalOpen(true)}
+                                    className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-slate-300 bg-white text-slate-700 font-bold hover:bg-slate-50 hover:text-blue-600 transition shadow-sm active:scale-[0.98]"
+                                >
+                                    <Users size={18} />
+                                    <span className="hidden sm:inline">Gerenciar Equipe</span>
+                                    <span className="inline sm:hidden">Equipe</span>
+                                </button>
+                            </>
                         )}
 
                         {/* Botão de Nova Publicação */}
@@ -110,7 +126,13 @@ export default function AdminDashboard() {
 
             </main>
 
-            {/* --- MODAL 1: EQUIPE (ADMIN) --- */}
+            {/* --- MODAL 1: ANALYTICS (NOVO) --- */}
+            <AnalyticsModal
+                isOpen={isAnalyticsModalOpen}
+                onClose={() => setIsAnalyticsModalOpen(false)}
+            />
+
+            {/* --- MODAL 2: EQUIPE (ADMIN) --- */}
             {isAdmin && (
                 <Modal
                     isOpen={isTeamModalOpen}
@@ -122,7 +144,7 @@ export default function AdminDashboard() {
                 </Modal>
             )}
 
-            {/* --- MODAL 2: NOVA POSTAGEM --- */}
+            {/* --- MODAL 3: NOVA POSTAGEM --- */}
             <Modal
                 isOpen={isPostModalOpen}
                 onClose={() => setIsPostModalOpen(false)}
