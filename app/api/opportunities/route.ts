@@ -3,17 +3,40 @@ import axios from 'axios';
 import https from 'https';
 import nodemailer from 'nodemailer';
 
-// ==========================================
-// 1. SERVIÇO DE E-MAIL
-// ==========================================
+const RATE_LIMIT_WINDOW = 15 * 60 * 1000;
+const MAX_REQUESTS = 3;
+const ipRequestMap = new Map<string, { count: number; firstRequestTime: number }>();
+
+class SimpleRateLimiter {
+    static check(ip: string): boolean {
+        const now = Date.now();
+        const record = ipRequestMap.get(ip);
+
+        if (!record) {
+            ipRequestMap.set(ip, { count: 1, firstRequestTime: now });
+            return true;
+        }
+
+        if (now - record.firstRequestTime > RATE_LIMIT_WINDOW) {
+            ipRequestMap.set(ip, { count: 1, firstRequestTime: now });
+            return true;
+        }
+
+        if (record.count >= MAX_REQUESTS) {
+            return false;
+        }
+
+        record.count++;
+        return true;
+    }
+}
+
 class EmailService {
     private transporter;
 
     constructor() {
         this.transporter = nodemailer.createTransport({
-            host: process.env.SMTP_HOST,
-            port: Number(process.env.SMTP_PORT),
-            secure: false,
+            service: 'gmail',
             auth: {
                 user: process.env.SMTP_USER,
                 pass: process.env.SMTP_PASS,
@@ -34,6 +57,7 @@ class EmailService {
             <p><strong>Email:</strong> ${email}</p>
             <p><strong>Mensagem:</strong></p>
             <blockquote style="background: #f5f5f5; padding: 10px; border-left: 4px solid #0e223b;">${mensagem}</blockquote>
+            <p style="font-size: 12px; color: #888; margin-top: 20px;">Enviado via Gmail SMTP</p>
           </div>
         `
             });
@@ -44,9 +68,6 @@ class EmailService {
     }
 }
 
-// ==========================================
-// 2. CLIENTE OMIE
-// ==========================================
 class OmieClient {
     private api;
     private appKey = process.env.OMIE_APP_KEY;
@@ -63,7 +84,6 @@ class OmieClient {
 
     async post(endpoint: string, call: string, param: any) {
         await new Promise(r => setTimeout(r, 500));
-
         const payload = { call, app_key: this.appKey, app_secret: this.appSecret, param };
 
         try {
@@ -77,15 +97,10 @@ class OmieClient {
     }
 }
 
-// ==========================================
-// 3. REGRAS DE NEGÓCIO (LEAD)
-// ==========================================
 class LeadService {
     constructor(private client: OmieClient) {}
 
-    // Gera ID único
     private gerarIdUnico(prefixo: string) {
-        // Adiciona um random grande e converte pra string base 36 para encurtar e variar
         const random = Math.floor(Math.random() * 1000000).toString(36);
         return `${prefixo}-${Date.now()}-${random}`.toUpperCase();
     }
@@ -95,7 +110,6 @@ class LeadService {
             const check = await this.client.post("/crm/contas/", "VerificarConta", [{ contaVerificarRequest: { cEmail: email } }]);
             if (check.nCod > 0) return true;
         } catch (e) {}
-
         const contato = await this.buscarContato(email);
         return !!contato;
     }
@@ -103,36 +117,22 @@ class LeadService {
     async processarNovoLead(nome: string, email: string, mensagem: string) {
         const contaId = await this.criarContaComRetry(nome, email);
         const contatoId = await this.criarContatoComRetry(contaId, nome, email);
-
-        const [solucaoId, origemId] = await Promise.all([
-            this.buscarIdSolucao(),
-            this.buscarIdOrigem()
-        ]);
-
+        const [solucaoId, origemId] = await Promise.all([this.buscarIdSolucao(), this.buscarIdOrigem()]);
         return await this.criarOportunidadeComRetry(contaId, contatoId, nome, email, mensagem, solucaoId, origemId);
     }
 
     async criarContaComRetry(nome: string, email: string, tentativa = 1): Promise<number> {
-        // Se for retry, muda o nome para "Nome (Timestamp)"
         const nomeFinal = tentativa > 1 ? `${nome} (${Date.now()})` : nome;
-
         const payload = {
-            identificacao: {
-                cCodInt: this.gerarIdUnico("CONTA"),
-                cNome: nomeFinal,
-                cObs: "Lead Site NextJS"
-            },
+            identificacao: { cCodInt: this.gerarIdUnico("CONTA"), cNome: nomeFinal, cObs: "Lead Site NextJS" },
             telefone_email: { cEmail: email },
             endereco: { cEndereco: "Via Site", cBairro: "Digital", cCEP: "00000-000", cCidade: "São Paulo", cUF: "SP", cPais: "Brasil" }
         };
-
         try {
             const res = await this.client.post("/crm/contas/", "IncluirConta", [payload]);
             return res.nCod;
         } catch (error: any) {
-            const erroString = error.message || "";
-            if (erroString.includes("cNome") || erroString.includes("nome informado") || erroString.includes("já existe")) {
-                console.log(`[RETRY CONTA] Nome "${nomeFinal}" duplicado. Tentando variante...`);
+            if ((error.message || "").includes("cNome") || (error.message || "").includes("já existe")) {
                 return this.criarContaComRetry(nome, email, tentativa + 1);
             }
             throw error;
@@ -141,65 +141,33 @@ class LeadService {
 
     async criarContatoComRetry(contaId: any, nome: string, email: string, tentativa = 1): Promise<number> {
         const nomeFinal = tentativa > 1 ? `${nome} (${Date.now()})` : nome;
-
         const payload = {
-            identificacao: {
-                cCodInt: this.gerarIdUnico("CT"),
-                cNome: nomeFinal,
-                nCodConta: Number(contaId)
-            },
+            identificacao: { cCodInt: this.gerarIdUnico("CT"), cNome: nomeFinal, nCodConta: Number(contaId) },
             telefone_email: { cEmail: email }
         };
-
         try {
             const res = await this.client.post("/crm/contatos/", "IncluirContato", [payload]);
             return res.nCod;
         } catch (error: any) {
-            const erroString = error.message || "";
-            if (erroString.includes("Contato já cadastrado") || erroString.includes("cNome") || erroString.includes("já existe")) {
-                console.log(`[RETRY CONTATO] Erro ao criar "${nomeFinal}". Tentando variante...`);
-                if (tentativa > 3) throw error;
-                return this.criarContatoComRetry(contaId, nome, email, tentativa + 1);
-            }
+            if ((error.message || "").includes("já existe") && tentativa <= 3) return this.criarContatoComRetry(contaId, nome, email, tentativa + 1);
             throw error;
         }
     }
 
-    // --- RETRY OPORTUNIDADE (Com Título Único) ---
     async criarOportunidadeComRetry(contaId: any, contatoId: any, nome: string, email: string, mensagem: string, solucaoId: any, origemId: any, tentativa = 1): Promise<number> {
-
         const idUnicoOp = this.gerarIdUnico("OP");
-
-        // Formata data atual: DD/MM HH:mm
         const agora = new Date();
-        const dataStr = `${agora.getDate()}/${agora.getMonth()+1} ${agora.getHours()}:${agora.getMinutes()}:${agora.getSeconds()}`;
-
-        // Título Único: "Lead Site: Pedro - 10/12 14:30:05"
-        // Isso evita qualquer bloqueio por Título duplicado
+        const dataStr = `${agora.getDate()}/${agora.getMonth()+1} ${agora.getHours()}:${agora.getMinutes()}`;
         const tituloUnico = `Lead Site: ${nome} - ${dataStr}`;
-
         const payload = {
-            identificacao: {
-                cCodIntOp: idUnicoOp,
-                cDesOp: tituloUnico,
-                nCodConta: Number(contaId),
-                nCodContato: Number(contatoId),
-                nCodSolucao: Number(solucaoId),
-                nCodOrigem: Number(origemId)
-            },
+            identificacao: { cCodIntOp: idUnicoOp, cDesOp: tituloUnico, nCodConta: Number(contaId), nCodContato: Number(contatoId), nCodSolucao: Number(solucaoId), nCodOrigem: Number(origemId) },
             observacoes: { cObs: `Mensagem: ${mensagem}\nEmail: ${email}` }
         };
-
         try {
             const res = await this.client.post("/crm/oportunidades/", "IncluirOportunidade", [payload]);
             return res.nCodOp;
         } catch (error: any) {
-            const erroString = error.message || "";
-
-            // Se der erro de "já cadastrada", tenta de novo
-            if (erroString.includes("já cadastrada") || erroString.includes("duplicad") || erroString.includes("cCodIntOp")) {
-                console.log(`[RETRY OP] Oportunidade conflitou (ID: ${idUnicoOp}). Tentando novo ID...`);
-                if (tentativa > 3) throw error;
+            if ((error.message || "").includes("duplicad") && tentativa <= 3) {
                 await new Promise(r => setTimeout(r, 1000));
                 return this.criarOportunidadeComRetry(contaId, contatoId, nome, email, mensagem, solucaoId, origemId, tentativa + 1);
             }
@@ -212,7 +180,6 @@ class LeadService {
         while(true) {
             const data = await this.client.post("/crm/contatos/", "ListarContatos", [{ pagina, registros_por_pagina: 50, apenas_importado_api: "N" }]);
             const found = data.cadastros?.find((c: any) => c.telefone_email?.cEmail?.toLowerCase() === email.toLowerCase());
-
             if (found) return { contatoId: found.identificacao.nCod, contaId: found.identificacao.nCodConta };
             if (pagina >= (data.total_de_paginas || 1)) break;
             pagina++;
@@ -232,11 +199,18 @@ class LeadService {
     }
 }
 
-// ==========================================
-// 4. ROTA POST
-// ==========================================
 export async function POST(request: Request) {
     try {
+        const ip = request.headers.get("x-forwarded-for")?.split(',')[0] || "unknown";
+
+        if (!SimpleRateLimiter.check(ip)) {
+            console.warn(`[RATE LIMIT] Bloqueado IP: ${ip}`);
+            return NextResponse.json(
+                { error: "Muitas requisições. Tente novamente em 15 minutos." },
+                { status: 429 }
+            );
+        }
+
         const { nome, email, mensagem } = await request.json();
 
         if (!nome || !email) {
@@ -247,7 +221,6 @@ export async function POST(request: Request) {
         const leadService = new LeadService(omie);
         const emailService = new EmailService();
 
-        // 1. CHECAGEM DUPLICIDADE
         const emailDuplicado = await leadService.verificarDuplicidade(email);
 
         if (emailDuplicado) {
@@ -258,10 +231,7 @@ export async function POST(request: Request) {
             }, { status: 409 });
         }
 
-        // 2. PROCESSAMENTO
         await leadService.processarNovoLead(nome, email, mensagem);
-
-        // 3. ENVIO EMAIL
         await emailService.enviarNotificacao(nome, email, mensagem);
 
         return NextResponse.json({ success: true, message: "Recebido com sucesso!" });

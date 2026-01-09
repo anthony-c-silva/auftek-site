@@ -67,8 +67,6 @@ export const Header: React.FC = () => {
     setIsProfileOpen(false);
     router.push("/");
   };
-  console.log("DADOS DO USUÁRIO:", user);
-
   return (
       <nav
           className={cn(

@@ -13,9 +13,6 @@ export async function POST(request: Request) {
 
         let strategy = providedStrategy;
 
-        // =================================================================================
-        // FASE 1: O ESTRATEGISTA (JSON Mode Nativo)
-        // =================================================================================
         if (!strategy) {
             const analysisPrompt = `
             Analise o texto abaixo para SEO.
@@ -56,9 +53,6 @@ export async function POST(request: Request) {
             }
         }
 
-        // =================================================================================
-        // FASE 2: REDATOR
-        // =================================================================================
         const finalPrompt = `
         Aja como Editor de Manchetes de Tecnologia. Escreva UM título para o Google.
         

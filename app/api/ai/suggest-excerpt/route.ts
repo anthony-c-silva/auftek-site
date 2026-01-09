@@ -19,9 +19,6 @@ export async function POST(request: Request) {
         const contentToAnalyze = content.slice(0, 4500);
         let strategy = providedStrategy;
 
-        // =================================================================================
-        // FASE 1: O ESTRATEGISTA (JSON Mode Nativo)
-        // =================================================================================
         if (!strategy) {
             const strategyPrompt = `
             Você é um Estrategista de SEO Sênior. Analise o texto abaixo.
@@ -64,9 +61,6 @@ export async function POST(request: Request) {
             }
         }
 
-        // =================================================================================
-        // FASE 2: O REDATOR (JORNALISTA CONCISO)
-        // =================================================================================
         const finalPrompt = `
             Atue como um jornalista de tecnologia.
             Escreva um Resumo (Meta Description) curto e completo para um artigo.
@@ -95,9 +89,6 @@ export async function POST(request: Request) {
 
         let finalExcerpt = creationCompletion.choices[0]?.message?.content || "";
 
-        // =================================================================================
-        // FASE 3: LIMPEZA E CORTE INTELIGENTE (Mantido da sua versão original)
-        // =================================================================================
 
         // 1. Limpezas básicas
         finalExcerpt = finalExcerpt

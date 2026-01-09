@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Header } from "../components/layout/Header";
-import { Footer } from "../components/layout/Footer";
-// Import do contexto que criamos no passo anterior
+import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
 import { AuthProvider } from "@/context/AuthContext";
+import { GoogleAnalytics } from "@next/third-parties/google";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -26,24 +26,19 @@ export default function RootLayout({
                                    }: Readonly<{
     children: React.ReactNode;
 }>) {
+    const gaId = process.env.NEXT_PUBLIC_GA_ID;
+
     return (
-        <html lang="en">
+        <html lang="pt-BR">
         <body
             className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-auftek-dark text-slate-200 font-sans selection:bg-auftek-blue selection:text-white`}
         >
-        {/* O AuthProvider precisa envolver tudo que vai usar a autenticação (Header, Páginas e Footer) */}
         <AuthProvider>
-
-            {/* 3. HEADER FIXO */}
             <Header />
-
-            {/* 4. CONTEÚDO DA PÁGINA */}
             {children}
-
-            {/* 5. FOOTER FIXO */}
             <Footer />
-
         </AuthProvider>
+        {gaId && <GoogleAnalytics gaId={gaId} />}
         </body>
         </html>
     );
