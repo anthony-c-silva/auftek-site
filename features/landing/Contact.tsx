@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { Button } from "../../components/ui/Button";
 import { ScrollReveal } from "../../components/ui/ScrollReveal";
 
 interface FormData {
   nome: string;
   email: string;
+  cnpj: string;
+  endereco: string;
   mensagem: string;
 }
 
@@ -16,32 +18,15 @@ export const Contact: React.FC = () => {
   const [formData, setFormData] = useState<FormData>({
     nome: "",
     email: "",
+    cnpj: "",
+    endereco: "",
     mensagem: "",
   });
 
   const [status, setStatus] = useState<FormStatus>("idle");
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // --- ESCUTA O EVENTO DO COMPONENTE ENERGY ---
-  useEffect(() => {
-    const handlePrefill = (event: Event) => {
-      // TypeScript precisa de 'CustomEvent' para acessar 'detail'
-      const customEvent = event as CustomEvent<string>;
-      if (customEvent.detail) {
-        setFormData((prev) => ({
-          ...prev,
-          mensagem: customEvent.detail,
-        }));
-      }
-    };
-
-    window.addEventListener("prefillContact", handlePrefill);
-
-    return () => {
-      window.removeEventListener("prefillContact", handlePrefill);
-    };
-  }, []);
-  // ---------------------------------------------
+  // --- LÓGICA DE PREENCHIMENTO REMOVIDA AQUI ---
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -71,7 +56,13 @@ export const Contact: React.FC = () => {
         } else {
           if (response.ok) {
             timeoutRef.current = setTimeout(() => {
-              setFormData({ nome: "", email: "", mensagem: "" });
+              setFormData({
+                nome: "",
+                email: "",
+                cnpj: "",
+                endereco: "",
+                mensagem: "",
+              });
               setStatus("idle");
             }, 4000);
           }
@@ -148,6 +139,36 @@ export const Contact: React.FC = () => {
 
               <div className="space-y-1 text-left">
                 <label className="text-xs text-gray-400 ml-1 uppercase tracking-wide font-bold">
+                  CNPJ
+                </label>
+                <input
+                  type="text"
+                  name="cnpj"
+                  value={formData.cnpj}
+                  onChange={handleChange}
+                  placeholder="000-000-000/0000"
+                  required
+                  className="w-full px-4 py-3.5 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-auftek-blue/50 focus:bg-black/40 transition-all"
+                />
+              </div>
+
+              <div className="space-y-1 text-left">
+                <label className="text-xs text-gray-400 ml-1 uppercase tracking-wide font-bold">
+                  Endereco
+                </label>
+                <input
+                  type="text"
+                  name="endereco"
+                  value={formData.endereco}
+                  onChange={handleChange}
+                  placeholder="RS, Santa maria, camobi, rua erly de almeida lima 122"
+                  required
+                  className="w-full px-4 py-3.5 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-auftek-blue/50 focus:bg-black/40 transition-all"
+                />
+              </div>
+
+              <div className="space-y-1 text-left">
+                <label className="text-xs text-gray-400 ml-1 uppercase tracking-wide font-bold">
                   Mensagem
                 </label>
                 <textarea
@@ -164,7 +185,7 @@ export const Contact: React.FC = () => {
                 variant="primary"
                 type="submit"
                 disabled={status === "success"}
-                className={`w-full py-4 text-lg mt-4 shadow-lg shadow-auftek-blue/25 hover:shadow-auftek-blue/40 transition-all duration-300
+                className={`w-full py-4 text-lg mt-4 shadow-lg shadow-auftek-blue/25 hover:shadow-auftek-blue/40 transition-all duration-300 
                       ${
                         status === "success"
                           ? "!bg-green-600 !border-green-500 hover:!bg-green-700 cursor-default"

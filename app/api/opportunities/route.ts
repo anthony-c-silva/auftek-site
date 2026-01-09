@@ -21,7 +21,8 @@ class EmailService {
         });
     }
 
-    async enviarNotificacao(nome: string, email: string, mensagem: string) {
+    // [ALTERADO] Adicionado cnpj e endereco nos parâmetros
+    async enviarNotificacao(nome: string, email: string, cnpj: string, endereco: string, mensagem: string) {
         try {
             await this.transporter.sendMail({
                 from: `"Site Lead" <${process.env.SMTP_USER}>`,
@@ -32,6 +33,9 @@ class EmailService {
             <h2 style="color: #0e223b;">Novo Contato pelo Site</h2>
             <p><strong>Nome:</strong> ${nome}</p>
             <p><strong>Email:</strong> ${email}</p>
+            <p><strong>CNPJ:</strong> ${cnpj || 'Não informado'}</p>
+            <p><strong>Endereço:</strong> ${endereco || 'Não informado'}</p>
+            <hr />
             <p><strong>Mensagem:</strong></p>
             <blockquote style="background: #f5f5f5; padding: 10px; border-left: 4px solid #0e223b;">${mensagem}</blockquote>
           </div>
@@ -81,11 +85,9 @@ class OmieClient {
 // 3. REGRAS DE NEGÓCIO (LEAD)
 // ==========================================
 class LeadService {
-    constructor(private client: OmieClient) {}
+    constructor(private client: OmieClient) { }
 
-    // Gera ID único
     private gerarIdUnico(prefixo: string) {
-        // Adiciona um random grande e converte pra string base 36 para encurtar e variar
         const random = Math.floor(Math.random() * 1000000).toString(36);
         return `${prefixo}-${Date.now()}-${random}`.toUpperCase();
     }
@@ -94,14 +96,16 @@ class LeadService {
         try {
             const check = await this.client.post("/crm/contas/", "VerificarConta", [{ contaVerificarRequest: { cEmail: email } }]);
             if (check.nCod > 0) return true;
-        } catch (e) {}
+        } catch (e) { }
 
         const contato = await this.buscarContato(email);
         return !!contato;
     }
 
-    async processarNovoLead(nome: string, email: string, mensagem: string) {
-        const contaId = await this.criarContaComRetry(nome, email);
+    // [ALTERADO] Recebe cnpj e endereco
+    async processarNovoLead(nome: string, email: string, cnpj: string, endereco: string, mensagem: string) {
+        // [ALTERADO] Passa cnpj e endereco para criarConta
+        const contaId = await this.criarContaComRetry(nome, email, cnpj, endereco);
         const contatoId = await this.criarContatoComRetry(contaId, nome, email);
 
         const [solucaoId, origemId] = await Promise.all([
@@ -112,18 +116,26 @@ class LeadService {
         return await this.criarOportunidadeComRetry(contaId, contatoId, nome, email, mensagem, solucaoId, origemId);
     }
 
-    async criarContaComRetry(nome: string, email: string, tentativa = 1): Promise<number> {
-        // Se for retry, muda o nome para "Nome (Timestamp)"
+    // [ALTERADO] Recebe cnpj e endereco e mapeia para o payload do Omie
+    async criarContaComRetry(nome: string, email: string, cnpj: string, endereco: string, tentativa = 1): Promise<number> {
         const nomeFinal = tentativa > 1 ? `${nome} (${Date.now()})` : nome;
 
         const payload = {
             identificacao: {
                 cCodInt: this.gerarIdUnico("CONTA"),
                 cNome: nomeFinal,
+                cCNPJ_CPF: cnpj || "", // [NOVO] Mapeamento do CNPJ
                 cObs: "Lead Site NextJS"
             },
             telefone_email: { cEmail: email },
-            endereco: { cEndereco: "Via Site", cBairro: "Digital", cCEP: "00000-000", cCidade: "São Paulo", cUF: "SP", cPais: "Brasil" }
+            endereco: {
+                cEndereco: endereco || "Via Site", // [NOVO] Endereço vindo do form ou padrão
+                cBairro: "Digital",
+                cCEP: "00000-000",
+                cCidade: "São Paulo",
+                cUF: "SP",
+                cPais: "Brasil"
+            }
         };
 
         try {
@@ -133,7 +145,8 @@ class LeadService {
             const erroString = error.message || "";
             if (erroString.includes("cNome") || erroString.includes("nome informado") || erroString.includes("já existe")) {
                 console.log(`[RETRY CONTA] Nome "${nomeFinal}" duplicado. Tentando variante...`);
-                return this.criarContaComRetry(nome, email, tentativa + 1);
+                // [ALTERADO] Passa os novos parametros na recursão
+                return this.criarContaComRetry(nome, email, cnpj, endereco, tentativa + 1);
             }
             throw error;
         }
@@ -165,17 +178,11 @@ class LeadService {
         }
     }
 
-    // --- RETRY OPORTUNIDADE (Com Título Único) ---
     async criarOportunidadeComRetry(contaId: any, contatoId: any, nome: string, email: string, mensagem: string, solucaoId: any, origemId: any, tentativa = 1): Promise<number> {
 
         const idUnicoOp = this.gerarIdUnico("OP");
-
-        // Formata data atual: DD/MM HH:mm
         const agora = new Date();
-        const dataStr = `${agora.getDate()}/${agora.getMonth()+1} ${agora.getHours()}:${agora.getMinutes()}:${agora.getSeconds()}`;
-
-        // Título Único: "Lead Site: Pedro - 10/12 14:30:05"
-        // Isso evita qualquer bloqueio por Título duplicado
+        const dataStr = `${agora.getDate()}/${agora.getMonth() + 1} ${agora.getHours()}:${agora.getMinutes()}:${agora.getSeconds()}`;
         const tituloUnico = `Lead Site: ${nome} - ${dataStr}`;
 
         const payload = {
@@ -195,8 +202,6 @@ class LeadService {
             return res.nCodOp;
         } catch (error: any) {
             const erroString = error.message || "";
-
-            // Se der erro de "já cadastrada", tenta de novo
             if (erroString.includes("já cadastrada") || erroString.includes("duplicad") || erroString.includes("cCodIntOp")) {
                 console.log(`[RETRY OP] Oportunidade conflitou (ID: ${idUnicoOp}). Tentando novo ID...`);
                 if (tentativa > 3) throw error;
@@ -209,7 +214,7 @@ class LeadService {
 
     async buscarContato(email: string) {
         let pagina = 1;
-        while(true) {
+        while (true) {
             const data = await this.client.post("/crm/contatos/", "ListarContatos", [{ pagina, registros_por_pagina: 50, apenas_importado_api: "N" }]);
             const found = data.cadastros?.find((c: any) => c.telefone_email?.cEmail?.toLowerCase() === email.toLowerCase());
 
@@ -237,7 +242,8 @@ class LeadService {
 // ==========================================
 export async function POST(request: Request) {
     try {
-        const { nome, email, mensagem } = await request.json();
+        // [ALTERADO] Extração dos novos campos
+        const { nome, email, cnpj, endereco, mensagem } = await request.json();
 
         if (!nome || !email) {
             return NextResponse.json({ error: "Campos obrigatórios faltando." }, { status: 400 });
@@ -258,11 +264,11 @@ export async function POST(request: Request) {
             }, { status: 409 });
         }
 
-        // 2. PROCESSAMENTO
-        await leadService.processarNovoLead(nome, email, mensagem);
+        // 2. PROCESSAMENTO (Passando novos campos)
+        await leadService.processarNovoLead(nome, email, cnpj, endereco, mensagem);
 
-        // 3. ENVIO EMAIL
-        await emailService.enviarNotificacao(nome, email, mensagem);
+        // 3. ENVIO EMAIL (Passando novos campos)
+        await emailService.enviarNotificacao(nome, email, cnpj, endereco, mensagem);
 
         return NextResponse.json({ success: true, message: "Recebido com sucesso!" });
 

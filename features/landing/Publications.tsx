@@ -51,36 +51,36 @@ export const Publications: React.FC = () => {
   const APPS = [
     {
       category: "INDÚSTRIA ALIMENTÍCIA",
-      title: "Salmonella e Patógenos",
-      description: "Libere lotes em horas, não dias. Segurança total com detecção rápida para eliminar riscos sanitários.",
+      title: "Salmonella e outros",
+      description: "Segurança total com detecção rápida para eliminar riscos sanitários e alimentícios.",
       icon: Drumstick,
       theme: "red"
     },
     {
       category: "SANEAMENTO (ETE E ETA)",
       title: "E. coli e Coliformes",
-      description: "Dados em tempo real na nuvem. Otimize a operação e garanta a qualidade da água com resposta imediata.",
+      description: "Otimize a operação e garanta a qualidade da água com resposta em poucas horas.",
       icon: Waves,
       theme: "cyan"
     },
     {
       category: "AGRO & BIOINSUMOS",
       title: "Monitoramento On-Farm",
-      description: "Maximize a colheita. Valide a viabilidade dos bioinsumos no campo e aplique no momento exato.",
+      description: "Valide a viabilidade dos bioinsumos no campo e aplique no momento exato. Maximizando a colheita.",
       icon: Sprout,
       theme: "green"
     },
     {
       category: "PROCESSOS INDUSTRIAIS",
       title: "Controle de Processos",
-      description: "Zero desperdício. Identifique falhas microbiológicas instantaneamente e corrija a produção em tempo recorde.",
+      description: "Zero desperdício. Identifique falhas microbiológicas instantaneamente e corrija a produção em tempo real.",
       icon: Gauge,
       theme: "orange"
     },
     {
       category: "QUALIDADE DO LEITE",
       title: "CBT Digital",
-      description: "Resultados em 3 horas. Automatize a Contagem Bacteriana Total para rastreabilidade e valorização do produto.",
+      description: "Resultados em até 3 horas. Automatize a Contagem Bacteriana Total (CBT) para rastreabilidade e valorização do produto.",
       icon: null,
       customIcon: MILK_ICON_PATH,
       theme: "white"
