@@ -6,8 +6,6 @@ import {
   Sprout,
   Waves,
   Gauge,
-  Biohazard,
-  FileText,
   Rocket,
   Drumstick
 } from "lucide-react";
@@ -93,20 +91,6 @@ export const Publications: React.FC = () => {
       theme: "primary",
       action: "Falar com um Especialista →",
       href: "#contato"
-    }
-  ];
-
-  // --- DADOS DOS PAPERS CIENTÍFICOS ---
-  const PAPERS = [
-    {
-      journal: "Analytical Chemistry",
-      title: "Feasibility for Real-Time Monitoring of Bacterial Growth in Raw Milk Using a New Contactless Sensor",
-      href: "https://pubs.acs.org/doi/10.1021/acs.analchem.5c03766"
-    },
-    {
-      journal: "IEEE Sensors Journal",
-      title: "Contactless Electrical Sensor Based on Resonance Frequency for Real-Time Monitoring of Bacterial Growth",
-      href: "https://ieeexplore.ieee.org/document/10424681"
     }
   ];
 
@@ -258,59 +242,6 @@ export const Publications: React.FC = () => {
       <p className="md:hidden text-center text-gray-600 text-xs mb-12 animate-pulse">
         Deslize para o lado para ver mais →
       </p>
-
-      {/* --- SEÇÃO DE ARTIGOS CIENTÍFICOS --- */}
-      <div className="border-t border-gray-800 pt-16">
-        <h3 className="text-2xl font-bold text-gray-300 mb-8 text-center">
-          Publicações e Embasamento Técnico-Científico
-        </h3>
-
-        {/* --- CARROSSEL 2: PAPERS --- */}
-        {/* Alteração: Usamos a mesma estrutura de container flex/scroll-x do mobile */}
-        <div
-          className="
-            flex overflow-x-auto gap-4 px-4 pb-10 pt-4 snap-x snap-mandatory items-stretch
-            md:grid md:grid-cols-2 md:gap-6 md:max-w-4xl md:mx-auto md:pb-0 md:px-0
-            [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]
-          "
-        >
-          {PAPERS.map((paper, index) => (
-            <a
-              key={index}
-              href={paper.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="
-                group relative w-[85vw] md:w-auto flex-shrink-0 snap-center h-full
-                flex gap-4 p-4 rounded-lg bg-[#0e223b]/50 border border-gray-800
-                hover:border-auftek-blue/50 hover:bg-[#0e223b] transition-all hover:-translate-y-1 cursor-pointer
-              "
-            >
-              <div className="bg-gray-800/50 p-3 rounded h-fit group-hover:bg-auftek-blue/10 transition-colors shrink-0">
-                <FileText className="text-gray-400 group-hover:text-auftek-blue transition-colors" size={24} />
-              </div>
-              <div className="flex flex-col">
-                <h4 className="text-white font-medium group-hover:text-auftek-blue transition-colors">
-                  {paper.journal}
-                </h4>
-                <p className="text-gray-500 text-sm mt-1 leading-snug">
-                  {paper.title}
-                </p>
-              </div>
-            </a>
-          ))}
-        </div>
-
-        {/* Dica visual extra para os papers no mobile */}
-        <p className="md:hidden text-center text-gray-600 text-xs mb-6 animate-pulse">
-          Deslize para o lado para ver mais →
-        </p>
-
-        <p className="text-center text-gray-500 text-sm mt-6 italic">
-          O BioAiLab tem sido utilizado em estudos científicos publicados em
-          periódicos de destaque internacional.
-        </p>
-      </div>
     </Section>
   );
 };

@@ -10,8 +10,8 @@ import {
 } from "lucide-react";
 import { Section, SectionTitle } from "../../components/ui/Section";
 import { Button } from "../../components/ui/Button";
-import { scrollToElement } from "../../hooks/useScroll";
 
+// Dados dos produtos
 const PRODUCTS = {
   pvag: {
     id: "pvag",
@@ -29,8 +29,9 @@ const PRODUCTS = {
     icon: Zap,
     youtubeLink:
       "https://www.youtube.com/playlist?list=PLikkF_yABojGV-2xLF1zsSfi1CkttXdyR",
-    whatsappMessage:
-      "Olá! Gostaria de receber um orçamento para o sistema PVAG LAB.",
+    // Renomeado de whatsappMessage para contactMessage
+    contactMessage:
+      "Olá! Gostaria de receber um orçamento técnico para o sistema PVAG LAB.",
     theme: {
       primary: "text-yellow-500",
       bg: "bg-yellow-500",
@@ -53,13 +54,13 @@ const PRODUCTS = {
       "Aplicável aos resíduos de segurança da Portaria inmetro nº 140",
       "Sistema modular para inversores até 75 KW",
     ],
-    // IMAGENS ATUALIZADAS AQUI:
     images: ["/images/IRCCT1.jpg", "/images/IRCCT2.jpg"],
     icon: Cpu,
     youtubeLink:
       "https://www.youtube.com/playlist?list=PLikkF_yABojGV-2xLF1zsSfi1CkttXdyR",
-    whatsappMessage:
-      "Olá! Gostaria de receber um orçamento para o sistema IRCCT.",
+    // Renomeado de whatsappMessage para contactMessage
+    contactMessage:
+      "Olá! Gostaria de receber um orçamento técnico para o sistema IRCCT.",
     theme: {
       primary: "text-cyan-400",
       bg: "bg-cyan-400",
@@ -97,13 +98,24 @@ export const Energy: React.FC = () => {
     );
   };
 
+  // --- LÓGICA PADRONIZADA (IGUAL AO BIOAILAB) ---
   const handleQuoteClick = () => {
-    const event = new CustomEvent("prefillContact", {
-      detail: product.whatsappMessage,
-    });
-    window.dispatchEvent(event);
-    scrollToElement("#contato");
+    const contactSection = document.getElementById("contato");
+
+    if (contactSection) {
+      // 1. Scroll suave até a seção de contato
+      contactSection.scrollIntoView({ behavior: "smooth" });
+
+      // 2. Dispara evento com a mensagem específica do produto selecionado
+      setTimeout(() => {
+        const event = new CustomEvent("prefillContact", {
+          detail: product.contactMessage, // Usa a mensagem do produto atual
+        });
+        window.dispatchEvent(event);
+      }, 300);
+    }
   };
+  // ----------------------------------------------
 
   return (
     <Section
@@ -111,14 +123,14 @@ export const Energy: React.FC = () => {
       className="bg-[#0e223b] py-20 transition-colors duration-500"
     >
       <div className="max-w-6xl mx-auto px-4">
-        {/* --- CABEÇALHO PADRONIZADO AQUI --- */}
+        {/* --- CABEÇALHO --- */}
         <div className="mb-10">
           <SectionTitle align="center" subtitle="Soluções em Energia">
             Instrumentação para acreditação de inversores
           </SectionTitle>
         </div>
 
-        {/* Switcher */}
+        {/* --- SWITCHER (Abas) --- */}
         <div className="flex justify-center mb-12">
           <div className="bg-black/30 backdrop-blur-md p-1.5 rounded-full border border-white/10 shadow-2xl flex w-full max-w-md relative">
             <div
@@ -156,7 +168,7 @@ export const Energy: React.FC = () => {
           </div>
         </div>
 
-        {/* Card Principal */}
+        {/* --- CARD DO PRODUTO --- */}
         <div
           className={`
           bg-[#112240] rounded-3xl overflow-hidden border transition-colors duration-500 shadow-2xl
@@ -166,7 +178,7 @@ export const Energy: React.FC = () => {
         `}
         >
           <div className="grid lg:grid-cols-2">
-            {/* Coluna Esquerda: Info */}
+            {/* Coluna Esquerda: Informações */}
             <div className="p-8 md:p-12 flex flex-col justify-center animate-in fade-in slide-in-from-left-4 duration-500 key={activeTab}">
               <div className="flex items-center gap-4 mb-6">
                 <div
@@ -219,7 +231,7 @@ export const Energy: React.FC = () => {
               </div>
             </div>
 
-            {/* Coluna Direita: Imagem + Carrossel */}
+            {/* Coluna Direita: Galeria de Imagens */}
             <div className="relative h-64 lg:h-auto bg-gray-900 overflow-hidden group">
               <div
                 className={`absolute inset-0 opacity-20 mix-blend-overlay ${theme.bg}`}
