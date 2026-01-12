@@ -19,7 +19,7 @@ export const NAV_LINKS = [
   { name: 'BioAiLab', href: '#bioailab' },
   { name: 'Energia', href: '#energia' },
   { name: 'Contato', href: '#contato'},
-  { name: 'Publicações', href: '#publicacoes' },
+  { name: 'Aplicações', href: '#publicacoes' },
   { name: 'Parceiros', href: '#parceiros' },
   { name: 'Sistema', href: 'https://bioailab.com.br/'},
 

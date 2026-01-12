@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import { Section, SectionTitle } from "../../components/ui/Section";
 import { Button } from "../../components/ui/Button";
-import { cn } from "../../lib/utils";
 
 export const BioAiLab: React.FC = () => {
   // --- LÓGICA DE INTEGRAÇÃO COM O FORMULÁRIO ---
