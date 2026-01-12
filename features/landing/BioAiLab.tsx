@@ -1,4 +1,5 @@
 "use client";
+
 import React from "react";
 import {
   Brain,
@@ -13,19 +14,24 @@ import { Button } from "../../components/ui/Button";
 import { cn } from "../../lib/utils";
 
 export const BioAiLab: React.FC = () => {
-  // Lógica do botão de orçamento
+  // --- LÓGICA DE INTEGRAÇÃO COM O FORMULÁRIO ---
   const handleQuoteClick = () => {
+    // 1. Identifica a seção de contato pelo ID
     const contactSection = document.getElementById("contato");
+    
     if (contactSection) {
+      // 2. Rola suavemente até ela
       contactSection.scrollIntoView({ behavior: "smooth" });
+
+      // 3. Define a mensagem personalizada
+      const message = "Olá! Gostaria de receber um orçamento técnico para a solução BioAiLab.";
+
+      // 4. Dispara o evento após um breve delay (para a animação de scroll começar)
+      setTimeout(() => {
+        const event = new CustomEvent("prefillContact", { detail: message });
+        window.dispatchEvent(event);
+      }, 300);
     }
-
-    const message = "Olá! Gostaria de receber um orçamento para o BioAiLab.";
-
-    setTimeout(() => {
-      const event = new CustomEvent("prefillContact", { detail: message });
-      window.dispatchEvent(event);
-    }, 100);
   };
 
   const TOPICS = [
@@ -83,7 +89,7 @@ export const BioAiLab: React.FC = () => {
           {/* Lado Esquerdo: Tópicos */}
           <div className="flex flex-col space-y-10">
             <h4 className="text-xl font-bold text-auftek-blue uppercase tracking-wider mb-2 border-b border-gray-800 pb-4 inline-block w-full">
-              Por que escolher o BioAiLab®?
+              Por que escolher o BioAiLab?
             </h4>
 
             <div className="space-y-8">

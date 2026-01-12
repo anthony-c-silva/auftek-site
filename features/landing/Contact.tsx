@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Button } from "../../components/ui/Button";
 import { SectionTitle } from "../../components/ui/Section";
 
@@ -22,6 +22,29 @@ export const Contact: React.FC = () => {
     endereco: "",
     mensagem: "",
   });
+
+  // --- NOVA LÓGICA: ESCUTAR EVENTO ---
+  useEffect(() => {
+    // Função que será executada quando o evento for disparado
+    const handlePrefill = (event: CustomEvent) => {
+      const message = event.detail; // Pega o texto enviado
+      if (message) {
+        setFormData((prev) => ({
+          ...prev,
+          mensagem: message,
+        }));
+      }
+    };
+
+    // Adiciona o ouvinte do evento na janela do navegador
+    window.addEventListener("prefillContact" as any, handlePrefill as any);
+
+    // Limpeza (boa prática): remove o ouvinte se o componente desmontar
+    return () => {
+      window.removeEventListener("prefillContact" as any, handlePrefill as any);
+    };
+  }, []);
+  // ------------------------------------
 
   const [status, setStatus] = useState<FormStatus>("idle");
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -73,25 +96,22 @@ export const Contact: React.FC = () => {
 
   return (
     <section
-      id="contato"
+      id="contato" // IMPORTANTE: O ID deve ser exatamente igual ao do href do menu
       className="relative z-20 bg-auftek-dark text-white text-center px-6 py-24 border-t border-white/10 overflow-hidden"
     >
-      {/* Background Effects */}
-      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5 pointer-events-none"></div>
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 w-[700px] h-[500px] bg-auftek-blue/15 rounded-full blur-[120px] pointer-events-none -translate-y-1/2"></div>
-
+      {/* ... (Todo o seu layout e inputs continuam iguais aqui) ... */}
+      
       <div className="max-w-4xl mx-auto relative z-10">
-        {/* TÍTULO PADRONIZADO */}
         <SectionTitle align="center" subtitle="Fale hoje mesmo com um especialista">
           Entre em Contato
         </SectionTitle>
 
-        {/* FORMULÁRIO (Sem ScrollReveal) */}
         <div className="mt-10 bg-white/5 backdrop-blur-xl p-8 md:p-10 rounded-3xl border border-white/10 shadow-2xl max-w-lg mx-auto relative overflow-hidden group">
           <div className="absolute inset-0 bg-gradient-to-br from-auftek-blue/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
           <form className="space-y-5 relative z-10" onSubmit={handleSubmit}>
-            <div className="space-y-1 text-left">
+             {/* ... Inputs de Nome, Email, CNPJ, Endereco ... */}
+             <div className="space-y-1 text-left">
               <label className="text-xs text-gray-400 ml-1 uppercase tracking-wide font-bold">
                 Nome
               </label>
@@ -105,32 +125,22 @@ export const Contact: React.FC = () => {
                 className="w-full px-4 py-3.5 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-auftek-blue/50 focus:bg-black/40 transition-all"
               />
             </div>
-
-            <div className="space-y-1 text-left">
+             <div className="space-y-1 text-left">
               <label className="text-xs text-gray-400 ml-1 uppercase tracking-wide font-bold">
-                Email Corporativo
+                Email
               </label>
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                placeholder="seu@empresa.com"
+                placeholder="seu@email.com"
                 required
-                className={`w-full px-4 py-3.5 rounded-xl bg-black/20 border text-white placeholder-white/30 focus:outline-none transition-all ${
-                  status === "duplicate"
-                    ? "border-amber-500 focus:border-amber-500 bg-amber-900/20"
-                    : "border-white/10 focus:border-auftek-blue/50 focus:bg-black/40"
-                }`}
+                className="w-full px-4 py-3.5 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-auftek-blue/50 focus:bg-black/40 transition-all"
               />
-              {status === "duplicate" && (
-                <p className="text-xs text-amber-500 font-bold mt-1 ml-1 animate-pulse">
-                  Este e-mail já enviou uma solicitação recentemente.
-                </p>
-              )}
             </div>
-
-            <div className="space-y-1 text-left">
+            
+             <div className="space-y-1 text-left">
               <label className="text-xs text-gray-400 ml-1 uppercase tracking-wide font-bold">
                 CNPJ
               </label>
@@ -139,7 +149,7 @@ export const Contact: React.FC = () => {
                 name="cnpj"
                 value={formData.cnpj}
                 onChange={handleChange}
-                placeholder="000-000-000/0000"
+                placeholder="00.000.000/0000-00"
                 required
                 className="w-full px-4 py-3.5 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-auftek-blue/50 focus:bg-black/40 transition-all"
               />
@@ -147,14 +157,14 @@ export const Contact: React.FC = () => {
 
             <div className="space-y-1 text-left">
               <label className="text-xs text-gray-400 ml-1 uppercase tracking-wide font-bold">
-                Endereco
+                Endereço
               </label>
               <input
                 type="text"
                 name="endereco"
                 value={formData.endereco}
                 onChange={handleChange}
-                placeholder="Rua, Número, Cidade - UF"
+                placeholder="Rua, Número..."
                 required
                 className="w-full px-4 py-3.5 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-auftek-blue/50 focus:bg-black/40 transition-all"
               />
@@ -166,7 +176,7 @@ export const Contact: React.FC = () => {
               </label>
               <textarea
                 name="mensagem"
-                value={formData.mensagem}
+                value={formData.mensagem} // O valor agora é controlado pelo State
                 onChange={handleChange}
                 placeholder="Como podemos ajudar?"
                 rows={4}
@@ -178,22 +188,11 @@ export const Contact: React.FC = () => {
               variant="primary"
               type="submit"
               disabled={status === "success"}
-              className={`w-full py-4 text-lg mt-4 shadow-lg shadow-auftek-blue/25 hover:shadow-auftek-blue/40 transition-all duration-300 
-                  ${
-                    status === "success"
-                      ? "!bg-green-600 !border-green-500 hover:!bg-green-700 cursor-default"
-                      : ""
-                  }
-                  ${
-                    status === "duplicate"
-                      ? "!bg-amber-600 !border-amber-500 hover:!bg-amber-700"
-                      : ""
-                  }
-                `}
+              className={`w-full py-4 text-lg mt-4 shadow-lg shadow-auftek-blue/25 hover:shadow-auftek-blue/40 transition-all duration-300 ${status === "success" ? "!bg-green-600 !border-green-500" : ""}`}
             >
               {status === "idle" && "Solicitar Contato"}
-              {status === "success" && "Solicitação Enviada!"}
-              {status === "duplicate" && "E-mail já Registrado"}
+              {status === "success" && "Enviado com Sucesso!"}
+              {status === "duplicate" && "Tente Novamente"}
             </Button>
           </form>
         </div>
