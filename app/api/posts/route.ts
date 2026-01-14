@@ -116,13 +116,9 @@ export async function POST(request: Request) {
             authorId: user._id,
             author: authorData,
             status: postStatus,
-
-            // Aqui salvamos a categoria validada
             category: finalCategory,
-
             writer: { name: user.name, email: user.email },
             approvedBy: postStatus === 'published' ? user._id : null,
-
             pendingChanges: undefined,
             rejectionReason: undefined
         });

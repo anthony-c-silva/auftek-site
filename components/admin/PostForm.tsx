@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Save, AlertCircle, Sparkles, Image as ImageIcon, Plus, X, Tag as TagIcon } from "lucide-react";
+import {
+    Save, AlertCircle, Sparkles, Plus, X,
+    Tag as TagIcon, UploadCloud, Trash2
+} from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import RichTextEditor from "@/components/RichTextEditor";
 import { TagManager, TagData } from "@/components/admin/TagManager";
-
-// --- Interfaces e Tipos ---
 
 type AIStrategy = Record<string, unknown>;
 
@@ -32,7 +33,7 @@ export interface PostData {
     readTime?: string;
     excerpt?: string;
     status?: string;
-    category?: 'general' | 'case_study'; // NOVO
+    category?: 'general' | 'case_study';
 }
 
 interface PostFormProps {
@@ -51,7 +52,7 @@ interface FormState {
     coverImage: string;
     readTime: string;
     status: string;
-    category: 'general' | 'case_study'; // NOVO
+    category: 'general' | 'case_study';
 }
 
 export const PostForm: React.FC<PostFormProps> = ({
@@ -62,7 +63,10 @@ export const PostForm: React.FC<PostFormProps> = ({
                                                   }) => {
     const { user } = useAuth();
     const router = useRouter();
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
     const [loading, setLoading] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
 
     // Estados da IA
     const [aiLoading, setAiLoading] = useState(false);
@@ -87,12 +91,11 @@ export const PostForm: React.FC<PostFormProps> = ({
         coverImage: "",
         readTime: "",
         status: "pending",
-        category: "general" // Padrão inicial
+        category: "general"
     });
 
     const [isFormValid, setIsFormValid] = useState(false);
 
-    // Carregar dados iniciais
     useEffect(() => {
         if (initialData) {
             setFormData({
@@ -104,12 +107,11 @@ export const PostForm: React.FC<PostFormProps> = ({
                 coverImage: initialData.coverImage || "",
                 readTime: initialData.readTime || "",
                 status: initialData.status || "pending",
-                category: initialData.category || "general" // Carrega categoria existente
+                category: initialData.category || "general"
             });
         }
     }, [initialData]);
 
-    // Buscar Tags da API
     useEffect(() => {
         const fetchTags = async () => {
             try {
@@ -125,7 +127,6 @@ export const PostForm: React.FC<PostFormProps> = ({
         fetchTags();
     }, []);
 
-    // Validação
     useEffect(() => {
         const isValid =
             formData.title.trim() !== "" &&
@@ -135,7 +136,6 @@ export const PostForm: React.FC<PostFormProps> = ({
         setIsFormValid(isValid);
     }, [formData]);
 
-    // Handlers Genéricos
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
@@ -152,7 +152,37 @@ export const PostForm: React.FC<PostFormProps> = ({
         if (excerptStrategy) setExcerptStrategy(null);
     };
 
-    // Handlers Tags
+    // --- Handler de Upload de Imagem (Atualizado) ---
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setIsUploading(true);
+        const uploadData = new FormData();
+        uploadData.append("file", file);
+        uploadData.append("folder", "publication"); // AQUI: Define que vai para a pasta 'publications'
+
+        try {
+            const res = await fetch("/api/upload", {
+                method: "POST",
+                body: uploadData,
+            });
+
+            if (!res.ok) throw new Error("Falha no upload");
+
+            const data = await res.json();
+            // A URL retornada já vem completa (http://auftek.com/...)
+            setFormData(prev => ({ ...prev, coverImage: data.url }));
+        } catch (error) {
+            console.error("Erro no upload:", error);
+            alert("Erro ao fazer upload da imagem.");
+        } finally {
+            setIsUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+    };
+    // ------------------------------------------------
+
     const handleAddTag = (tagName: string) => {
         if (tagName && !formData.tags.includes(tagName)) {
             setFormData(prev => ({ ...prev, tags: [...prev.tags, tagName] }));
@@ -174,12 +204,11 @@ export const PostForm: React.FC<PostFormProps> = ({
         handleAddTag(newTag.name);
     };
 
-    // Handlers IA
     const handleAISuggestion = async () => {
         setAiMessage(null);
         const cleanContent = formData.content.replace(/<[^>]*>?/gm, '');
         if (!cleanContent || cleanContent.length < 100) {
-            setAiMessage({ type: 'error', text: 'Escreva pelo menos 100 caracteres no conteúdo.' });
+            setAiMessage({ type: 'error', text: 'Escreva pelo menos 100 caracteres.' });
             return;
         }
         setAiLoading(true);
@@ -190,13 +219,11 @@ export const PostForm: React.FC<PostFormProps> = ({
                 body: JSON.stringify({ content: formData.content, strategy: titleStrategy }),
             });
             const data = await response.json() as AISuggestionResponse;
-            if (!response.ok) throw new Error(data.error || 'Erro ao gerar sugestão');
             if (data.title) setFormData(prev => ({ ...prev, title: data.title! }));
             if (data.strategy) setTitleStrategy(data.strategy);
             setAiMessage({ type: 'success', text: '✨ Título gerado!' });
-            setTimeout(() => setAiMessage(null), 5000);
         } catch (error: any) {
-            setAiMessage({ type: 'error', text: error.message || 'Erro ao gerar sugestão.' });
+            setAiMessage({ type: 'error', text: 'Erro ao gerar.' });
         } finally {
             setAiLoading(false);
         }
@@ -206,7 +233,7 @@ export const PostForm: React.FC<PostFormProps> = ({
         setAiExcerptMessage(null);
         const cleanContent = formData.content.replace(/<[^>]*>?/gm, '');
         if (!cleanContent || cleanContent.length < 100) {
-            setAiExcerptMessage({ type: 'error', text: 'Escreva pelo menos 100 caracteres no conteúdo.' });
+            setAiExcerptMessage({ type: 'error', text: 'Escreva pelo menos 100 caracteres.' });
             return;
         }
         setAiExcerptLoading(true);
@@ -214,16 +241,14 @@ export const PostForm: React.FC<PostFormProps> = ({
             const response = await fetch('/api/ai/suggest-excerpt', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ content: formData.content, title: formData.title || undefined, strategy: excerptStrategy }),
+                body: JSON.stringify({ content: formData.content, title: formData.title, strategy: excerptStrategy }),
             });
             const data = await response.json() as AISuggestionResponse;
-            if (!response.ok) throw new Error(data.error || 'Erro ao gerar sugestão');
             if (data.excerpt) setFormData(prev => ({ ...prev, excerpt: data.excerpt! }));
             if (data.strategy) setExcerptStrategy(data.strategy);
             setAiExcerptMessage({ type: 'success', text: '✨ Resumo gerado!' });
-            setTimeout(() => setAiExcerptMessage(null), 5000);
         } catch (error: any) {
-            setAiExcerptMessage({ type: 'error', text: error.message || 'Erro ao gerar sugestão.' });
+            setAiExcerptMessage({ type: 'error', text: 'Erro ao gerar.' });
         } finally {
             setAiExcerptLoading(false);
         }
@@ -243,7 +268,7 @@ export const PostForm: React.FC<PostFormProps> = ({
                 excerpt: formData.excerpt,
                 status: formData.status,
                 tags: formData.tags,
-                category: formData.category, // Envia a categoria selecionada
+                category: formData.category,
                 ...(formData.slug ? { slug: formData.slug } : {})
             };
 
@@ -327,39 +352,63 @@ export const PostForm: React.FC<PostFormProps> = ({
                     {/* Imagem de Capa */}
                     <div className="space-y-3">
                         <label className="block text-sm font-medium text-slate-700">
-                            URL da Imagem de Capa <span className="text-red-500">*</span>
+                            Imagem de Capa <span className="text-red-500">*</span>
                         </label>
-                        <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                                <ImageIcon size={18} />
-                            </div>
-                            <input
-                                name="coverImage"
-                                value={formData.coverImage}
-                                onChange={handleChange}
-                                className={`${inputClass} pl-10`}
-                                placeholder="https://exemplo.com/imagem.jpg"
-                                required
-                            />
-                        </div>
 
-                        {formData.coverImage && (
-                            <div className="relative w-full h-48 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 shadow-sm">
+                        {!formData.coverImage ? (
+                            <div
+                                onClick={() => fileInputRef.current?.click()}
+                                className={`
+                                    border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-colors h-48
+                                    ${isUploading ? 'bg-slate-50 border-slate-300' : 'border-slate-300 hover:border-purple-500 hover:bg-purple-50'}
+                                `}
+                            >
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    className="hidden"
+                                    accept="image/*"
+                                    onChange={handleImageUpload}
+                                    disabled={isUploading}
+                                />
+                                {isUploading ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mb-2"></div>
+                                        <span className="text-sm text-slate-500">Enviando para KingHost...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <UploadCloud size={32} className="text-slate-400 mb-2" />
+                                        <span className="text-sm font-medium text-slate-700">Clique para selecionar</span>
+                                        <span className="text-xs text-slate-400 mt-1">Formatos: JPG, PNG, WEBP</span>
+                                    </>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="relative w-full h-48 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 shadow-sm group">
                                 <img
                                     src={formData.coverImage}
                                     alt="Preview da capa"
                                     className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                        (e.target as HTMLImageElement).style.display = 'none';
-                                    }}
                                 />
+                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData(prev => ({ ...prev, coverImage: "" }))}
+                                        className="bg-white text-red-600 px-4 py-2 rounded-lg hover:bg-red-50 transition flex items-center gap-2 font-medium"
+                                        title="Remover imagem"
+                                    >
+                                        <Trash2 size={18} /> Alterar Capa
+                                    </button>
+                                </div>
                             </div>
                         )}
                     </div>
 
+                    {/* Tags */}
                     <div className="space-y-3">
                         <label className="block text-sm font-medium text-slate-700">Tags</label>
-                        <div className="border border-slate-300 rounded-lg p-3 bg-white space-y-3 min-h-[140px]">
+                        <div className="border border-slate-300 rounded-lg p-3 bg-white space-y-3 min-h-[140px] h-48 flex flex-col">
                             <div className="flex gap-2">
                                 <select
                                     className="flex-1 p-2 border border-slate-200 rounded text-sm bg-slate-50 text-slate-700 outline-none focus:ring-2 focus:ring-purple-500"
@@ -370,7 +419,7 @@ export const PostForm: React.FC<PostFormProps> = ({
                                         }
                                     }}
                                 >
-                                    <option value="">Selecione...</option>
+                                    <option value="">Selecione uma tag...</option>
                                     {availableTags
                                         .filter(t => !formData.tags.includes(t.name))
                                         .map(tag => (
@@ -392,15 +441,15 @@ export const PostForm: React.FC<PostFormProps> = ({
                                 )}
                             </div>
 
-                            <div className="flex flex-wrap gap-2">
+                            <div className="flex flex-wrap gap-2 overflow-y-auto content-start flex-1">
                                 {formData.tags.length === 0 && (
-                                    <span className="text-xs text-slate-400 italic">Nenhuma tag selecionada.</span>
+                                    <span className="text-xs text-slate-400 italic w-full text-center mt-4">Nenhuma tag selecionada.</span>
                                 )}
 
                                 {formData.tags.map(tagName => (
                                     <span
                                         key={tagName}
-                                        className="flex items-center gap-1 px-2 py-1 rounded text-xs font-bold border bg-slate-100 text-slate-700 border-slate-200 animate-fade-in"
+                                        className="flex items-center gap-1 px-2 py-1 rounded text-xs font-bold border bg-slate-100 text-slate-700 border-slate-200 animate-fade-in h-fit"
                                     >
                                         <TagIcon size={10} className="opacity-50" />
                                         {tagName}
@@ -415,12 +464,10 @@ export const PostForm: React.FC<PostFormProps> = ({
                                 ))}
                             </div>
                         </div>
-                        <p className="text-xs text-slate-500 mt-2">
-                            Selecione da lista {user?.role === 'admin' ? "ou crie novas tags" : ""}.
-                        </p>
                     </div>
                 </div>
 
+                {/* Resto do formulário mantido igual... */}
                 <div className="grid md:grid-cols-2 gap-6">
                     <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">Tempo de Leitura</label>
@@ -449,7 +496,6 @@ export const PostForm: React.FC<PostFormProps> = ({
                     )}
                 </div>
 
-                {/* --- SEÇÃO DE CATEGORIA (NOVO CHECKBOX) --- */}
                 <div className="flex items-center gap-3 p-4 bg-slate-50 border border-slate-200 rounded-lg">
                     <input
                         type="checkbox"
@@ -469,7 +515,6 @@ export const PostForm: React.FC<PostFormProps> = ({
                     </label>
                 </div>
 
-                {/* Resumo */}
                 <div>
                     <div className="flex items-center justify-between mb-1">
                         <label className="block text-sm font-medium text-slate-700">Resumo (Excerpt)</label>
@@ -505,23 +550,16 @@ export const PostForm: React.FC<PostFormProps> = ({
                     )}
                 </div>
 
-                {/* Conteúdo com Rich Text Editor */}
                 <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">
                         Conteúdo <span className="text-red-500">*</span>
                     </label>
-
                     <RichTextEditor
                         value={formData.content}
                         onChange={handleContentChange}
                     />
-
-                    <p className="text-xs text-slate-500 mt-1">
-                        Selecione o texto para formatar. Use o botão de imagem para inserir via URL.
-                    </p>
                 </div>
 
-                {/* Botões de Ação */}
                 <div className="flex justify-end gap-3 pt-6 border-t border-slate-200">
                     <button
                         type="button"
@@ -543,7 +581,6 @@ export const PostForm: React.FC<PostFormProps> = ({
                 </div>
             </form>
 
-            {/* Modal de Tags */}
             {showTagManager && (
                 <TagManager
                     isModal={true}
