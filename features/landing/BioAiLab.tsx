@@ -17,13 +17,14 @@ export const BioAiLab: React.FC = () => {
   const handleQuoteClick = () => {
     // 1. Identifica a seção de contato pelo ID
     const contactSection = document.getElementById("contato");
-    
+
     if (contactSection) {
       // 2. Rola suavemente até ela
       contactSection.scrollIntoView({ behavior: "smooth" });
 
       // 3. Define a mensagem personalizada
-      const message = "Olá! Gostaria de receber um orçamento técnico para a solução BioAiLab.";
+      const message =
+        "Olá! Gostaria de receber um orçamento técnico para a solução BioAiLab.";
 
       // 4. Dispara o evento após um breve delay (para a animação de scroll começar)
       setTimeout(() => {
@@ -78,8 +79,9 @@ export const BioAiLab: React.FC = () => {
           </h3>
           <p className="text-lg text-gray-400 max-w-3xl mx-auto leading-relaxed">
             O BioAiLab monitora o crescimento bacteriano e fornece dados
-            quantitativos a partir de 8 horas, reduzindo o tempo de espera
-            comparado aos métodos tradicionais.
+            quantitativos a partir de 8 horas, reduzindo drasticamente o tempo
+            de espera, comparado aos métodos tradicionais utilizados hoje na
+            indústria.
           </p>
         </div>
 
@@ -120,9 +122,9 @@ export const BioAiLab: React.FC = () => {
             </div>
 
             <img
-              src="/images/BioAiLabIlustration.svg"
+              src="/images/Bioailab.png"
               alt="Equipamento BioAiLab"
-              className="relative z-10 w-full max-w-[320px] lg:max-w-[400px] h-auto object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-700"
+              className="relative z-10 w-full max-w-[920px] lg:max-w-[900px] h-auto object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-700"
             />
           </div>
         </div>
