@@ -55,9 +55,9 @@ export const BioAiLab: React.FC = () => {
     },
     {
       icon: Rocket,
-      title: "Otimização do Fluxo Produtivo",
+      title: "Laboratório Portátil e Descentralizado",
       description:
-        "Permite a liberação antecipada de lotes e o monitoramento de processos industriais em intervalos menores de tempo.",
+        "Possibilita a realização de análises microbiológicas diretamente no local do processo, por meio de um minilaboratório portátil, de baixo custo.",
     },
   ];
 
@@ -78,10 +78,10 @@ export const BioAiLab: React.FC = () => {
             Resultados em horas, não semanas.
           </h3>
           <p className="text-lg text-gray-400 max-w-3xl mx-auto leading-relaxed">
-            O BioAiLab monitora o crescimento bacteriano e fornece dados
-            quantitativos a partir de 8 horas, reduzindo drasticamente o tempo
-            de espera, comparado aos métodos tradicionais utilizados hoje na
-            indústria.
+            O sistema realiza o monitoramento contínuo, em tempo real, da
+            dinâmica de crescimento bacteriano, fornecendo dados quantitativos a
+            partir de 8 horas e reduzindo de forma expressiva o tempo de
+            resposta frente aos métodos tradicionais
           </p>
         </div>
 

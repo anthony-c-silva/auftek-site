@@ -2,13 +2,7 @@
 
 import React from "react";
 import { usePathname, useRouter } from "next/navigation";
-import {
-  Sprout,
-  Waves,
-  Gauge,
-  Rocket,
-  Drumstick
-} from "lucide-react";
+import { Sprout, Waves, Gauge, Rocket, Drumstick } from "lucide-react";
 
 import { Section, SectionTitle } from "../../components/ui/Section";
 import { cn } from "../../lib/utils";
@@ -49,101 +43,107 @@ export const Publications: React.FC = () => {
   const APPS = [
     {
       category: "INDÚSTRIA ALIMENTÍCIA",
-      title: "Salmonella e outros",
-      description: "Segurança total com detecção rápida para eliminar riscos sanitários e alimentícios.",
+      title: "Salmonella",
+      description:
+        "Detecção rápida de baixo custo, inclusive de bactérias injuriadas, diretamente no chão de fábrica.",
       icon: Drumstick,
-      theme: "red"
+      theme: "red",
     },
     {
       category: "SANEAMENTO (ETE E ETA)",
       title: "E. coli e Coliformes",
-      description: "Otimize a operação e garanta a qualidade da água com resposta em poucas horas.",
+      description:
+        "Monitoramento rápido de indicadores fecais, incluindo bactérias termotolerantes, para controle eficiente da qualidade da água.",
       icon: Waves,
-      theme: "cyan"
+      theme: "cyan",
     },
     {
       category: "AGRO & BIOINSUMOS",
       title: "Monitoramento On-Farm",
-      description: "Valide a viabilidade dos bioinsumos no campo e aplique no momento exato. Maximizando a colheita.",
+      description:
+        "Valide a viabilidade dos bioinsumos no campo e aplique no momento exato. Maximizando a colheita.",
       icon: Sprout,
-      theme: "green"
+      theme: "green",
     },
     {
       category: "PROCESSOS INDUSTRIAIS",
       title: "Controle de Processos",
-      description: "Zero desperdício. Identifique falhas microbiológicas instantaneamente e corrija a produção em tempo real.",
+      description:
+        "Reduz desperdícios e aumenta a produtividade ao identificar rapidamente desvios microbiológicos e físico-químicos.",
       icon: Gauge,
-      theme: "orange"
+      theme: "orange",
     },
     {
       category: "QUALIDADE DO LEITE",
       title: "CBT Digital",
-      description: "Resultados em até 3 horas. Automatize a Contagem Bacteriana Total (CBT) para rastreabilidade e valorização do produto.",
+      description:
+        "Resultados a partir de 3 horas diretamente na fazenda. Automatize a Contagem Bacteriana Total (CBT) para rastreabilidade e valorização do leite.",
       icon: null,
       customIcon: MILK_ICON_PATH,
-      theme: "white"
+      theme: "white",
     },
     {
       category: "P&D SOB MEDIDA",
       title: "Sua dor é única?",
-      description: "Adaptamos o BioAiLab para resolver o seu desafio microbiológico específico.",
+      description:
+        "Adaptamos o BioAiLab para resolver o seu desafio microbiológico específico.",
       icon: Rocket,
       theme: "primary",
       action: "Falar com um Especialista →",
-      href: "#contato"
-    }
+      href: "#contato",
+    },
   ];
 
   const getThemeStyles = (theme: string) => {
     switch (theme) {
-      case 'red':
+      case "red":
         return {
           borderHover: "hover:border-red-500/50",
           iconBg: "bg-red-500/10 group-hover:bg-red-500/20",
           iconColor: "text-red-400",
-          categoryColor: "text-red-400"
+          categoryColor: "text-red-400",
         };
-      case 'cyan':
+      case "cyan":
         return {
           borderHover: "hover:border-cyan-400/50",
           iconBg: "bg-cyan-400/10 group-hover:bg-cyan-400/20",
           iconColor: "text-cyan-400",
-          categoryColor: "text-cyan-400"
+          categoryColor: "text-cyan-400",
         };
-      case 'green':
+      case "green":
         return {
           borderHover: "hover:border-auftek-green/50",
           iconBg: "bg-auftek-green/10 group-hover:bg-auftek-green/20",
           iconColor: "text-auftek-green",
-          categoryColor: "text-auftek-green"
+          categoryColor: "text-auftek-green",
         };
-      case 'orange':
+      case "orange":
         return {
           borderHover: "hover:border-orange-400/50",
           iconBg: "bg-orange-400/10 group-hover:bg-orange-400/20",
           iconColor: "text-orange-400",
-          categoryColor: "text-orange-400"
+          categoryColor: "text-orange-400",
         };
-      case 'white':
+      case "white":
         return {
           borderHover: "hover:border-white/50",
           iconBg: "bg-white/10 group-hover:bg-white/20",
           iconColor: "text-gray-200",
-          categoryColor: "text-gray-300"
+          categoryColor: "text-gray-300",
         };
-      case 'primary':
+      case "primary":
         return {
           borderHover: "hover:border-auftek-blue",
           iconBg: "bg-auftek-blue/10 group-hover:bg-auftek-blue/20",
           iconColor: "text-auftek-blue",
-          categoryColor: "text-auftek-blue font-bold"
+          categoryColor: "text-auftek-blue font-bold",
         };
       default:
         return {
           borderHover: "hover:border-gray-500",
           iconBg: "bg-gray-800",
           iconColor: "text-gray-400",
-          categoryColor: "text-gray-500"
+          categoryColor: "text-gray-500",
         };
     }
   };
@@ -206,19 +206,23 @@ export const Publications: React.FC = () => {
                     )}
                   </div>
 
-                  <span className={cn(
-                    "text-[11px] uppercase tracking-widest font-bold mt-2 transition-colors",
-                    styles.categoryColor
-                  )}>
+                  <span
+                    className={cn(
+                      "text-[11px] uppercase tracking-widest font-bold mt-2 transition-colors",
+                      styles.categoryColor
+                    )}
+                  >
                     {app.category}
                   </span>
                 </div>
 
                 {/* Título */}
-                <h3 className={cn(
-                  "text-xl font-bold text-white mb-3",
-                  isActionCard && "text-auftek-blue"
-                )}>
+                <h3
+                  className={cn(
+                    "text-xl font-bold text-white mb-3",
+                    isActionCard && "text-auftek-blue"
+                  )}
+                >
                   {app.title}
                 </h3>
 
