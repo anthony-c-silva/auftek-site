@@ -21,7 +21,7 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
         }
 
-        const { name, color } = await request.json();
+        const { name } = await request.json();
 
         if (!name) return NextResponse.json({ error: "Nome é obrigatório" }, { status: 400 });
 
@@ -36,8 +36,7 @@ export async function POST(request: Request) {
 
         const newTag = await Tag.create({
             name,
-            slug,
-            color: color || 'slate'
+            slug
         });
 
         return NextResponse.json(newTag, { status: 201 });
