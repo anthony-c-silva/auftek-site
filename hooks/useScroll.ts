@@ -12,7 +12,17 @@ export const useScroll = (threshold = 50) => {
     return scrolled;
 };
 
-export const scrollToElement = (id: string) => {
-    const el = document.querySelector(id);
-    if (el) el.scrollIntoView({ behavior: 'smooth' });
+//valor de offset 'e usado como uma margem no scroll
+export const scrollToElement = (id: string, offset = 25) => {
+  const el = document.querySelector(id);
+  if (!el) return;
+
+  const y =
+    el.getBoundingClientRect().top + window.scrollY - offset;
+
+  window.scrollTo({
+    top: y,
+    behavior: "smooth",
+  });
 };
+
