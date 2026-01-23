@@ -28,7 +28,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en">
+        <html lang="pt-BR">
         <body
             // 2. MISTUREI AS CLASSES
             // Peguei as classes de fonte do Next + as classes de cor/fundo do seu div antigo

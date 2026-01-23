@@ -21,29 +21,31 @@ class EmailService {
         });
     }
 
-    // [ALTERADO] Adicionado cnpj e endereco nos parâmetros
-    async enviarNotificacao(nome: string, email: string, cnpj: string, endereco: string, mensagem: string) {
+    // [ATUALIZADO] Parâmetros ajustados para telefone e nome_empresa
+    async enviarNotificacao(nome: string, email: string, telefone: string, nome_empresa: string, mensagem: string) {
         try {
             await this.transporter.sendMail({
                 from: `"Site Lead" <${process.env.SMTP_USER}>`,
                 to: process.env.SMTP_TO,
-                subject: `🚀 Novo Lead: ${nome}`,
+                subject: `🚀 Novo Lead: ${nome} (${nome_empresa})`,
                 html: `
-          <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee;">
+          <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; color: #333;">
             <h2 style="color: #0e223b;">Novo Contato pelo Site</h2>
-            <p><strong>Nome:</strong> ${nome}</p>
-            <p><strong>Email:</strong> ${email}</p>
-            <p><strong>CNPJ:</strong> ${cnpj || 'Não informado'}</p>
-            <p><strong>Endereço:</strong> ${endereco || 'Não informado'}</p>
-            <hr />
+            <p><strong>Nome do Contato:</strong> ${nome}</p>
+            <p><strong>E-mail:</strong> ${email}</p>
+            <p><strong>Telefone:</strong> ${telefone || 'Não informado'}</p>
+            <p><strong>Empresa:</strong> ${nome_empresa || 'Não informada'}</p>
+            <hr style="border: 0; border-top: 1px solid #eee;" />
             <p><strong>Mensagem:</strong></p>
-            <blockquote style="background: #f5f5f5; padding: 10px; border-left: 4px solid #0e223b;">${mensagem}</blockquote>
+            <blockquote style="background: #f5f5f5; padding: 15px; border-left: 4px solid #0e223b; font-style: italic;">
+                ${mensagem}
+            </blockquote>
           </div>
         `
             });
-            console.log(`[EMAIL] Enviado para ${process.env.SMTP_TO}`);
+            console.log(`[EMAIL] Notificação enviada com sucesso.`);
         } catch (error) {
-            console.error(`[EMAIL] Erro:`, error);
+            console.error(`[EMAIL] Erro ao enviar:`, error);
         }
     }
 }
@@ -67,7 +69,6 @@ class OmieClient {
 
     async post(endpoint: string, call: string, param: any) {
         await new Promise(r => setTimeout(r, 500));
-
         const payload = { call, app_key: this.appKey, app_secret: this.appSecret, param };
 
         try {
@@ -102,11 +103,11 @@ class LeadService {
         return !!contato;
     }
 
-    // [ALTERADO] Recebe cnpj e endereco
-    async processarNovoLead(nome: string, email: string, cnpj: string, endereco: string, mensagem: string) {
-        // [ALTERADO] Passa cnpj e endereco para criarConta
-        const contaId = await this.criarContaComRetry(nome, email, cnpj, endereco);
-        const contatoId = await this.criarContatoComRetry(contaId, nome, email);
+    // [ATUALIZADO] Processamento com telefone e nome_empresa
+    async processarNovoLead(nome: string, email: string, telefone: string, nome_empresa: string, mensagem: string) {
+        // No Omie, a "Conta" (nCodConta) geralmente representa a Empresa no CRM.
+        const contaId = await this.criarContaComRetry(nome, email, telefone, nome_empresa);
+        const contatoId = await this.criarContatoComRetry(contaId, nome, email, telefone);
 
         const [solucaoId, origemId] = await Promise.all([
             this.buscarIdSolucao(),
@@ -116,20 +117,24 @@ class LeadService {
         return await this.criarOportunidadeComRetry(contaId, contatoId, nome, email, mensagem, solucaoId, origemId);
     }
 
-    // [ALTERADO] Recebe cnpj e endereco e mapeia para o payload do Omie
-    async criarContaComRetry(nome: string, email: string, cnpj: string, endereco: string, tentativa = 1): Promise<number> {
-        const nomeFinal = tentativa > 1 ? `${nome} (${Date.now()})` : nome;
+    // [ATUALIZADO] Mapeia o telefone e a empresa para o payload da Conta
+    async criarContaComRetry(nome: string, email: string, telefone: string, nome_empresa: string, tentativa = 1): Promise<number> {
+        // Se a empresa não for informada, usamos o nome da pessoa
+        const nomeParaRegistro = nome_empresa || nome;
+        const nomeFinal = tentativa > 1 ? `${nomeParaRegistro} (${Date.now()})` : nomeParaRegistro;
 
         const payload = {
             identificacao: {
                 cCodInt: this.gerarIdUnico("CONTA"),
                 cNome: nomeFinal,
-                cCNPJ_CPF: cnpj || "", // [NOVO] Mapeamento do CNPJ
-                cObs: "Lead Site NextJS"
+                cObs: `Lead via Site - Pessoa de contato: ${nome}`
             },
-            telefone_email: { cEmail: email },
+            telefone_email: { 
+                cEmail: email,
+                cTelefone: telefone // [NOVO] Mapeamento de telefone
+            },
             endereco: {
-                cEndereco: endereco || "Via Site", // [NOVO] Endereço vindo do form ou padrão
+                cEndereco: "Via Site",
                 cBairro: "Digital",
                 cCEP: "00000-000",
                 cCidade: "São Paulo",
@@ -143,16 +148,14 @@ class LeadService {
             return res.nCod;
         } catch (error: any) {
             const erroString = error.message || "";
-            if (erroString.includes("cNome") || erroString.includes("nome informado") || erroString.includes("já existe")) {
-                console.log(`[RETRY CONTA] Nome "${nomeFinal}" duplicado. Tentando variante...`);
-                // [ALTERADO] Passa os novos parametros na recursão
-                return this.criarContaComRetry(nome, email, cnpj, endereco, tentativa + 1);
+            if (erroString.includes("já existe") || erroString.includes("duplicado")) {
+                return this.criarContaComRetry(nome, email, telefone, nome_empresa, tentativa + 1);
             }
             throw error;
         }
     }
 
-    async criarContatoComRetry(contaId: any, nome: string, email: string, tentativa = 1): Promise<number> {
+    async criarContatoComRetry(contaId: any, nome: string, email: string, telefone: string, tentativa = 1): Promise<number> {
         const nomeFinal = tentativa > 1 ? `${nome} (${Date.now()})` : nome;
 
         const payload = {
@@ -161,28 +164,25 @@ class LeadService {
                 cNome: nomeFinal,
                 nCodConta: Number(contaId)
             },
-            telefone_email: { cEmail: email }
+            telefone_email: { 
+                cEmail: email,
+                cTelefone: telefone // [NOVO] Telefone no contato também
+            }
         };
 
         try {
             const res = await this.client.post("/crm/contatos/", "IncluirContato", [payload]);
             return res.nCod;
         } catch (error: any) {
-            const erroString = error.message || "";
-            if (erroString.includes("Contato já cadastrado") || erroString.includes("cNome") || erroString.includes("já existe")) {
-                console.log(`[RETRY CONTATO] Erro ao criar "${nomeFinal}". Tentando variante...`);
-                if (tentativa > 3) throw error;
-                return this.criarContatoComRetry(contaId, nome, email, tentativa + 1);
-            }
-            throw error;
+            if (tentativa > 3) throw error;
+            return this.criarContatoComRetry(contaId, nome, email, telefone, tentativa + 1);
         }
     }
 
     async criarOportunidadeComRetry(contaId: any, contatoId: any, nome: string, email: string, mensagem: string, solucaoId: any, origemId: any, tentativa = 1): Promise<number> {
-
         const idUnicoOp = this.gerarIdUnico("OP");
         const agora = new Date();
-        const dataStr = `${agora.getDate()}/${agora.getMonth() + 1} ${agora.getHours()}:${agora.getMinutes()}:${agora.getSeconds()}`;
+        const dataStr = `${agora.getDate()}/${agora.getMonth() + 1} ${agora.getHours()}:${agora.getMinutes()}`;
         const tituloUnico = `Lead Site: ${nome} - ${dataStr}`;
 
         const payload = {
@@ -201,14 +201,8 @@ class LeadService {
             const res = await this.client.post("/crm/oportunidades/", "IncluirOportunidade", [payload]);
             return res.nCodOp;
         } catch (error: any) {
-            const erroString = error.message || "";
-            if (erroString.includes("já cadastrada") || erroString.includes("duplicad") || erroString.includes("cCodIntOp")) {
-                console.log(`[RETRY OP] Oportunidade conflitou (ID: ${idUnicoOp}). Tentando novo ID...`);
-                if (tentativa > 3) throw error;
-                await new Promise(r => setTimeout(r, 1000));
-                return this.criarOportunidadeComRetry(contaId, contatoId, nome, email, mensagem, solucaoId, origemId, tentativa + 1);
-            }
-            throw error;
+            if (tentativa > 3) throw error;
+            return this.criarOportunidadeComRetry(contaId, contatoId, nome, email, mensagem, solucaoId, origemId, tentativa + 1);
         }
     }
 
@@ -242,8 +236,8 @@ class LeadService {
 // ==========================================
 export async function POST(request: Request) {
     try {
-        // [ALTERADO] Extração dos novos campos
-        const { nome, email, cnpj, endereco, mensagem } = await request.json();
+        // [ATUALIZADO] Destruturação dos novos campos vindos do formulário
+        const { nome, email, telefone, nome_empresa, mensagem } = await request.json();
 
         if (!nome || !email) {
             return NextResponse.json({ error: "Campos obrigatórios faltando." }, { status: 400 });
@@ -260,20 +254,20 @@ export async function POST(request: Request) {
             return NextResponse.json({
                 success: false,
                 error: "DUPLICATE_EMAIL",
-                message: "E-mail duplicado."
+                message: "E-mail já cadastrado no sistema."
             }, { status: 409 });
         }
 
-        // 2. PROCESSAMENTO (Passando novos campos)
-        await leadService.processarNovoLead(nome, email, cnpj, endereco, mensagem);
+        // 2. PROCESSAMENTO (Passando telefone e nome_empresa)
+        await leadService.processarNovoLead(nome, email, telefone, nome_empresa, mensagem);
 
-        // 3. ENVIO EMAIL (Passando novos campos)
-        await emailService.enviarNotificacao(nome, email, cnpj, endereco, mensagem);
+        // 3. ENVIO EMAIL (Notificação para sua equipe)
+        await emailService.enviarNotificacao(nome, email, telefone, nome_empresa, mensagem);
 
-        return NextResponse.json({ success: true, message: "Recebido com sucesso!" });
+        return NextResponse.json({ success: true, message: "Lead processado com sucesso!" });
 
     } catch (error: any) {
         console.error("API Error:", error.message);
-        return NextResponse.json({ error: error.message || "Erro interno." }, { status: 500 });
+        return NextResponse.json({ error: error.message || "Erro interno no servidor." }, { status: 500 });
     }
 }
