@@ -54,7 +54,7 @@ const PRODUCTS = {
       "Aplicável aos resíduos de segurança da Portaria inmetro nº 140",
       "Sistema modular para inversores até 75 KW",
     ],
-    images: ["/images/IRCCT1.jpg", "/images/IRCCT2.jpg"],
+    images: ["/images/ircct1.jpeg", "/images/ircct2.jpeg", "/images/ircct3.jpeg"],
     icon: Cpu,
     youtubeLink:
       "https://www.youtube.com/playlist?list=PLikkF_yABojGV-2xLF1zsSfi1CkttXdyR",
