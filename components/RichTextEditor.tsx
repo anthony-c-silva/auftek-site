@@ -9,26 +9,19 @@ import { useEffect, useState, useRef } from 'react'
 import {
     Bold, Italic, List, ListOrdered,
     Heading1, Heading2, Quote, Image as ImageIcon,
-    Undo, Redo
+    Undo, Redo, Loader2 // Adicionado Loader2 para feedback visual
 } from 'lucide-react'
 
-// --- 1. EXTENSÃO CUSTOMIZADA CORRIGIDA ---
 const CustomImage = Image.extend({
     addAttributes() {
         return {
             ...this.parent?.(),
             width: {
                 default: '100%',
-                // AQUI ESTÁ A CORREÇÃO:
-                // 1. Tenta ler do atributo data-width (mais seguro)
-                // 2. Se não tiver, tenta ler do estilo (fallback)
                 parseHTML: element => element.getAttribute('data-width') || element.style.width || '100%',
-
                 renderHTML: attributes => {
                     return {
-                        // Salvamos o valor em um atributo de dados explícito
                         'data-width': attributes.width,
-                        // E aplicamos visualmente no style
                         style: `width: ${attributes.width}`,
                         class: 'rounded-lg h-auto my-6 border border-slate-200 shadow-sm block mx-auto',
                     }
@@ -44,6 +37,11 @@ interface RichTextEditorProps {
 }
 
 const RichTextEditor = ({ value, onChange }: RichTextEditorProps) => {
+    // Estado para controlar o loading do upload
+    const [isUploading, setIsUploading] = useState(false);
+    // Ref para o input invisível
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
     const editor = useEditor({
         extensions: [
             StarterKit,
@@ -72,33 +70,61 @@ const RichTextEditor = ({ value, onChange }: RichTextEditorProps) => {
         }
     }, [value, editor]);
 
+    // --- NOVA LÓGICA DE UPLOAD ---
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !editor) return;
+
+        setIsUploading(true);
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('folder', 'content'); // Define a pasta nova "content"
+
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!res.ok) throw new Error("Falha no upload");
+
+            const data = await res.json();
+
+
+            editor.chain().focus().setImage({ src: data.url }).run();
+
+        } catch (error) {
+            console.error(error);
+            alert("Erro ao enviar imagem. Tente novamente.");
+        } finally {
+            setIsUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+    };
+
+    const triggerImageUpload = () => {
+        fileInputRef.current?.click();
+    };
+
     if (!editor) return null
 
-    const addImage = () => {
-        const url = window.prompt('Cole a URL da imagem:')
-        if (url) {
-            const alt = window.prompt('Descreva a imagem (para SEO):') || ''
-            editor.chain().focus().setImage({ src: url, alt, title: alt }).run()
-        }
-    }
-
-    const ToolbarBtn = ({ onClick, isActive, icon: Icon, title }: any) => (
+    const ToolbarBtn = ({ onClick, isActive, icon: Icon, title, disabled }: any) => (
         <button
             type="button"
             onClick={onClick}
             title={title}
+            disabled={disabled}
             className={`p-2 rounded hover:bg-slate-200 transition-colors ${
                 isActive ? 'bg-slate-200 text-blue-600' : 'text-slate-600'
-            }`}
+            } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
-            <Icon size={18} />
+            <Icon size={18} className={disabled ? 'animate-spin' : ''} />
         </button>
     )
 
-    // --- 2. COMPONENTE DE REDIMENSIONAMENTO ---
     const ImageResizer = () => {
         const attrs = editor.getAttributes('image');
-        // Garante que converte para inteiro corretamente, removendo o '%'
         const currentWidth = parseInt(attrs.width ? attrs.width.toString().replace('%', '') : '100');
 
         const [isEditing, setIsEditing] = useState(false);
@@ -182,6 +208,15 @@ const RichTextEditor = ({ value, onChange }: RichTextEditorProps) => {
     return (
         <div className="border border-slate-300 rounded-lg overflow-hidden bg-white shadow-sm hover:border-slate-400 transition-colors relative">
 
+            {/* Input Invisível para Upload */}
+            <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={handleImageUpload}
+            />
+
             {editor && (
                 <BubbleMenu
                     editor={editor}
@@ -203,7 +238,15 @@ const RichTextEditor = ({ value, onChange }: RichTextEditorProps) => {
                 <ToolbarBtn onClick={() => editor.chain().focus().toggleOrderedList().run()} isActive={editor.isActive('orderedList')} icon={ListOrdered} title="Lista Numerada" />
                 <ToolbarBtn onClick={() => editor.chain().focus().toggleBlockquote().run()} isActive={editor.isActive('blockquote')} icon={Quote} title="Citação" />
                 <div className="w-px h-6 bg-slate-300 mx-1" />
-                <ToolbarBtn onClick={addImage} isActive={false} icon={ImageIcon} title="Imagem (URL)" />
+
+                <ToolbarBtn
+                    onClick={triggerImageUpload}
+                    isActive={false}
+                    icon={isUploading ? Loader2 : ImageIcon}
+                    title="Inserir Imagem"
+                    disabled={isUploading}
+                />
+
                 <div className="flex-grow" />
                 <ToolbarBtn onClick={() => editor.chain().focus().undo().run()} icon={Undo} title="Desfazer" />
                 <ToolbarBtn onClick={() => editor.chain().focus().redo().run()} icon={Redo} title="Refazer" />

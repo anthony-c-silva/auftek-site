@@ -16,16 +16,13 @@ export async function GET(request: Request) {
         const statusParam = searchParams.get('status');
         const categoryParam = searchParams.get('category');
 
-        // ==========================================================
-        // 1. Visitante (Público)
-        // ==========================================================
+
         if (!user) {
             const publicFilter: any = {
                 deletedAt: null,
                 status: 'published'
             };
 
-            // Se o visitante clicou na aba "Cases", filtramos aqui
             if (categoryParam) {
                 publicFilter.category = categoryParam;
             }
@@ -33,30 +30,23 @@ export async function GET(request: Request) {
             return NextResponse.json(await Post.find(publicFilter).sort({ createdAt: -1 }));
         }
 
-        // ==========================================================
-        // 2. Usuário Logado (Admin ou Autor)
-        // ==========================================================
         const isAdmin = user.role === 'admin';
         let filter: any = { deletedAt: null };
 
-        // Filtro de Status (ex: Painel Admin vendo pendentes)
+
         if (statusParam) {
             filter.status = statusParam;
         }
 
-        // Filtro de Categoria (ex: Painel filtrando só Cases)
         if (categoryParam) {
-            filter.category = categoryParam; // <--- NOVO: Aplica o filtro
+            filter.category = categoryParam;
         }
 
-        // Restrições de Visibilidade (Quem vê o quê)
+        // Restrições de Visibilidade
         if (!isAdmin) {
             if (statusParam) {
-                // Se pediu status específico, vê apenas os SEUS posts naquele status
                 filter.authorId = user._id;
             } else {
-                // Feed Misto: Tudo que é público OU tudo que é meu (mesmo rascunho)
-                // Nota: O filtro de categoria acima (filter.category) continua valendo para ambas as condições
                 filter.$or = [
                     { status: 'published' },
                     { authorId: user._id }
@@ -81,14 +71,12 @@ export async function POST(request: Request) {
         await connectDB();
         const body = await request.json();
 
-        // 1. Gera Slug
         let finalSlug = body.slug;
         if (!finalSlug || finalSlug.trim() === "") {
             if (!body.title) return NextResponse.json({ error: "Título obrigatório." }, { status: 400 });
             finalSlug = generateSlug(body.title);
         }
 
-        // 2. Monta Autor (Snapshot)
         const authorData = {
             name: user.name,
             photoUrl: user.photoUrl || "",
@@ -97,7 +85,6 @@ export async function POST(request: Request) {
             socialLinks: user.socialLinks || {}
         };
 
-        // 3. Define Status Seguro
         let postStatus = 'pending';
         if (user.role === 'admin') {
             postStatus = body.status || 'published';
@@ -105,8 +92,7 @@ export async function POST(request: Request) {
             postStatus = body.status === 'draft' ? 'draft' : 'pending';
         }
 
-        // 4. Valida Categoria (NOVO)
-        // Garante que só entra 'general' ou 'case_study'. Se vier lixo, vira 'general'.
+
         const validCategories = ['general', 'case_study'];
         const finalCategory = validCategories.includes(body.category) ? body.category : 'general';
 

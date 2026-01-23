@@ -59,17 +59,16 @@ const PostSchema: Schema = new Schema(
             index: true
         },
 
-        // NOVO: Definição da Categoria no Banco
         category: {
             type: String,
-            enum: ['general', 'case_study'], // general = Insights, case_study = Casos de Sucesso
+            enum: ['general', 'case_study'],
             default: 'general',
             required: true,
             index: true
         },
 
         title: { type: String, required: [true, "O título é obrigatório"], trim: true },
-        slug: { type: String, required: true, unique: true, index: true },
+        slug: { type: String, required: true },
         excerpt: { type: String, required: [true, "O resumo é obrigatório"], trim: true },
         content: { type: String, required: [true, "O conteúdo é obrigatório"] },
         coverImage: { type: String, required: [true, "A imagem de capa é obrigatória"] },
@@ -93,7 +92,7 @@ const PostSchema: Schema = new Schema(
             coverImage: String,
             slug: String,
             tags: [String],
-            category: String // Adicionado aqui também
+            category: String
         },
 
         author: {
@@ -117,6 +116,14 @@ const PostSchema: Schema = new Schema(
         deletedAt: { type: Date, default: null }
     },
     { timestamps: true }
+);
+
+PostSchema.index(
+    { slug: 1 },
+    {
+        unique: true,
+        partialFilterExpression: { deletedAt: null }
+    }
 );
 
 const Post: Model<IPost> = mongoose.models.Post || mongoose.model<IPost>("Post", PostSchema);
