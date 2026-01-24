@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { SOLUTIONS } from "../../data/constants";
-import { Section, SectionTitle } from "../../components/ui/Section";
+import { Section, SectionTitle } from "../ui/Section";
 import { cn } from "../../lib/utils";
 // 1. Importando a função de scroll
 import { scrollToElement } from "../../hooks/useScroll";

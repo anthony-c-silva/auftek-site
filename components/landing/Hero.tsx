@@ -9,7 +9,7 @@ import {
   Activity,
   ChevronDown,
 } from "lucide-react";
-import { Button } from "../../components/ui/Button";
+import { Button } from "../ui/Button";
 import { scrollToElement } from "../../hooks/useScroll";
 import { FaBacteria } from "react-icons/fa";
 

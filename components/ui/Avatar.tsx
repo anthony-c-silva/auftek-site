@@ -46,6 +46,7 @@ export const Avatar: React.FC<AvatarProps> = ({ src, alt, size = 40, className =
     // CASO 1: IMAGEM (Se existir e for válida)
     if (!isInvalidSource && !error) {
         return (
+            // eslint-disable-next-line @next/next/no-img-element
             <img
                 src={src}
                 alt={alt}

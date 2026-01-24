@@ -4,9 +4,9 @@ import React from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Sprout, Waves, Gauge, Rocket, Drumstick } from "lucide-react";
 
-import { Section, SectionTitle } from "../../components/ui/Section";
-import { cn } from "../../lib/utils";
-import { scrollToElement } from "../../hooks/useScroll";
+import { Section, SectionTitle } from "../ui/Section";
+import { cn } from "@/lib/utils";
+import { scrollToElement } from "@/hooks/useScroll";
 
 const MILK_ICON_PATH = "/images/milk.svg";
 

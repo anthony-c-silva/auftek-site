@@ -34,35 +34,56 @@ interface AnalyticsModalProps {
 export function AnalyticsModal({ isOpen, onClose }: AnalyticsModalProps) {
     const [chartData, setChartData] = useState<ChartData[]>([]);
     const [pagesData, setPagesData] = useState<PageData[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
     // Estado para ordenação da tabela
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
     useEffect(() => {
-        if (isOpen) {
-            setLoading(true);
-            fetch("/api/analytics")
-                .then((res) => {
-                    if (!res.ok) throw new Error("Erro ao buscar dados");
-                    return res.json();
-                })
-                .then((data) => {
-                    // Formata datas do gráfico
-                    const formattedChart = data.chart.map((item: any) => ({
-                        ...item,
-                        formattedDate: item.date
-                            ? `${item.date.substring(6, 8)}/${item.date.substring(4, 6)}`
-                            : "",
-                    }));
+        if (!isOpen) return;
 
-                    setChartData(formattedChart);
-                    setPagesData(data.pages);
-                })
-                .catch((err) => setError(err.message))
-                .finally(() => setLoading(false));
-        }
+        // Create an AbortController for cleanup
+        const controller = new AbortController();
+
+        const fetchData = async () => {
+            setLoading(true);
+            setError("");
+
+            try {
+                const res = await fetch("/api/analytics", {
+                    signal: controller.signal
+                });
+
+                if (!res.ok) throw new Error("Erro ao buscar dados");
+
+                const data = await res.json();
+
+                // Formata datas do gráfico
+                const formattedChart = data.chart.map((item: any) => ({
+                    ...item,
+                    formattedDate: item.date
+                        ? `${item.date.substring(6, 8)}/${item.date.substring(4, 6)}`
+                        : "",
+                }));
+
+                setChartData(formattedChart);
+                setPagesData(data.pages);
+            } catch (err: any) {
+                if (err.name !== 'AbortError') {
+                    setError(err.message);
+                }
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+
+        // Cleanup function to abort fetch if modal closes
+        return () => {
+            controller.abort();
+        };
     }, [isOpen]);
 
     // Lógica de Ordenação

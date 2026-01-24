@@ -510,7 +510,7 @@ export const PostForm: React.FC<PostFormProps> = ({
                     <label htmlFor="isCaseStudy" className="text-sm font-medium text-slate-700 cursor-pointer select-none">
                         Publicar como relato de caso
                         <span className="block text-xs text-slate-500 font-normal mt-0.5">
-                            Marque esta opção para exibir este post na aba "Casos de Sucesso".
+                            Marque esta opção para exibir este post na aba Casos de Sucesso.
                         </span>
                     </label>
                 </div>

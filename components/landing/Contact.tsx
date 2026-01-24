@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Button } from "../../components/ui/Button";
-import { SectionTitle } from "../../components/ui/Section";
+import { Button } from "../ui/Button";
+import { SectionTitle } from "../ui/Section";
 
 interface FormData {
   nome: string;

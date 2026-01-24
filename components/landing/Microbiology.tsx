@@ -1,6 +1,6 @@
 import React from "react";
 import { Clock, TrendingDown, Target } from "lucide-react";
-import { Section, SectionTitle } from "../../components/ui/Section";
+import { Section, SectionTitle } from "../ui/Section";
 import { cn } from "../../lib/utils";
 
 export const Microbiology: React.FC = () => {
@@ -61,8 +61,8 @@ export const Microbiology: React.FC = () => {
           <div className="p-4 rounded-lg bg-orange-500/5 border border-orange-500/10 text-orange-400 text-sm leading-relaxed relative overflow-hidden">
             <div className="absolute left-0 top-0"></div>
             <p className="font-medium text-xs opacity-90">
-              "Lotes retidos geram prejuízos diários de armazenagem e risco de
-              perda de validade."
+              Lotes retidos geram prejuízos diários de armazenagem e risco de
+              perda de validade.
             </p>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import React from "react";
-import { Section, SectionTitle } from "../../components/ui/Section";
+import { Section, SectionTitle } from "../ui/Section";
 
 export const About: React.FC = () => {
   return (

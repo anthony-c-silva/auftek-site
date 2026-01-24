@@ -31,7 +31,7 @@ export async function GET(request: Request) {
         }
 
         const isAdmin = user.role === 'admin';
-        let filter: any = { deletedAt: null };
+        const filter: any = { deletedAt: null };
 
 
         if (statusParam) {
@@ -42,7 +42,6 @@ export async function GET(request: Request) {
             filter.category = categoryParam;
         }
 
-        // Restrições de Visibilidade
         if (!isAdmin) {
             if (statusParam) {
                 filter.authorId = user._id;

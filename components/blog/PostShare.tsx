@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Share2, Linkedin, Twitter, Facebook } from "lucide-react";
 
 interface PostShareProps {
@@ -9,33 +9,37 @@ interface PostShareProps {
 }
 
 export function PostShare({ title, excerpt }: PostShareProps) {
-    const [shareUrl, setShareUrl] = useState("");
-
-    useEffect(() => {
-        setShareUrl(window.location.href);
-    }, []);
+    // Initialize with empty string for SSR compatibility
+    const [shareUrl] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return window.location.href;
+        }
+        return "";
+    });
 
     const handleShare = (platform: 'linkedin' | 'twitter' | 'facebook') => {
-        if (!shareUrl) return;
-
-        const encodedUrl = encodeURIComponent(shareUrl);
+        // Get the URL at the time of sharing if not set during init
+        const url = shareUrl || window.location.href;
+        const encodedUrl = encodeURIComponent(url);
         const encodedTitle = encodeURIComponent(title);
-        let url = "";
+        let shareLink = "";
 
         switch (platform) {
-            case 'linkedin': url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`; break;
-            case 'twitter': url = `https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`; break;
-            case 'facebook': url = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`; break;
+            case 'linkedin': shareLink = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`; break;
+            case 'twitter': shareLink = `https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`; break;
+            case 'facebook': shareLink = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`; break;
         }
 
-        window.open(url, '_blank', 'noopener,noreferrer,width=600,height=600');
+        window.open(shareLink, '_blank', 'noopener,noreferrer,width=600,height=600');
     };
 
     const handleNativeShare = () => {
+        const url = shareUrl || window.location.href;
+
         if (navigator.share) {
-            navigator.share({ title, text: excerpt, url: shareUrl }).catch(console.error);
+            navigator.share({ title, text: excerpt, url }).catch(console.error);
         } else {
-            navigator.clipboard.writeText(shareUrl);
+            navigator.clipboard.writeText(url);
             alert('Link copiado!');
         }
     };

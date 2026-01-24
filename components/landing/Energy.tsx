@@ -8,8 +8,8 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { Section, SectionTitle } from "../../components/ui/Section";
-import { Button } from "../../components/ui/Button";
+import { Section, SectionTitle } from "../ui/Section";
+import { Button } from "../ui/Button";
 
 // Dados dos produtos
 const PRODUCTS = {

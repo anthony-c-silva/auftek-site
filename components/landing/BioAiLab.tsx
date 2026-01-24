@@ -9,8 +9,8 @@ import {
   ArrowRight,
   ExternalLink,
 } from "lucide-react";
-import { Section, SectionTitle } from "../../components/ui/Section";
-import { Button } from "../../components/ui/Button";
+import { Section, SectionTitle } from "../ui/Section";
+import { Button } from "../ui/Button";
 
 export const BioAiLab: React.FC = () => {
   // --- LÓGICA DE INTEGRAÇÃO COM O FORMULÁRIO ---
