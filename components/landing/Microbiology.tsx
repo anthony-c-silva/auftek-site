@@ -1,7 +1,7 @@
 import React from "react";
 import { Clock, TrendingDown, Target } from "lucide-react";
 import { Section, SectionTitle } from "../ui/Section";
-import { cn } from "../../lib/utils";
+import { cn } from "@/lib/utils";
 
 export const Microbiology: React.FC = () => {
   const CARDS = [

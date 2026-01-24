@@ -8,7 +8,7 @@ import { Solutions } from '@/components/landing/Solutions';
 import { Microbiology } from '@/components/landing/Microbiology';
 import { BioAiLab } from '@/components/landing/BioAiLab';
 import { Publications } from '@/components/landing/Publications';
-import { Historys } from '../components/history/Historys'
+import { Historys } from '@/components/history/Historys'
 import { Energy } from '@/components/landing/Energy';
 import { Partners } from '@/components/landing/Partners';
 import { Team } from '@/components/landing/Team';

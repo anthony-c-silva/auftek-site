@@ -10,7 +10,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { Button } from "../ui/Button";
-import { scrollToElement } from "../../hooks/useScroll";
+import { scrollToElement } from "@/hooks/useScroll";
 import { FaBacteria } from "react-icons/fa";
 
 const IMAGES = {
