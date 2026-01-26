@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
     Save, AlertCircle, Sparkles, Plus, X,
-    Tag as TagIcon, UploadCloud, Trash2
+    Tag as TagIcon, UploadCloud, Trash2, Layout, FileText
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import RichTextEditor from "@/components/RichTextEditor";
@@ -30,7 +30,6 @@ export interface PostData {
     content?: string;
     tags?: string[];
     coverImage?: string;
-    readTime?: string;
     excerpt?: string;
     status?: string;
     category?: 'general' | 'case_study';
@@ -50,7 +49,6 @@ interface FormState {
     content: string;
     tags: string[];
     coverImage: string;
-    readTime: string;
     status: string;
     category: 'general' | 'case_study';
 }
@@ -68,17 +66,17 @@ export const PostForm: React.FC<PostFormProps> = ({
     const [loading, setLoading] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
 
-    // Estados da IA
+    // AI States
     const [aiLoading, setAiLoading] = useState(false);
     const [aiMessage, setAiMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
     const [aiExcerptLoading, setAiExcerptLoading] = useState(false);
     const [aiExcerptMessage, setAiExcerptMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
-    // Cache da IA
+    // AI Cache
     const [titleStrategy, setTitleStrategy] = useState<AIStrategy | null>(null);
     const [excerptStrategy, setExcerptStrategy] = useState<AIStrategy | null>(null);
 
-    // Estados para o Tag Manager
+    // Tag Manager States
     const [availableTags, setAvailableTags] = useState<TagData[]>([]);
     const [showTagManager, setShowTagManager] = useState(false);
 
@@ -89,13 +87,13 @@ export const PostForm: React.FC<PostFormProps> = ({
         content: "",
         tags: [],
         coverImage: "",
-        readTime: "",
         status: "pending",
         category: "general"
     });
 
     const [isFormValid, setIsFormValid] = useState(false);
 
+    // Inicialização dos dados do formulário quando initialData muda
     useEffect(() => {
         if (initialData) {
             setFormData({
@@ -105,12 +103,18 @@ export const PostForm: React.FC<PostFormProps> = ({
                 content: initialData.content || "",
                 tags: Array.isArray(initialData.tags) ? initialData.tags : [],
                 coverImage: initialData.coverImage || "",
-                readTime: initialData.readTime || "",
                 status: initialData.status || "pending",
                 category: initialData.category || "general"
             });
         }
-    }, [initialData]);
+    }, [initialData?._id]);
+
+    // Define status padrão para admin em novos posts
+    useEffect(() => {
+        if (!initialData && user?.role === 'admin') {
+            setFormData(prev => ({ ...prev, status: 'published' }));
+        }
+    }, [initialData, user?.role]);
 
     useEffect(() => {
         const fetchTags = async () => {
@@ -121,7 +125,7 @@ export const PostForm: React.FC<PostFormProps> = ({
                     setAvailableTags(data);
                 }
             } catch (error) {
-                console.error("Erro ao buscar tags:", error);
+                console.error("Error fetching tags:", error);
             }
         };
         fetchTags();
@@ -152,7 +156,6 @@ export const PostForm: React.FC<PostFormProps> = ({
         if (excerptStrategy) setExcerptStrategy(null);
     };
 
-    // --- Handler de Upload de Imagem (Atualizado) ---
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -160,7 +163,7 @@ export const PostForm: React.FC<PostFormProps> = ({
         setIsUploading(true);
         const uploadData = new FormData();
         uploadData.append("file", file);
-        uploadData.append("folder", "publication"); // AQUI: Define que vai para a pasta 'publications'
+        uploadData.append("folder", "publication");
 
         try {
             const res = await fetch("/api/upload", {
@@ -168,20 +171,18 @@ export const PostForm: React.FC<PostFormProps> = ({
                 body: uploadData,
             });
 
-            if (!res.ok) throw new Error("Falha no upload");
+            if (!res.ok) throw new Error("Upload failed");
 
             const data = await res.json();
-            // A URL retornada já vem completa (http://auftek.com/...)
             setFormData(prev => ({ ...prev, coverImage: data.url }));
         } catch (error) {
-            console.error("Erro no upload:", error);
-            alert("Erro ao fazer upload da imagem.");
+            console.error("Upload error:", error);
+            alert("Error uploading image.");
         } finally {
             setIsUploading(false);
             if (fileInputRef.current) fileInputRef.current.value = "";
         }
     };
-    // ------------------------------------------------
 
     const handleAddTag = (tagName: string) => {
         if (tagName && !formData.tags.includes(tagName)) {
@@ -208,7 +209,7 @@ export const PostForm: React.FC<PostFormProps> = ({
         setAiMessage(null);
         const cleanContent = formData.content.replace(/<[^>]*>?/gm, '');
         if (!cleanContent || cleanContent.length < 100) {
-            setAiMessage({ type: 'error', text: 'Escreva pelo menos 100 caracteres.' });
+            setAiMessage({ type: 'error', text: 'Escreva mais conteúdo antes de gerar o título.' });
             return;
         }
         setAiLoading(true);
@@ -233,7 +234,7 @@ export const PostForm: React.FC<PostFormProps> = ({
         setAiExcerptMessage(null);
         const cleanContent = formData.content.replace(/<[^>]*>?/gm, '');
         if (!cleanContent || cleanContent.length < 100) {
-            setAiExcerptMessage({ type: 'error', text: 'Escreva pelo menos 100 caracteres.' });
+            setAiExcerptMessage({ type: 'error', text: 'Escreva mais conteúdo antes de gerar o resumo.' });
             return;
         }
         setAiExcerptLoading(true);
@@ -264,7 +265,6 @@ export const PostForm: React.FC<PostFormProps> = ({
                 title: formData.title,
                 content: formData.content,
                 coverImage: formData.coverImage,
-                readTime: formData.readTime,
                 excerpt: formData.excerpt,
                 status: formData.status,
                 tags: formData.tags,
@@ -283,7 +283,7 @@ export const PostForm: React.FC<PostFormProps> = ({
 
             if (!res.ok) {
                 const errorData = await res.json() as ApiErrorResponse;
-                throw new Error(errorData.error || "Erro ao salvar");
+                throw new Error(errorData.error || "Error saving");
             }
 
             if (onSuccess) onSuccess();
@@ -292,7 +292,7 @@ export const PostForm: React.FC<PostFormProps> = ({
                 router.refresh();
             }
         } catch (error: any) {
-            alert(error.message || "Erro desconhecido.");
+            alert(error.message || "Unknown error.");
         } finally {
             setLoading(false);
         }
@@ -307,279 +307,265 @@ export const PostForm: React.FC<PostFormProps> = ({
 
     return (
         <>
-            <form onSubmit={handleSubmit} className="space-y-6 max-w-5xl mx-auto pb-10">
-                {/* Título */}
-                <div>
-                    <div className="flex items-center justify-between mb-1">
-                        <label className="block text-sm font-medium text-slate-700">
-                            Título da Publicação <span className="text-red-500">*</span>
-                        </label>
-                        <button
-                            type="button"
-                            onClick={handleAISuggestion}
-                            disabled={aiLoading}
-                            className={`
-                            flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all
-                            ${aiLoading
-                                ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                                : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 shadow-sm hover:shadow-md'
-                            }
-                        `}
-                        >
-                            <Sparkles size={16} className={aiLoading ? 'animate-spin' : ''} />
-                            {aiLoading ? 'Gerando...' : 'Sugestão IA'}
-                        </button>
-                    </div>
-                    <input
-                        name="title"
-                        value={formData.title}
-                        onChange={handleChange}
-                        className={inputClass}
-                        placeholder="Ex: Inovação em Biotecnologia"
-                        required
-                    />
-                    {aiMessage && (
-                        <div className={`mt-2 px-3 py-2 rounded-lg text-sm flex items-center gap-2 ${aiMessage.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
-                            {aiMessage.type === 'error' && <AlertCircle size={16} />}
-                            {aiMessage.text}
-                        </div>
-                    )}
-                </div>
+            <div className="relative pb-24">
+                <form onSubmit={handleSubmit} className="space-y-8 max-w-5xl mx-auto">
 
-                {/* Grid: Capa e Tags */}
-                <div className="grid md:grid-cols-2 gap-6">
+                    {/* --- SEÇÃO 1: CONFIGURAÇÃO VISUAL --- */}
+                    <div className="bg-slate-50 p-6 rounded-xl border border-slate-200">
+                        <h3 className="text-sm font-bold text-slate-500 uppercase mb-4 flex items-center gap-2">
+                            <Layout size={16} /> Configuração Visual
+                        </h3>
+                        <div className="grid md:grid-cols-2 gap-6">
+                            {/* Imagem de Capa */}
+                            <div className="space-y-3">
+                                <label className="block text-sm font-medium text-slate-700">
+                                    Imagem de Capa <span className="text-red-500">*</span>
+                                </label>
 
-                    {/* Imagem de Capa */}
-                    <div className="space-y-3">
-                        <label className="block text-sm font-medium text-slate-700">
-                            Imagem de Capa <span className="text-red-500">*</span>
-                        </label>
-
-                        {!formData.coverImage ? (
-                            <div
-                                onClick={() => fileInputRef.current?.click()}
-                                className={`
-                                    border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-colors h-48
+                                {!formData.coverImage ? (
+                                    <div
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className={`
+                                    border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-colors h-48 bg-white
                                     ${isUploading ? 'bg-slate-50 border-slate-300' : 'border-slate-300 hover:border-purple-500 hover:bg-purple-50'}
                                 `}
-                            >
-                                <input
-                                    type="file"
-                                    ref={fileInputRef}
-                                    className="hidden"
-                                    accept="image/*"
-                                    onChange={handleImageUpload}
-                                    disabled={isUploading}
-                                />
-                                {isUploading ? (
-                                    <>
-                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mb-2"></div>
-                                        <span className="text-sm text-slate-500">Enviando para KingHost...</span>
-                                    </>
+                                    >
+                                        <input
+                                            type="file"
+                                            ref={fileInputRef}
+                                            className="hidden"
+                                            accept="image/*"
+                                            onChange={handleImageUpload}
+                                            disabled={isUploading}
+                                        />
+                                        {isUploading ? (
+                                            <>
+                                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mb-2"></div>
+                                                <span className="text-sm text-slate-500">Enviando...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <UploadCloud size={32} className="text-slate-400 mb-2" />
+                                                <span className="text-sm font-medium text-slate-700">Clique para selecionar</span>
+                                                <span className="text-xs text-slate-400 mt-1">Formatos: JPG, PNG, WEBP</span>
+                                            </>
+                                        )}
+                                    </div>
                                 ) : (
-                                    <>
-                                        <UploadCloud size={32} className="text-slate-400 mb-2" />
-                                        <span className="text-sm font-medium text-slate-700">Clique para selecionar</span>
-                                        <span className="text-xs text-slate-400 mt-1">Formatos: JPG, PNG, WEBP</span>
-                                    </>
+                                    <div className="relative w-full h-48 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 shadow-sm group">
+                                        <img
+                                            src={formData.coverImage}
+                                            alt="Preview da capa"
+                                            className="w-full h-full object-cover"
+                                        />
+                                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => setFormData(prev => ({ ...prev, coverImage: "" }))}
+                                                className="bg-white text-red-600 px-4 py-2 rounded-lg hover:bg-red-50 transition flex items-center gap-2 font-medium"
+                                                title="Remover imagem"
+                                            >
+                                                <Trash2 size={18} /> Alterar Capa
+                                            </button>
+                                        </div>
+                                    </div>
                                 )}
                             </div>
-                        ) : (
-                            <div className="relative w-full h-48 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 shadow-sm group">
-                                <img
-                                    src={formData.coverImage}
-                                    alt="Preview da capa"
-                                    className="w-full h-full object-cover"
-                                />
-                                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => setFormData(prev => ({ ...prev, coverImage: "" }))}
-                                        className="bg-white text-red-600 px-4 py-2 rounded-lg hover:bg-red-50 transition flex items-center gap-2 font-medium"
-                                        title="Remover imagem"
-                                    >
-                                        <Trash2 size={18} /> Alterar Capa
-                                    </button>
+
+                            {/* Tags */}
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Tags do Artigo</label>
+                                    <div className="border border-slate-300 rounded-lg p-3 bg-white space-y-3 min-h-[140px] h-48 flex flex-col">
+                                        <div className="flex gap-2">
+                                            <select
+                                                className="flex-1 p-2 border border-slate-200 rounded text-sm bg-slate-50 text-slate-700 outline-none focus:ring-2 focus:ring-purple-500"
+                                                onChange={(e) => {
+                                                    if (e.target.value) {
+                                                        handleAddTag(e.target.value);
+                                                        e.target.value = "";
+                                                    }
+                                                }}
+                                            >
+                                                <option value="">Selecione uma tag...</option>
+                                                {availableTags
+                                                    .filter(t => !formData.tags.includes(t.name))
+                                                    .map(tag => (
+                                                        <option key={tag._id} value={tag.name}>
+                                                            {tag.name}
+                                                        </option>
+                                                    ))
+                                                }
+                                            </select>
+                                            {user?.role === 'admin' && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowTagManager(true)}
+                                                    className="bg-purple-100 text-purple-700 px-3 py-2 rounded-md hover:bg-purple-200 transition flex items-center gap-2 text-sm font-bold border border-purple-200 whitespace-nowrap"
+                                                >
+                                                    <Plus size={16} /> Nova
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className="flex flex-wrap gap-2 overflow-y-auto content-start flex-1">
+                                            {formData.tags.length === 0 && (
+                                                <span className="text-xs text-slate-400 italic w-full text-center mt-4">Nenhuma tag selecionada.</span>
+                                            )}
+                                            {formData.tags.map(tagName => (
+                                                <span key={tagName} className="flex items-center gap-1 px-2 py-1 rounded text-xs font-bold border bg-slate-100 text-slate-700 border-slate-200 animate-fade-in h-fit">
+                                                <TagIcon size={10} className="opacity-50" />
+                                                    {tagName}
+                                                    <button type="button" onClick={() => handleRemoveTag(tagName)} className="hover:text-red-600 ml-1 p-0.5 rounded-full hover:bg-black/5 transition">
+                                                    <X size={12} />
+                                                </button>
+                                            </span>
+                                            ))}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        )}
-                    </div>
+                        </div>
 
-                    {/* Tags */}
-                    <div className="space-y-3">
-                        <label className="block text-sm font-medium text-slate-700">Tags</label>
-                        <div className="border border-slate-300 rounded-lg p-3 bg-white space-y-3 min-h-[140px] h-48 flex flex-col">
-                            <div className="flex gap-2">
-                                <select
-                                    className="flex-1 p-2 border border-slate-200 rounded text-sm bg-slate-50 text-slate-700 outline-none focus:ring-2 focus:ring-purple-500"
-                                    onChange={(e) => {
-                                        if (e.target.value) {
-                                            handleAddTag(e.target.value);
-                                            e.target.value = "";
-                                        }
-                                    }}
-                                >
-                                    <option value="">Selecione uma tag...</option>
-                                    {availableTags
-                                        .filter(t => !formData.tags.includes(t.name))
-                                        .map(tag => (
-                                            <option key={tag._id} value={tag.name}>
-                                                {tag.name}
-                                            </option>
-                                        ))
-                                    }
-                                </select>
-
-                                {user?.role === 'admin' && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowTagManager(true)}
-                                        className="bg-purple-100 text-purple-700 px-3 py-2 rounded-md hover:bg-purple-200 transition flex items-center gap-2 text-sm font-bold border border-purple-200 whitespace-nowrap"
-                                    >
-                                        <Plus size={16} /> Nova
-                                    </button>
-                                )}
-                            </div>
-
-                            <div className="flex flex-wrap gap-2 overflow-y-auto content-start flex-1">
-                                {formData.tags.length === 0 && (
-                                    <span className="text-xs text-slate-400 italic w-full text-center mt-4">Nenhuma tag selecionada.</span>
-                                )}
-
-                                {formData.tags.map(tagName => (
-                                    <span
-                                        key={tagName}
-                                        className="flex items-center gap-1 px-2 py-1 rounded text-xs font-bold border bg-slate-100 text-slate-700 border-slate-200 animate-fade-in h-fit"
-                                    >
-                                        <TagIcon size={10} className="opacity-50" />
-                                        {tagName}
-                                        <button
-                                            type="button"
-                                            onClick={() => handleRemoveTag(tagName)}
-                                            className="hover:text-red-600 ml-1 p-0.5 rounded-full hover:bg-black/5 transition"
-                                        >
-                                            <X size={12} />
-                                        </button>
-                                    </span>
-                                ))}
-                            </div>
+                        {/* Status e Categoria */}
+                        <div className="flex items-center gap-3 mt-4 pt-4 border-t border-slate-200">
+                            <input
+                                type="checkbox"
+                                id="isCaseStudy"
+                                checked={formData.category === 'case_study'}
+                                onChange={(e) => setFormData(prev => ({
+                                    ...prev,
+                                    category: e.target.checked ? 'case_study' : 'general'
+                                }))}
+                                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 border-gray-300 cursor-pointer"
+                            />
+                            <label htmlFor="isCaseStudy" className="text-sm font-medium text-slate-700 cursor-pointer select-none">
+                                É um Relato de Caso (Case Study)?
+                            </label>
                         </div>
                     </div>
-                </div>
 
-                {/* Resto do formulário mantido igual... */}
-                <div className="grid md:grid-cols-2 gap-6">
+                    {/* --- SEÇÃO 2: REDAÇÃO --- */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Tempo de Leitura</label>
-                        <input
-                            name="readTime"
-                            value={formData.readTime}
-                            onChange={handleChange}
-                            className={inputClass}
-                            placeholder="Ex: 5 min"
-                        />
+                        <label className="block text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
+                            <FileText size={20} className="text-purple-600"/>
+                            Conteúdo da Publicação
+                        </label>
+                        <div className="min-h-[400px]">
+                            <RichTextEditor
+                                value={formData.content}
+                                onChange={handleContentChange}
+                            />
+                        </div>
                     </div>
-                    {user?.role === 'admin' && (
+
+                    {/* --- SEÇÃO 3: FINALIZAÇÃO (IA) --- */}
+                    <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 space-y-6">
+                        <div className="flex items-center gap-2 text-purple-800 font-bold uppercase text-xs tracking-wider mb-2">
+                            <Sparkles size={14} /> Finalização
+                        </div>
+
+                        {/* Título */}
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
-                            <select
-                                name="status"
-                                value={formData.status}
+                            <div className="flex items-center justify-between mb-1">
+                                <label className="block text-sm font-medium text-slate-700">
+                                    Título do Artigo <span className="text-red-500">*</span>
+                                </label>
+
+                                <button
+                                    type="button"
+                                    onClick={handleAISuggestion}
+                                    disabled={aiLoading}
+                                    className={`
+                                flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all
+                                ${aiLoading
+                                        ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                        : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 shadow-sm hover:shadow-md'
+                                    }
+                            `}
+                                >
+                                    <Sparkles size={16} className={aiLoading ? 'animate-spin' : ''} />
+                                    {aiLoading ? 'Gerando...' : 'Sugestão IA'}
+                                </button>
+                            </div>
+                            <input
+                                name="title"
+                                value={formData.title}
                                 onChange={handleChange}
                                 className={inputClass}
-                            >
-                                <option value="pending">Pendente</option>
-                                <option value="draft">Rascunho</option>
-                                <option value="published">Publicado</option>
-                            </select>
+                                placeholder="Escreva seu texto primeiro, depois clique em Sugestão IA..."
+                                required
+                            />
+                            {aiMessage && (
+                                <div className={`mt-2 px-3 py-2 rounded-lg text-sm flex items-center gap-2 animate-fade-in ${aiMessage.type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                                    {aiMessage.type === 'error' && <AlertCircle size={16} />}
+                                    {aiMessage.text}
+                                </div>
+                            )}
                         </div>
-                    )}
-                </div>
 
-                <div className="flex items-center gap-3 p-4 bg-slate-50 border border-slate-200 rounded-lg">
-                    <input
-                        type="checkbox"
-                        id="isCaseStudy"
-                        checked={formData.category === 'case_study'}
-                        onChange={(e) => setFormData(prev => ({
-                            ...prev,
-                            category: e.target.checked ? 'case_study' : 'general'
-                        }))}
-                        className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 border-gray-300 cursor-pointer"
-                    />
-                    <label htmlFor="isCaseStudy" className="text-sm font-medium text-slate-700 cursor-pointer select-none">
-                        Publicar como relato de caso
-                        <span className="block text-xs text-slate-500 font-normal mt-0.5">
-                            Marque esta opção para exibir este post na aba Casos de Sucesso.
-                        </span>
-                    </label>
-                </div>
+                        {/* Resumo */}
+                        <div>
+                            <div className="flex items-center justify-between mb-1">
+                                <label className="block text-sm font-medium text-slate-700">Resumo (Excerpt)</label>
 
-                <div>
-                    <div className="flex items-center justify-between mb-1">
-                        <label className="block text-sm font-medium text-slate-700">Resumo (Excerpt)</label>
-                        <button
-                            type="button"
-                            onClick={handleAIExcerptSuggestion}
-                            disabled={aiExcerptLoading}
-                            className={`
-                            flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all
-                            ${aiExcerptLoading
-                                ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                                : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 shadow-sm hover:shadow-md'
-                            }
-                        `}
-                        >
-                            <Sparkles size={16} className={aiExcerptLoading ? 'animate-spin' : ''} />
-                            {aiExcerptLoading ? 'Gerando...' : 'Sugestão IA'}
-                        </button>
+                                {/* BOTÃO IA (ESTILO RESTAURADO) */}
+                                <button
+                                    type="button"
+                                    onClick={handleAIExcerptSuggestion}
+                                    disabled={aiExcerptLoading}
+                                    className={`
+                                flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all
+                                ${aiExcerptLoading
+                                        ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                                        : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700 shadow-sm hover:shadow-md'
+                                    }
+                            `}
+                                >
+                                    <Sparkles size={16} className={aiExcerptLoading ? 'animate-spin' : ''} />
+                                    {aiExcerptLoading ? 'Gerando...' : 'Sugestão IA'}
+                                </button>
+                            </div>
+                            <textarea
+                                name="excerpt"
+                                value={formData.excerpt}
+                                onChange={handleChange}
+                                rows={3}
+                                className={inputClass}
+                                placeholder="Breve descrição automática para cards..."
+                            />
+                            {aiExcerptMessage && (
+                                <div className={`mt-2 px-3 py-2 rounded-lg text-sm flex items-center gap-2 animate-fade-in ${aiExcerptMessage.type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                                    {aiExcerptMessage.type === 'error' && <AlertCircle size={16} />}
+                                    {aiExcerptMessage.text}
+                                </div>
+                            )}
+                        </div>
                     </div>
-                    <textarea
-                        name="excerpt"
-                        value={formData.excerpt}
-                        onChange={handleChange}
-                        rows={2}
-                        className={inputClass}
-                        placeholder="Breve descrição que aparecerá nos cards..."
-                    />
-                    {aiExcerptMessage && (
-                        <div className={`mt-2 px-3 py-2 rounded-lg text-sm flex items-center gap-2 ${aiExcerptMessage.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
-                            {aiExcerptMessage.type === 'error' && <AlertCircle size={16} />}
-                            {aiExcerptMessage.text}
+
+                    {/* --- BOTÕES FIXOS (STICKY) --- */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur border-t border-slate-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] py-4">
+                        <div className="max-w-5xl mx-auto flex justify-end gap-3">
+                            <button
+                                type="button"
+                                onClick={handleCancel}
+                                className="px-6 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors bg-white font-medium"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={loading || !isFormValid}
+                                className={`
+                            px-6 py-2 rounded-lg flex items-center gap-2 text-white font-bold transition-all shadow-md
+                            ${isFormValid ? "bg-blue-600 hover:bg-blue-700 hover:scale-105" : "bg-slate-300 cursor-not-allowed"}
+                        `}
+                            >
+                                {loading ? "Salvando..." : <><Save size={18} /> Salvar Publicação</>}
+                            </button>
                         </div>
-                    )}
-                </div>
-
-                <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
-                        Conteúdo <span className="text-red-500">*</span>
-                    </label>
-                    <RichTextEditor
-                        value={formData.content}
-                        onChange={handleContentChange}
-                    />
-                </div>
-
-                <div className="flex justify-end gap-3 pt-6 border-t border-slate-200">
-                    <button
-                        type="button"
-                        onClick={handleCancel}
-                        className="px-6 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
-                    >
-                        Cancelar
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={loading || !isFormValid}
-                        className={`
-                        px-6 py-2 rounded-lg flex items-center gap-2 text-white font-medium transition-all
-                        ${isFormValid ? "bg-blue-600 hover:bg-blue-700 shadow-md" : "bg-slate-300 cursor-not-allowed"}
-                    `}
-                    >
-                        {loading ? "Salvando..." : <><Save size={18} /> Salvar Publicação</>}
-                    </button>
-                </div>
-            </form>
+                    </div>
+                </form>
+            </div>
 
             {showTagManager && (
                 <TagManager

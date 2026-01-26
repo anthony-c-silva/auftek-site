@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import Post from "@/lib/models/Post";
 import { getAuthenticatedUser } from "@/lib/auth-server";
+import {calculateReadingTime} from "@/lib/utils/readingTime";
 
 function generateSlug(text: string) {
     return text.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "-").replace(/[^\w\-]+/g, "").replace(/\-\-+/g, "-").replace(/^-+/, "").replace(/-+$/, "");
@@ -69,6 +70,7 @@ export async function POST(request: Request) {
 
         await connectDB();
         const body = await request.json();
+        const calculatedTime = calculateReadingTime(body.content || "");
 
         let finalSlug = body.slug;
         if (!finalSlug || finalSlug.trim() === "") {
@@ -86,11 +88,10 @@ export async function POST(request: Request) {
 
         let postStatus = 'pending';
         if (user.role === 'admin') {
-            postStatus = body.status || 'published';
+            postStatus = body.status === 'draft' ? 'draft' : 'published';
         } else {
             postStatus = body.status === 'draft' ? 'draft' : 'pending';
         }
-
 
         const validCategories = ['general', 'case_study'];
         const finalCategory = validCategories.includes(body.category) ? body.category : 'general';
@@ -105,7 +106,8 @@ export async function POST(request: Request) {
             writer: { name: user.name, email: user.email },
             approvedBy: postStatus === 'published' ? user._id : null,
             pendingChanges: undefined,
-            rejectionReason: undefined
+            rejectionReason: undefined,
+            readTime: `${calculatedTime} min`
         });
 
         return NextResponse.json(newPost, { status: 201 });

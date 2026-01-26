@@ -54,21 +54,37 @@ export async function POST(request: Request) {
         }
 
         const finalPrompt = `
-        Aja como Editor de Manchetes de Tecnologia. Escreva UM título para o Google.
-        
-        ESTRATÉGIA:
-        - Foco: "${strategy.primary_keyword}"
-        - Ângulo: "${strategy.hook_angle}"
-        
-        REGRAS:
-        1. Use MÁXIMO 8 PALAVRAS.
-        2. Seja urgente ou curioso. Nada de títulos acadêmicos.
-        3. Idioma: Português do Brasil.
-        4. Retorne APENAS o texto do título, sem aspas.
-        
-        TEXTO BASE:
-        """${contentToAnalyze}"""
-        `;
+            Aja como Editor de SEO Técnico para Google Discover e Busca Orgânica.
+            
+            OBJETIVO:
+            Criar um título descritivo, direto e informativo sobre o texto.
+            
+            ESTRATÉGIA:
+            - Palavra-chave principal: "${strategy.primary_keyword}"
+            - Ângulo semântico: "${strategy.hook_angle}"
+            
+            REGRAS OBRIGATÓRIAS:
+            1. Máximo de 8 palavras.
+            2. Proibido usar verbos imperativos ou de promessa.
+            3. Proibido qualquer CTA implícito.
+            4. O título DEVE descrever o conteúdo, não provocar ação.
+            5. Linguagem neutra, factual e clara.
+            6. Português do Brasil.
+            7. Retorne APENAS o título, sem aspas.
+            
+            EXEMPLOS VÁLIDOS:
+            - Novo padrão USB-C no Brasil
+            - IA generativa no mercado financeiro
+            - Falha de segurança afeta dispositivos Android
+            
+            EXEMPLOS PROIBIDOS:
+            - Descubra como funciona a IA
+            - Veja o que mudou no Android
+            - Saiba tudo sobre USB-C
+            
+            TEXTO BASE:
+            """${contentToAnalyze}"""
+            `;
 
         const creationCompletion = await openai.chat.completions.create({
             model: "gpt-4o-mini",
