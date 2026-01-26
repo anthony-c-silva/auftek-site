@@ -1,12 +1,6 @@
+import type { NextConfig } from "next";
 
-//ignorando warnings na build por enquanto para testes... será removido
-const nextConfig: any = {
-    eslint: {
-        ignoreDuringBuilds: true,
-    },
-    typescript: {
-        ignoreBuildErrors: true,
-    },
+const nextConfig: NextConfig = {
     images: {
         remotePatterns: [
             {
