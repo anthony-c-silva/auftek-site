@@ -88,11 +88,10 @@ export async function POST(request: Request) {
 
         let postStatus = 'pending';
         if (user.role === 'admin') {
-            postStatus = body.status || 'published';
+            postStatus = body.status === 'draft' ? 'draft' : 'published';
         } else {
             postStatus = body.status === 'draft' ? 'draft' : 'pending';
         }
-
 
         const validCategories = ['general', 'case_study'];
         const finalCategory = validCategories.includes(body.category) ? body.category : 'general';
