@@ -7,6 +7,7 @@ import {
     Tag as TagIcon, UploadCloud, Trash2
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+// Adjust the import path if your RichTextEditor is elsewhere
 import RichTextEditor from "@/components/RichTextEditor";
 import { TagManager, TagData } from "@/components/admin/TagManager";
 
@@ -30,7 +31,7 @@ export interface PostData {
     content?: string;
     tags?: string[];
     coverImage?: string;
-    readTime?: string;
+    // readTime removed here as it's backend-only now
     excerpt?: string;
     status?: string;
     category?: 'general' | 'case_study';
@@ -50,7 +51,7 @@ interface FormState {
     content: string;
     tags: string[];
     coverImage: string;
-    readTime: string;
+    // readTime removed here
     status: string;
     category: 'general' | 'case_study';
 }
@@ -68,17 +69,17 @@ export const PostForm: React.FC<PostFormProps> = ({
     const [loading, setLoading] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
 
-    // Estados da IA
+    // AI States
     const [aiLoading, setAiLoading] = useState(false);
     const [aiMessage, setAiMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
     const [aiExcerptLoading, setAiExcerptLoading] = useState(false);
     const [aiExcerptMessage, setAiExcerptMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
-    // Cache da IA
+    // AI Cache
     const [titleStrategy, setTitleStrategy] = useState<AIStrategy | null>(null);
     const [excerptStrategy, setExcerptStrategy] = useState<AIStrategy | null>(null);
 
-    // Estados para o Tag Manager
+    // Tag Manager States
     const [availableTags, setAvailableTags] = useState<TagData[]>([]);
     const [showTagManager, setShowTagManager] = useState(false);
 
@@ -89,7 +90,7 @@ export const PostForm: React.FC<PostFormProps> = ({
         content: "",
         tags: [],
         coverImage: "",
-        readTime: "",
+        // readTime removed from initial state
         status: "pending",
         category: "general"
     });
@@ -105,7 +106,7 @@ export const PostForm: React.FC<PostFormProps> = ({
                 content: initialData.content || "",
                 tags: Array.isArray(initialData.tags) ? initialData.tags : [],
                 coverImage: initialData.coverImage || "",
-                readTime: initialData.readTime || "",
+                // readTime removed here
                 status: initialData.status || "pending",
                 category: initialData.category || "general"
             });
@@ -121,7 +122,7 @@ export const PostForm: React.FC<PostFormProps> = ({
                     setAvailableTags(data);
                 }
             } catch (error) {
-                console.error("Erro ao buscar tags:", error);
+                console.error("Error fetching tags:", error);
             }
         };
         fetchTags();
@@ -152,7 +153,6 @@ export const PostForm: React.FC<PostFormProps> = ({
         if (excerptStrategy) setExcerptStrategy(null);
     };
 
-    // --- Handler de Upload de Imagem (Atualizado) ---
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -160,7 +160,7 @@ export const PostForm: React.FC<PostFormProps> = ({
         setIsUploading(true);
         const uploadData = new FormData();
         uploadData.append("file", file);
-        uploadData.append("folder", "publication"); // AQUI: Define que vai para a pasta 'publications'
+        uploadData.append("folder", "publication");
 
         try {
             const res = await fetch("/api/upload", {
@@ -168,20 +168,18 @@ export const PostForm: React.FC<PostFormProps> = ({
                 body: uploadData,
             });
 
-            if (!res.ok) throw new Error("Falha no upload");
+            if (!res.ok) throw new Error("Upload failed");
 
             const data = await res.json();
-            // A URL retornada já vem completa (http://auftek.com/...)
             setFormData(prev => ({ ...prev, coverImage: data.url }));
         } catch (error) {
-            console.error("Erro no upload:", error);
-            alert("Erro ao fazer upload da imagem.");
+            console.error("Upload error:", error);
+            alert("Error uploading image.");
         } finally {
             setIsUploading(false);
             if (fileInputRef.current) fileInputRef.current.value = "";
         }
     };
-    // ------------------------------------------------
 
     const handleAddTag = (tagName: string) => {
         if (tagName && !formData.tags.includes(tagName)) {
@@ -208,7 +206,7 @@ export const PostForm: React.FC<PostFormProps> = ({
         setAiMessage(null);
         const cleanContent = formData.content.replace(/<[^>]*>?/gm, '');
         if (!cleanContent || cleanContent.length < 100) {
-            setAiMessage({ type: 'error', text: 'Escreva pelo menos 100 caracteres.' });
+            setAiMessage({ type: 'error', text: 'Write at least 100 characters.' });
             return;
         }
         setAiLoading(true);
@@ -221,9 +219,9 @@ export const PostForm: React.FC<PostFormProps> = ({
             const data = await response.json() as AISuggestionResponse;
             if (data.title) setFormData(prev => ({ ...prev, title: data.title! }));
             if (data.strategy) setTitleStrategy(data.strategy);
-            setAiMessage({ type: 'success', text: '✨ Título gerado!' });
+            setAiMessage({ type: 'success', text: '✨ Title generated!' });
         } catch (error: any) {
-            setAiMessage({ type: 'error', text: 'Erro ao gerar.' });
+            setAiMessage({ type: 'error', text: 'Generation error.' });
         } finally {
             setAiLoading(false);
         }
@@ -233,7 +231,7 @@ export const PostForm: React.FC<PostFormProps> = ({
         setAiExcerptMessage(null);
         const cleanContent = formData.content.replace(/<[^>]*>?/gm, '');
         if (!cleanContent || cleanContent.length < 100) {
-            setAiExcerptMessage({ type: 'error', text: 'Escreva pelo menos 100 caracteres.' });
+            setAiExcerptMessage({ type: 'error', text: 'Write at least 100 characters.' });
             return;
         }
         setAiExcerptLoading(true);
@@ -246,9 +244,9 @@ export const PostForm: React.FC<PostFormProps> = ({
             const data = await response.json() as AISuggestionResponse;
             if (data.excerpt) setFormData(prev => ({ ...prev, excerpt: data.excerpt! }));
             if (data.strategy) setExcerptStrategy(data.strategy);
-            setAiExcerptMessage({ type: 'success', text: '✨ Resumo gerado!' });
+            setAiExcerptMessage({ type: 'success', text: '✨ Summary generated!' });
         } catch (error: any) {
-            setAiExcerptMessage({ type: 'error', text: 'Erro ao gerar.' });
+            setAiExcerptMessage({ type: 'error', text: 'Generation error.' });
         } finally {
             setAiExcerptLoading(false);
         }
@@ -264,7 +262,7 @@ export const PostForm: React.FC<PostFormProps> = ({
                 title: formData.title,
                 content: formData.content,
                 coverImage: formData.coverImage,
-                readTime: formData.readTime,
+                // readTime removed from payload
                 excerpt: formData.excerpt,
                 status: formData.status,
                 tags: formData.tags,
@@ -283,7 +281,7 @@ export const PostForm: React.FC<PostFormProps> = ({
 
             if (!res.ok) {
                 const errorData = await res.json() as ApiErrorResponse;
-                throw new Error(errorData.error || "Erro ao salvar");
+                throw new Error(errorData.error || "Error saving");
             }
 
             if (onSuccess) onSuccess();
@@ -292,7 +290,7 @@ export const PostForm: React.FC<PostFormProps> = ({
                 router.refresh();
             }
         } catch (error: any) {
-            alert(error.message || "Erro desconhecido.");
+            alert(error.message || "Unknown error.");
         } finally {
             setLoading(false);
         }
@@ -308,7 +306,7 @@ export const PostForm: React.FC<PostFormProps> = ({
     return (
         <>
             <form onSubmit={handleSubmit} className="space-y-6 max-w-5xl mx-auto pb-10">
-                {/* Título */}
+                {/* Title */}
                 <div>
                     <div className="flex items-center justify-between mb-1">
                         <label className="block text-sm font-medium text-slate-700">
@@ -346,10 +344,10 @@ export const PostForm: React.FC<PostFormProps> = ({
                     )}
                 </div>
 
-                {/* Grid: Capa e Tags */}
+                {/* Grid: Cover Image and Tags */}
                 <div className="grid md:grid-cols-2 gap-6">
 
-                    {/* Imagem de Capa */}
+                    {/* Cover Image */}
                     <div className="space-y-3">
                         <label className="block text-sm font-medium text-slate-700">
                             Imagem de Capa <span className="text-red-500">*</span>
@@ -374,7 +372,7 @@ export const PostForm: React.FC<PostFormProps> = ({
                                 {isUploading ? (
                                     <>
                                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mb-2"></div>
-                                        <span className="text-sm text-slate-500">Enviando para KingHost...</span>
+                                        <span className="text-sm text-slate-500">Enviando...</span>
                                     </>
                                 ) : (
                                     <>
@@ -467,19 +465,10 @@ export const PostForm: React.FC<PostFormProps> = ({
                     </div>
                 </div>
 
-                {/* Resto do formulário mantido igual... */}
-                <div className="grid md:grid-cols-2 gap-6">
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Tempo de Leitura</label>
-                        <input
-                            name="readTime"
-                            value={formData.readTime}
-                            onChange={handleChange}
-                            className={inputClass}
-                            placeholder="Ex: 5 min"
-                        />
-                    </div>
-                    {user?.role === 'admin' && (
+                {/* Status Selection and Case Study Checkbox */}
+                <div className="grid md:grid-cols-2 gap-6 items-end">
+                    {/* Status (Admin Only) */}
+                    {user?.role === 'admin' ? (
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">Status</label>
                             <select
@@ -493,28 +482,30 @@ export const PostForm: React.FC<PostFormProps> = ({
                                 <option value="published">Publicado</option>
                             </select>
                         </div>
+                    ) : (
+                        // Empty div to keep grid alignment if user is not admin
+                        <div />
                     )}
+
+                    {/* Case Study Checkbox */}
+                    <div className="flex items-center gap-3 p-4 bg-slate-50 border border-slate-200 rounded-lg h-[42px]">
+                        <input
+                            type="checkbox"
+                            id="isCaseStudy"
+                            checked={formData.category === 'case_study'}
+                            onChange={(e) => setFormData(prev => ({
+                                ...prev,
+                                category: e.target.checked ? 'case_study' : 'general'
+                            }))}
+                            className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 border-gray-300 cursor-pointer"
+                        />
+                        <label htmlFor="isCaseStudy" className="text-sm font-medium text-slate-700 cursor-pointer select-none">
+                            Publicar como relato de caso
+                        </label>
+                    </div>
                 </div>
 
-                <div className="flex items-center gap-3 p-4 bg-slate-50 border border-slate-200 rounded-lg">
-                    <input
-                        type="checkbox"
-                        id="isCaseStudy"
-                        checked={formData.category === 'case_study'}
-                        onChange={(e) => setFormData(prev => ({
-                            ...prev,
-                            category: e.target.checked ? 'case_study' : 'general'
-                        }))}
-                        className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 border-gray-300 cursor-pointer"
-                    />
-                    <label htmlFor="isCaseStudy" className="text-sm font-medium text-slate-700 cursor-pointer select-none">
-                        Publicar como relato de caso
-                        <span className="block text-xs text-slate-500 font-normal mt-0.5">
-                            Marque esta opção para exibir este post na aba Casos de Sucesso.
-                        </span>
-                    </label>
-                </div>
-
+                {/* Excerpt */}
                 <div>
                     <div className="flex items-center justify-between mb-1">
                         <label className="block text-sm font-medium text-slate-700">Resumo (Excerpt)</label>
@@ -550,6 +541,7 @@ export const PostForm: React.FC<PostFormProps> = ({
                     )}
                 </div>
 
+                {/* Content Editor */}
                 <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">
                         Conteúdo <span className="text-red-500">*</span>
@@ -560,6 +552,7 @@ export const PostForm: React.FC<PostFormProps> = ({
                     />
                 </div>
 
+                {/* Action Buttons */}
                 <div className="flex justify-end gap-3 pt-6 border-t border-slate-200">
                     <button
                         type="button"
