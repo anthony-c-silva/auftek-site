@@ -1,14 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { Activity, Droplet, Clock, AlertCircle, Wifi, Smartphone, Monitor } from 'lucide-react';
 
-// Simulated Gompertz Curve Data (Microbial Growth)
 const generateData = () => {
   const data = [];
   for (let i = 0; i <= 12; i += 0.5) {
-    // Sigmoid-like curve equation approximation
     const growth = 100 * Math.exp(-Math.exp(-0.8 * (i - 4)));
     data.push({
       time: i,
@@ -24,13 +22,7 @@ const data = generateData();
 export const BioDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'desktop' | 'mobile'>('desktop');
 
-  // Adicionei este useEffect para garantir que o componente montou no cliente
-  // Isso evita erros de "Hydration Mismatch" comuns com Recharts
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const isMounted = typeof window !== 'undefined';
 
   if (!isMounted) {
     return <div className="w-full h-64 bg-gray-900/50 rounded-xl animate-pulse"></div>;

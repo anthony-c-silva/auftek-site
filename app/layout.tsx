@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-
-// 1. IMPORTAR SEUS COMPONENTES
-// O caminho "../" volta uma pasta (sai de 'app' e vai para a raiz onde está 'components')
-import { Header } from "../components/layout/Header";
-import { Footer } from "../components/layout/Footer";
+import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
+import { AuthProvider } from "@/context/AuthContext";
+import { GoogleAnalytics } from "@next/third-parties/google";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -18,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-    title: "Auftek", // Pode mudar o título aqui
+    title: "Auftek",
     description: "Tecnologia Industrial",
 };
 
@@ -27,21 +26,19 @@ export default function RootLayout({
                                    }: Readonly<{
     children: React.ReactNode;
 }>) {
+    const gaId = process.env.NEXT_PUBLIC_GA_ID;
+
     return (
         <html lang="pt-BR">
         <body
-            // 2. MISTUREI AS CLASSES
-            // Peguei as classes de fonte do Next + as classes de cor/fundo do seu div antigo
             className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-auftek-dark text-slate-200 font-sans selection:bg-auftek-blue selection:text-white`}
         >
-        {/* 3. HEADER FIXO */}
-        <Header />
-
-        {/* 4. CONTEÚDO DA PÁGINA (Substitui o <Routes> antigo) */}
-        {children}
-
-        {/* 5. FOOTER FIXO */}
-        <Footer />
+        <AuthProvider>
+            <Header />
+            {children}
+            <Footer />
+        </AuthProvider>
+        {gaId && <GoogleAnalytics gaId={gaId} />}
         </body>
         </html>
     );

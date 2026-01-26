@@ -1,19 +1,16 @@
 @import 'tailwindcss';
-
+@plugin "@tailwindcss/typography";
 @theme {
-  /* Definição das cores personalizadas da Auftek */
   --color-auftek-blue: #1e90ff;
   --color-auftek-dark: #0e223b;
   --color-auftek-green: #a9deca;
   --color-auftek-slate: #1a2c42;
-
-  /* Definição da fonte */
   --font-sans: 'Inter', sans-serif;
 }
 
 /* Seus estilos globais extras */
 body {
-  @apply bg-auftek-dark text-slate-200; /* Usando as cores novas já aqui */
+  @apply bg-auftek-dark text-slate-200;
 }
 
 .glass-panel {

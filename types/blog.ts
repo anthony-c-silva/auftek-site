@@ -1,28 +1,45 @@
-// src/types/blog.ts
+export interface Author {
+    _id?: string;
+    id?: string;
+    name: string;
+    photoUrl: string;
+    education?: string;
+    bio?: string;
 
-export enum CategoryType {
-    ALL = 'Todos',
-    MICROBIOLOGY = 'Microbiologia',
-    ENERGY = 'Energia',
-    IOT_AI = 'IoT & IA'
+    socialLinks?: {
+        linkedin?: string;
+        instagram?: string;
+        github?: string;
+        lattes?: string;
+    };
+
+    linkedin?: string;
+    lattes?: string;
 }
 
-export interface Author {
-    name: string;
-    role: string;
-    avatarUrl: string;
-    bio: string;
+export enum CategoryType {
+    ALL = 'all',
+    GENERAL = 'general',
+    CASE_STUDY = 'case_study'
 }
 
 export interface BlogPost {
+    _id?: string;
     id: string;
+    slug: string;
     title: string;
     excerpt: string;
-    content: string[]; // Array de parágrafos para facilitar
-    date: string;
-    readTime: string;
-    author: Author;
-    category: CategoryType | string;
+    content: string | string[];
     imageUrl: string;
+    date: string;
+    readTime?: string;
+    category: 'general' | 'case_study';
     tags: string[];
+    author: Author;
+    writer?: {
+        name: string;
+        email?: string;
+    };
+    authorId: string;
+    createdAt?: string;
 }

@@ -1,7 +1,29 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+    images: {
+        remotePatterns: [
+            {
+                protocol: 'http',
+                hostname: 'auftek.com',
+                pathname: '/blog-uploads/**',
+            },
+            {
+                protocol: 'https',
+                hostname: 'auftek.com',
+                pathname: '/blog-uploads/**',
+            },
+            {
+                protocol: 'https',
+                hostname: 'auftek.com.br',
+                pathname: '/blog-uploads/**',
+            },
+            {
+                protocol: 'https',
+                hostname: '**',
+            },
+        ],
+    },
 };
 
 export default nextConfig;

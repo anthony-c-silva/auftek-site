@@ -1,3 +1,5 @@
+"use client"; 
+
 import React from 'react';
 import { Mail, Send } from 'lucide-react';
 
@@ -20,6 +22,7 @@ const Newsletter: React.FC = () => {
             Assine nossa newsletter para acompanhar novos artigos, estudos e lançamentos.
           </p>
 
+          {/* O onSubmit aqui requer que o componente seja "use client" */}
           <form className="flex flex-col sm:flex-row gap-3 max-w-lg mx-auto" onSubmit={(e) => e.preventDefault()}>
             <input
               type="email"
