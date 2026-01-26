@@ -76,28 +76,25 @@ class OmieClient {
     private appSecret = process.env.OMIE_APP_SECRET;
 
     constructor() {
-        // CORREÇÃO CRÍTICA: Configuração do Agente HTTPS
-        // O erro "Broken Response" ocorre pq o Node tenta manter a conexão viva e o Omie corta.
         const httpsAgent = new https.Agent({
-            keepAlive: false, // Desabilita keepAlive para evitar timeout fantasma
-            rejectUnauthorized: false, // Evita erros de SSL em alguns ambientes
-            family: 4 // Força IPv4
+            keepAlive: false,
+            rejectUnauthorized: false,
+            family: 4
         });
 
         this.api = axios.create({
             baseURL: 'https://app.omie.com.br/api/v1',
-            timeout: 60000, // Aumentei para 60s pois o Omie é lento
+            timeout: 60000,
             httpsAgent: httpsAgent,
             headers: {
                 'Content-Type': 'application/json',
-                'Connection': 'close', // Força fechamento a cada request
+                'Connection': 'close',
                 'User-Agent': 'Auftek-Site/1.0'
             }
         });
     }
 
     async post(endpoint: string, call: string, param: any) {
-        // Pequeno delay para não floodar a API do Omie na sequência
         await new Promise(r => setTimeout(r, 500));
         const payload = { call, app_key: this.appKey, app_secret: this.appSecret, param };
 
@@ -111,15 +108,12 @@ class OmieClient {
             }
             return data;
         } catch (err: any) {
-            // Log detalhado para debug
             const msg = err.response?.data?.faultstring || err.message;
             console.error(`[OMIE CRASH] Falha ao chamar ${call}:`, msg);
 
-            // Se for o erro "Broken Response", tentamos mais uma vez após 2s
             if (msg.includes("Broken response") || msg.includes("ECONNRESET")) {
                 console.log(`[OMIE RETRY] Tentando novamente ${call} em 2s...`);
                 await new Promise(r => setTimeout(r, 2000));
-                // Retry simples manual (cuidado com recursão infinita aqui, fiz só 1 nível)
                 try {
                     const retry = await this.api.post(endpoint, payload);
                     return retry.data;
@@ -142,7 +136,6 @@ class LeadService {
     }
 
     private limparString(str: string) {
-        // Remove emojis e caracteres que quebram o SOAP do Omie
         return (str || "").replace(/[^\w\s\-\.\@\(\)áàãâéêíóõôúçÁÀÃÂÉÊÍÓÕÔÚÇ]/gi, "").trim();
     }
 
@@ -156,7 +149,6 @@ class LeadService {
     }
 
     async processarNovoLead(nome: string, email: string, mensagem: string, telefone: string, nome_empresa: string) {
-        // Sanitização básica
         const empresaSafe = this.limparString(nome_empresa) || "Empresa Sem Nome";
         const nomeSafe = this.limparString(nome) || "Contato Site";
 
@@ -166,8 +158,8 @@ class LeadService {
         const contaId = await this.criarContaComRetry(empresaSafe, email);
         console.log(`[PROCESS] Conta criada ID: ${contaId}`);
 
-        // 2. Criar Contato
-        const contatoId = await this.criarContatoComRetry(contaId, nomeSafe, email);
+        // 2. Criar Contato - CORRIGIDO: adicionado telefone
+        const contatoId = await this.criarContatoComRetry(contaId, nomeSafe, email, telefone);
         console.log(`[PROCESS] Contato criado ID: ${contatoId}`);
 
         const [solucaoId, origemId] = await Promise.all([this.buscarIdSolucao(), this.buscarIdOrigem()]);
@@ -202,7 +194,8 @@ class LeadService {
         }
     }
 
-    async criarContatoComRetry(contaId: any, nome: string, email: string, telefone: string, tentativa = 1): Promise<number> {
+    // CORRIGIDO: assinatura agora espera 4 parâmetros
+    async criarContatoComRetry(contaId: number, nome: string, email: string, telefone: string, tentativa = 1): Promise<number> {
         const nomeFinal = tentativa > 1 ? `${nome} (${Date.now()})` : nome;
         const payload = {
             identificacao: {
@@ -210,21 +203,35 @@ class LeadService {
                 cNome: nomeFinal,
                 nCodConta: Number(contaId)
             },
-            telefone_email: { 
+            telefone_email: {
                 cEmail: email,
-                cTelefone: telefone // [NOVO] Telefone no contato também
+                cTelefone: telefone
             }
         };
         try {
             const res = await this.client.post("/crm/contatos/", "IncluirContato", [payload]);
             return res.nCod;
         } catch (error: any) {
-            if ((error.message || "").includes("já existe") && tentativa <= 3) return this.criarContatoComRetry(contaId, nome, email, tentativa + 1);
+            // CORRIGIDO: passando todos os 4 parâmetros no retry
+            if ((error.message || "").includes("já existe") && tentativa <= 3) {
+                return this.criarContatoComRetry(contaId, nome, email, telefone, tentativa + 1);
+            }
             throw error;
         }
     }
 
-    async criarOportunidadeComRetry(contaId: any, contatoId: any, nome: string, email: string, mensagem: string, telefone: string, solucaoId: any, origemId: any, tentativa = 1): Promise<number> {
+    // CORRIGIDO: tipos corretos para contaId e contatoId
+    async criarOportunidadeComRetry(
+        contaId: number,
+        contatoId: number,
+        nome: string,
+        email: string,
+        mensagem: string,
+        telefone: string,
+        solucaoId: number,
+        origemId: number,
+        tentativa = 1
+    ): Promise<number> {
         const idUnicoOp = this.gerarIdUnico("OP");
         const agora = new Date();
         const dataStr = `${agora.getDate()}/${agora.getMonth()+1} ${agora.getHours()}:${agora.getMinutes()}`;
@@ -296,7 +303,6 @@ export async function POST(request: Request) {
 
         const { nome, email, mensagem, telefone, nome_empresa } = await request.json();
 
-        // Validação estrita
         if (!nome || !email || !nome_empresa) {
             return NextResponse.json({ error: "Campos obrigatórios faltando (Nome, Email ou Empresa)." }, { status: 400 });
         }
@@ -305,7 +311,6 @@ export async function POST(request: Request) {
         const leadService = new LeadService(omie);
         const emailService = new EmailService();
 
-        // Verifica duplicidade antes de tentar criar para poupar a API
         const emailDuplicado = await leadService.verificarDuplicidade(email);
 
         if (emailDuplicado) {
