@@ -78,6 +78,8 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
     };
 }
 
+// ... imports e configurações anteriores mantidos ...
+
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
     const { slug } = await params;
 
@@ -87,21 +89,27 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         notFound();
     }
 
-    // Normalização dos dados
     const normalizedPost: BlogPost = {
+        _id: data._id.toString(),
         id: data._id.toString(),
+
         slug: data.slug,
         title: data.title,
         excerpt: data.excerpt || "",
         imageUrl: data.coverImage,
         tags: data.tags || [],
-        content: typeof data.content === 'string'
-            ? data.content.split('\n').filter((p: string) => p.trim() !== "")
-            : data.content,
+        content: data.content,
+
         date: new Date(data.createdAt).toLocaleDateString('pt-BR'),
         readTime: data.readTime || "5 min",
-        category: data.tags?.[0] || "Artigo",
+        category: data.category || "Artigo",
+
         authorId: data.authorId || "",
+        writer: {
+            name: data.writer?.name || "",
+            email: data.writer?.email || ""
+        },
+
         author: {
             name: data.author?.name || "Equipe Auftek",
             photoUrl: data.author?.photoUrl || "",
@@ -111,7 +119,6 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         }
     };
 
-    // JSON-LD
     const jsonLd = {
         "@context": "https://schema.org",
         "@type": "BlogPosting",
@@ -131,7 +138,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                 "url": "https://auftek.com/logo.png"
             }
         },
-        "description": data.excerpt || stripHtml(typeof data.content === 'string' ? data.content : '').substring(0, 160)
+        "description": data.excerpt || stripHtml(data.content).substring(0, 160)
     };
 
     return (
