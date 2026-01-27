@@ -23,41 +23,45 @@ function BlogListSkeleton() {
     );
 }
 
+async function getPosts(): Promise<BlogPost[]> {
+    try {
+        await connectDB();
+
+        const rawPosts = await Post.find({
+            status: 'published',
+            deletedAt: null
+        })
+            .sort({ createdAt: -1 })
+            .lean()
+            .exec();
+
+        return rawPosts.map((item: any) => ({
+            id: item._id.toString(),
+            slug: item.slug,
+            title: item.title,
+            excerpt: item.excerpt || "",
+            content: item.content || "",
+            imageUrl: item.coverImage || "",
+            date: item.createdAt ? new Date(item.createdAt).toLocaleDateString('pt-BR') : "",
+            readTime: item.readTime || "5 min",
+            category: (item.category === 'case_study' || item.category === 'general')
+                ? item.category
+                : 'general',
+            tags: item.tags || [],
+            author: {
+                name: item.author?.name || "Autor Auftek",
+                photoUrl: item.author?.photoUrl || "",
+            },
+            authorId: item.authorId ? item.authorId.toString() : "",
+        }));
+    } catch (error) {
+        console.error('Error fetching posts:', error);
+        return [];
+    }
+}
+
 export default async function BlogPage() {
-    await connectDB();
-
-    const rawPosts = await Post.find({
-        status: 'published',
-        deletedAt: null
-    })
-        .sort({ createdAt: -1 })
-        .lean();
-
-    const posts: BlogPost[] = rawPosts.map((item: any) => ({
-        id: item._id.toString(),
-        slug: item.slug,
-        title: item.title,
-        excerpt: item.excerpt || "",
-        content: item.content || "",
-
-        imageUrl: item.coverImage || "",
-
-        date: item.createdAt ? new Date(item.createdAt).toLocaleDateString('pt-BR') : "",
-        readTime: item.readTime || "5 min",
-
-        category: (item.category === 'case_study' || item.category === 'general')
-            ? item.category
-            : 'general',
-
-        tags: item.tags || [],
-
-        author: {
-            name: item.author?.name || "Autor Auftek",
-            photoUrl: item.author?.photoUrl || "",
-        },
-
-        authorId: item.authorId ? item.authorId.toString() : "",
-    }));
+    const posts = await getPosts();
 
     return (
         <div className="bg-white min-h-screen animate-fade-in">
@@ -65,7 +69,6 @@ export default async function BlogPage() {
             <Suspense fallback={<BlogListSkeleton />}>
                 <BlogList initialPosts={posts} />
             </Suspense>
-
             <Newsletter />
         </div>
     );
