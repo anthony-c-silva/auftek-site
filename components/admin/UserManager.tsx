@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import {
     UserPlus, Search, Edit2, Trash2, User,
     Briefcase, Save, X, Lock, Github, BookOpen, Linkedin, Instagram, Check,
-    UploadCloud, Loader2, Eye, EyeOff, AlertCircle
+    UploadCloud, Loader2 // Adicionei Loader2
 } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 
@@ -33,12 +33,9 @@ export function UserManager() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
-    const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
-    // Estados para controle de senha e visualização
-    const [confirmPassword, setConfirmPassword] = useState("");
-    const [showPassword, setShowPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    // Novo estado para o loading da foto
+    const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
     const initialFormState = {
         name: "",
@@ -57,7 +54,7 @@ export function UserManager() {
     const [formData, setFormData] = useState<any>(initialFormState);
     const [editingId, setEditingId] = useState<string | null>(null);
 
-    // --- Lógica de Força da Senha ---
+    // --- LÓGICA DE SENHA ---
     const getStrength = (pass: string) => {
         const criteria = {
             length: pass.length >= 8,
@@ -74,18 +71,10 @@ export function UserManager() {
         return getStrength(formData.password);
     }, [formData.password]);
 
-    // Verifica validade geral (Senha forte + Confirmação igual)
     const isPasswordValid = () => {
-        // Se estiver editando e o campo senha estiver vazio, é válido (mantém a antiga)
         if (isEditing && formData.password === "") return true;
-
-        // Se estiver criando ou editando (com texto no campo):
-        const isStrong = passwordStrength.score === 5; // Exige todos os critérios
-        const isMatch = formData.password === confirmPassword;
-
-        return isStrong && isMatch;
+        return passwordStrength.score === 5;
     };
-    // -------------------------------
 
     const fetchUsers = async () => {
         setLoading(true);
@@ -120,9 +109,6 @@ export function UserManager() {
 
     const handleOpenCreate = () => {
         setFormData(initialFormState);
-        setConfirmPassword(""); // Reseta confirmação
-        setShowPassword(false);
-        setShowConfirmPassword(false);
         setIsEditing(false);
         setEditingId(null);
         setIsModalOpen(true);
@@ -142,9 +128,6 @@ export function UserManager() {
             github: user.socialLinks?.github || "",
             lattes: user.socialLinks?.lattes || ""
         });
-        setConfirmPassword(""); // Reseta confirmação
-        setShowPassword(false);
-        setShowConfirmPassword(false);
         setIsEditing(true);
         setEditingId(user._id);
         setIsModalOpen(true);
@@ -160,6 +143,7 @@ export function UserManager() {
         }
     };
 
+    // --- NOVA FUNÇÃO DE UPLOAD ---
     const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -167,7 +151,7 @@ export function UserManager() {
         setIsUploadingPhoto(true);
         const uploadData = new FormData();
         uploadData.append("file", file);
-        uploadData.append("folder", "profile");
+        uploadData.append("folder", "profile"); // Define pasta correta para perfil
 
         try {
             const res = await fetch("/api/upload", {
@@ -178,6 +162,7 @@ export function UserManager() {
             if (!res.ok) throw new Error("Erro no upload");
 
             const data = await res.json();
+            // Salva a URL retornada no estado do formulário
             setFormData((prev: any) => ({ ...prev, photoUrl: data.url }));
         } catch (error) {
             console.error(error);
@@ -186,12 +171,13 @@ export function UserManager() {
             setIsUploadingPhoto(false);
         }
     };
+    // ----------------------------
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (!isPasswordValid()) {
-            alert("Verifique os requisitos da senha e a confirmação.");
+            alert("A senha não atende aos requisitos de segurança.");
             return;
         }
 
@@ -356,89 +342,22 @@ export function UserManager() {
                                             <option value="admin">Administrador (Total)</option>
                                         </select>
                                     </div>
-
-                                    {/* --- BLOCO DE SENHA COM CONFIRMAÇÃO --- */}
-                                    <div className="md:col-span-1">
+                                    <div className="md:col-span-2">
                                         <label className={labelClass}>{isEditing ? "Nova Senha (opcional)" : <>Senha <span className="text-red-500">*</span></>}</label>
-                                        <div className="relative">
-                                            <input
-                                                type={showPassword ? "text" : "password"}
-                                                required={!isEditing}
-                                                placeholder={isEditing ? "Manter atual" : "Digite uma senha"}
-                                                value={formData.password}
-                                                onChange={e => setFormData({...formData, password: e.target.value})}
-                                                className={`${inputClass} pr-10`}
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowPassword(!showPassword)}
-                                                className="absolute right-2 top-2 text-slate-400 hover:text-slate-600"
-                                            >
-                                                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                            </button>
-                                        </div>
+                                        <input type="password" required={!isEditing} placeholder={isEditing ? "Manter atual" : "Digite uma senha forte"} value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className={`${inputClass} ${formData.password && !isPasswordValid() ? 'border-red-300 ring-2 ring-red-100' : ''}`} />
+
+                                        {formData.password && (
+                                            <div className="mt-2 space-y-2 animate-fade-in">
+                                                <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                                                    <div className={`h-full transition-all duration-500 ${getBarColor()}`} style={{ width: `${(passwordStrength.score / 5) * 100}%` }} />
+                                                </div>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs text-slate-500">
+                                                    {/* Critérios de senha simplificados visualmente */}
+                                                    <div className={`flex items-center gap-1.5 ${passwordStrength.criteria.length ? 'text-green-600 font-medium' : ''}`}>{passwordStrength.criteria.length ? <Check size={10} /> : <div className="w-2.5 h-2.5 rounded-full bg-slate-300" />} Mínimo 8 caracteres</div>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
-
-                                    <div className="md:col-span-1">
-                                        <label className={labelClass}>{isEditing && !formData.password ? "Confirmar (opcional)" : <>Confirmar Senha <span className="text-red-500">*</span></>}</label>
-                                        <div className="relative">
-                                            <input
-                                                type={showConfirmPassword ? "text" : "password"}
-                                                required={!isEditing || formData.password.length > 0}
-                                                placeholder="Repita a senha"
-                                                value={confirmPassword}
-                                                onChange={e => setConfirmPassword(e.target.value)}
-                                                disabled={isEditing && formData.password === ""}
-                                                className={`${inputClass} pr-10 ${confirmPassword && formData.password !== confirmPassword ? 'border-red-400 bg-red-50' : ''}`}
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                                className="absolute right-2 top-2 text-slate-400 hover:text-slate-600"
-                                                disabled={isEditing && formData.password === ""}
-                                            >
-                                                {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* Feedback Visual de Força e Erro */}
-                                    {formData.password && (
-                                        <div className="md:col-span-2 space-y-2 animate-fade-in bg-white p-3 rounded border border-slate-200">
-                                            <div className="flex justify-between items-end mb-1">
-                                                <span className="text-xs font-bold text-slate-500 uppercase">Requisitos de Segurança</span>
-                                                <span className="text-xs text-slate-400">{passwordStrength.score}/5</span>
-                                            </div>
-
-                                            {/* Barra de Força */}
-                                            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                                                <div className={`h-full transition-all duration-500 ${getBarColor()}`} style={{ width: `${(passwordStrength.score / 5) * 100}%` }} />
-                                            </div>
-
-                                            {/* Lista de Critérios */}
-                                            <div className="grid grid-cols-2 gap-2 mt-2">
-                                                <div className={`text-[10px] flex items-center gap-1 ${passwordStrength.criteria.length ? 'text-green-600' : 'text-slate-400'}`}>
-                                                    {passwordStrength.criteria.length ? <Check size={10} /> : <div className="w-2 h-2 bg-slate-200 rounded-full"/>} 8+ caracteres
-                                                </div>
-                                                <div className={`text-[10px] flex items-center gap-1 ${passwordStrength.criteria.hasUpper ? 'text-green-600' : 'text-slate-400'}`}>
-                                                    {passwordStrength.criteria.hasUpper ? <Check size={10} /> : <div className="w-2 h-2 bg-slate-200 rounded-full"/>} Maiúscula
-                                                </div>
-                                                <div className={`text-[10px] flex items-center gap-1 ${passwordStrength.criteria.hasNumber ? 'text-green-600' : 'text-slate-400'}`}>
-                                                    {passwordStrength.criteria.hasNumber ? <Check size={10} /> : <div className="w-2 h-2 bg-slate-200 rounded-full"/>} Número
-                                                </div>
-                                                <div className={`text-[10px] flex items-center gap-1 ${passwordStrength.criteria.hasSpecial ? 'text-green-600' : 'text-slate-400'}`}>
-                                                    {passwordStrength.criteria.hasSpecial ? <Check size={10} /> : <div className="w-2 h-2 bg-slate-200 rounded-full"/>} Especial (!@#)
-                                                </div>
-                                            </div>
-
-                                            {/* Erro de não coincidência */}
-                                            {confirmPassword && formData.password !== confirmPassword && (
-                                                <p className="text-red-500 text-xs mt-2 flex items-center gap-1 font-bold pt-2 border-t border-slate-100">
-                                                    <AlertCircle size={12} /> As senhas não conferem.
-                                                </p>
-                                            )}
-                                        </div>
-                                    )}
                                 </div>
                             </div>
 
@@ -446,9 +365,11 @@ export function UserManager() {
                                 <h3 className="font-bold text-slate-700 mb-3 flex items-center gap-2 text-sm uppercase"><User size={14}/> Perfil Público</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
+                                    {/* --- ÁREA DE UPLOAD DA FOTO (MODIFICADA) --- */}
                                     <div className="md:col-span-2">
                                         <label className={labelClass}>Foto de Perfil</label>
                                         <div className="flex items-center gap-4">
+                                            {/* Preview */}
                                             <div className="relative group w-16 h-16 rounded-full overflow-hidden border border-slate-200 bg-slate-100 flex-shrink-0">
                                                 {formData.photoUrl ? (
                                                     <img src={formData.photoUrl} alt="Preview" className="w-full h-full object-cover" />
@@ -462,6 +383,7 @@ export function UserManager() {
                                                 )}
                                             </div>
 
+                                            {/* Botão de Upload */}
                                             <div className="flex-1">
                                                 <label className={`cursor-pointer inline-flex items-center gap-2 bg-white border border-slate-300 px-4 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition shadow-sm ${isUploadingPhoto ? 'opacity-50 pointer-events-none' : ''}`}>
                                                     <UploadCloud size={16} />
@@ -478,6 +400,7 @@ export function UserManager() {
                                             </div>
                                         </div>
                                     </div>
+                                    {/* ------------------------------------------- */}
 
                                     <div className="md:col-span-2">
                                         <label className={labelClass}>Formação / Cargo</label>

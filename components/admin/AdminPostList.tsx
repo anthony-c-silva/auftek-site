@@ -44,13 +44,16 @@ export const AdminPostList: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'pending'>('all');
 
+    // Modais de Edição/Revisão
     const [editingPost, setEditingPost] = useState<PostData | null>(null);
     const [reviewingPost, setReviewingPost] = useState<PostData | null>(null);
 
+    // Modal de CRIAR Rejeição (Admin escrevendo)
     const [rejectModalOpen, setRejectModalOpen] = useState(false);
     const [postToReject, setPostToReject] = useState<string | null>(null);
     const [rejectionReasonText, setRejectionReasonText] = useState("");
 
+    // --- NOVO: Modal de LER Rejeição (Autor lendo) ---
     const [viewReason, setViewReason] = useState<string | null>(null);
 
     useEffect(() => {
@@ -79,6 +82,8 @@ export const AdminPostList: React.FC = () => {
         }
     };
 
+    // --- AÇÕES ---
+
     const handleDirectApprove = async (slug: string) => {
         if (!confirm("Aprovar e publicar este post?")) return;
         try {
@@ -95,12 +100,14 @@ export const AdminPostList: React.FC = () => {
         } catch (error) { console.error(error); }
     };
 
+    // Abre modal para ADMIN escrever motivo
     const openRejectModal = (slug: string) => {
         setPostToReject(slug);
         setRejectionReasonText("");
         setRejectModalOpen(true);
     };
 
+    // Envia a rejeição para API
     const handleConfirmReject = async () => {
         if (!postToReject || !rejectionReasonText.trim()) {
             alert("Por favor, informe o motivo da recusa.");
@@ -112,19 +119,18 @@ export const AdminPostList: React.FC = () => {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({
-                    status: 're-evaluation',
+                    status: 'rejected',
                     rejectionReason: rejectionReasonText
                 })
             });
             if (res.ok) {
-                alert("Solicitação de ajustes enviada ao autor."); // Mensagem mais adequada
+                alert("Post rejeitado e motivo enviado ao autor.");
                 setRejectModalOpen(false);
                 setPostToReject(null);
                 fetchPosts();
             }
         } catch (error) { console.error(error); }
     };
-    // ----------------------------------------------------------------
 
     const handleConfirmApproval = async (slug: string) => {
         try {
@@ -148,19 +154,15 @@ export const AdminPostList: React.FC = () => {
             const res = await fetch(`/api/posts/${slug}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({
-                    status: 're-evaluation',
-                    rejectionReason: reason
-                })
+                body: JSON.stringify({ status: 'rejected', rejectionReason: reason })
             });
             if (res.ok) {
-                alert("Alterações rejeitadas. O autor deverá revisar.");
+                alert("Alterações rejeitadas.");
                 setReviewingPost(null);
                 fetchPosts();
             }
         } catch (error) { console.error(error); }
     };
-    // ---------------------------------------------------------
 
     const handleDelete = async (slug: string) => {
         if (!confirm("Tem certeza que deseja excluir este post?")) return;
@@ -173,6 +175,8 @@ export const AdminPostList: React.FC = () => {
             if (res.ok) fetchPosts();
         } catch (error) { console.error(error); }
     };
+
+    // --- UI HELPERS ---
 
     const handleEditClick = (post: PostData) => setEditingPost(post);
     const handleModalClose = () => setEditingPost(null);
@@ -195,7 +199,6 @@ export const AdminPostList: React.FC = () => {
             result = result.filter(p => p.status === 'published' && p.writer?.email === user?.email);
         } else if (statusFilter === 'pending') {
             const isPendingOrReview = (p: PostData) => {
-                // Inclui 're-evaluation' no filtro de pendentes para o admin ver
                 if (['pending', 're-evaluation', 'rejected'].includes(p.status)) return true;
                 if (p.status === 'published' && p.rejectionReason) return true;
                 return false;
@@ -223,6 +226,7 @@ export const AdminPostList: React.FC = () => {
     return (
         <>
             <div className="rounded-xl shadow border border-slate-200 overflow-hidden bg-white">
+                {/* Header da Tabela (Filtros e Busca) */}
                 <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row justify-between items-center gap-4">
                     <div className="relative w-full max-w-sm">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -259,16 +263,17 @@ export const AdminPostList: React.FC = () => {
                         <tbody className="divide-y divide-slate-100">
                         {filteredPosts.map((post) => (
                             <tr key={post._id} className="hover:bg-slate-50 transition-colors">
+                                {/* COLUNA STATUS (MODIFICADA) */}
                                 <td className="px-6 py-4">
                                     {post.rejectionReason ? (
+                                        // Botão Interativo para ver o motivo
                                         <button
                                             onClick={() => setViewReason(post.rejectionReason || "")}
                                             className="group flex items-center gap-2 bg-red-100 hover:bg-red-200 text-red-700 px-3 py-1.5 rounded-full text-xs font-bold transition-all w-fit cursor-pointer border border-transparent hover:border-red-300"
                                             title="Clique para ler o motivo da recusa"
                                         >
                                             <XCircle size={14} />
-                                            {/* Ajustei o texto para refletir melhor o estado */}
-                                            {post.status === 'published' ? 'Edição Recusada' : 'Ajustes Solicitados'}
+                                            {post.status === 'published' ? 'Edição Recusada' : 'Recusado'}
                                             <Eye size={12} className="opacity-50 group-hover:opacity-100 transition-opacity ml-1" />
                                         </button>
                                     ) : (
@@ -276,7 +281,7 @@ export const AdminPostList: React.FC = () => {
                                             {post.status === 'published' && <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold flex w-fit items-center gap-1"><CheckCircle size={12} /> No Ar</span>}
                                             {post.status === 'pending' && <span className="bg-amber-100 text-amber-700 px-2 py-1 rounded text-xs font-bold flex w-fit items-center gap-1"><Clock size={12} /> Novo</span>}
                                             {post.status === 're-evaluation' && <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-bold flex w-fit items-center gap-1"><RefreshCw size={12} /> Reavaliação</span>}
-                                            {post.status === 'rejected' && <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold flex w-fit items-center gap-1"><XCircle size={12} /> Recusado</span>}
+                                            {post.status === 'rejected' && !post.rejectionReason && <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold flex w-fit items-center gap-1"><XCircle size={12} /> Recusado</span>}
                                             {post.status === 'draft' && <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-bold flex w-fit items-center gap-1"><FileText size={12} /> Rascunho</span>}
                                         </>
                                     )}
@@ -303,7 +308,7 @@ export const AdminPostList: React.FC = () => {
 
                                 <td className="px-6 py-4 text-right">
                                     <div className="flex items-center justify-end gap-2">
-                                        {isAdmin && (post.status === 'pending' || post.status === 're-evaluation') ? (
+                                        {isAdmin && !post.rejectionReason && (
                                             <>
                                                 {post.status === 'pending' && (
                                                     <>
@@ -321,16 +326,14 @@ export const AdminPostList: React.FC = () => {
                                                     </button>
                                                 )}
                                             </>
-                                        ) : (
-                                            <>
-                                                <button onClick={() => handleEditClick(post)} className={`p-2 rounded transition-colors ${post.rejectionReason ? 'text-amber-600 hover:bg-amber-100 animate-pulse' : 'text-slate-400 hover:text-amber-500'}`} title={post.rejectionReason ? "Corrigir e Reenviar" : "Editar Conteúdo"}>
-                                                    <Edit size={18} />
-                                                </button>
-                                                <button onClick={() => handleDelete(post.slug)} className="text-slate-400 hover:text-red-500 p-2 rounded transition-colors" title="Excluir">
-                                                    <Trash2 size={18} />
-                                                </button>
-                                            </>
                                         )}
+
+                                        <button onClick={() => handleEditClick(post)} className={`p-2 rounded transition-colors ${post.rejectionReason ? 'text-amber-600 hover:bg-amber-100 animate-pulse' : 'text-slate-400 hover:text-amber-500'}`} title={post.rejectionReason ? "Corrigir e Reenviar" : "Editar Conteúdo"}>
+                                            <Edit size={18} />
+                                        </button>
+                                        <button onClick={() => handleDelete(post.slug)} className="text-slate-400 hover:text-red-500 p-2 rounded transition-colors" title="Excluir">
+                                            <Trash2 size={18} />
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -344,6 +347,7 @@ export const AdminPostList: React.FC = () => {
                 )}
             </div>
 
+            {/* Modais de Edição */}
             <Modal isOpen={!!editingPost} onClose={handleModalClose} title="Editar Post">
                 {editingPost && (
                     <PostForm initialData={editingPost} isEditing={true} onSuccess={handleFormSuccess} onCancel={handleModalClose} />
@@ -354,6 +358,7 @@ export const AdminPostList: React.FC = () => {
                 <PostComparisonModal isOpen={!!reviewingPost} post={reviewingPost} onClose={() => setReviewingPost(null)} onApprove={handleConfirmApproval} onReject={handleComparisonReject} />
             )}
 
+            {/* MODAL 1: ADMIN ESCREVENDO O MOTIVO (Para rejeitar) */}
             {rejectModalOpen && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
                     <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md border border-slate-200 animate-fade-in-up">
@@ -372,15 +377,17 @@ export const AdminPostList: React.FC = () => {
                         />
                         <div className="flex justify-end gap-3">
                             <button onClick={() => setRejectModalOpen(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg text-sm font-medium">Cancelar</button>
-                            <button onClick={handleConfirmReject} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-bold shadow-lg shadow-red-500/20">Enviar Solicitação</button>
+                            <button onClick={handleConfirmReject} className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-bold shadow-lg shadow-red-500/20">Confirmar Recusa</button>
                         </div>
                     </div>
                 </div>
             )}
 
+            {/* MODAL 2: AUTOR LENDO O MOTIVO (Visualização) */}
             {viewReason && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+                        {/* Cabeçalho do Modal */}
                         <div className="bg-red-50 px-6 py-4 border-b border-red-100 flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <div className="bg-white p-2 rounded-full shadow-sm text-red-600">
@@ -393,15 +400,18 @@ export const AdminPostList: React.FC = () => {
                             </button>
                         </div>
 
+                        {/* Corpo do Modal */}
                         <div className="p-6">
                             <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">
                                 {viewReason}
                             </div>
+
                             <p className="mt-4 text-xs text-slate-400 text-center">
                                 Edite o post para corrigir os problemas apontados e reenvie para aprovação.
                             </p>
                         </div>
 
+                        {/* Rodapé */}
                         <div className="bg-slate-50 px-6 py-3 border-t border-slate-100 flex justify-end">
                             <button
                                 onClick={() => setViewReason(null)}

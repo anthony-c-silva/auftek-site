@@ -9,7 +9,7 @@ import { useEffect, useState, useRef } from 'react'
 import {
     Bold, Italic, List, ListOrdered,
     Heading1, Heading2, Quote, Image as ImageIcon,
-    Undo, Redo, Loader2
+    Undo, Redo, Loader2 // Adicionado Loader2 para feedback visual
 } from 'lucide-react'
 
 const CustomImage = Image.extend({
@@ -37,7 +37,9 @@ interface RichTextEditorProps {
 }
 
 const RichTextEditor = ({ value, onChange }: RichTextEditorProps) => {
+    // Estado para controlar o loading do upload
     const [isUploading, setIsUploading] = useState(false);
+    // Ref para o input invisível
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const editor = useEditor({
@@ -51,20 +53,7 @@ const RichTextEditor = ({ value, onChange }: RichTextEditorProps) => {
         content: value,
         editorProps: {
             attributes: {
-                class: `
-                    prose prose-slate max-w-none 
-                    focus:outline-none 
-                    h-[600px] overflow-y-auto 
-                    px-4 py-3 
-                    leading-normal
-                    [&_p]:my-0 [&_p]:min-h-[1.5em]
-                    [&_li]:my-0 
-                    [&_ul]:my-0 
-                    [&_ol]:my-0
-                    [&_h1]:mb-2 [&_h1]:mt-4
-                    [&_h2]:mb-2 [&_h2]:mt-4
-                    [&_h3]:mb-1 [&_h3]:mt-3
-                `.replace(/\s+/g, ' ').trim(),
+                class: 'prose prose-slate max-w-none focus:outline-none min-h-[300px] px-4 py-3',
             },
         },
         onUpdate: ({ editor }) => {
@@ -81,6 +70,7 @@ const RichTextEditor = ({ value, onChange }: RichTextEditorProps) => {
         }
     }, [value, editor]);
 
+    // --- NOVA LÓGICA DE UPLOAD ---
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file || !editor) return;
@@ -90,7 +80,7 @@ const RichTextEditor = ({ value, onChange }: RichTextEditorProps) => {
         try {
             const formData = new FormData();
             formData.append('file', file);
-            formData.append('folder', 'content');
+            formData.append('folder', 'content'); // Define a pasta nova "content"
 
             const res = await fetch('/api/upload', {
                 method: 'POST',
@@ -100,6 +90,8 @@ const RichTextEditor = ({ value, onChange }: RichTextEditorProps) => {
             if (!res.ok) throw new Error("Falha no upload");
 
             const data = await res.json();
+
+
             editor.chain().focus().setImage({ src: data.url }).run();
 
         } catch (error) {
@@ -215,6 +207,8 @@ const RichTextEditor = ({ value, onChange }: RichTextEditorProps) => {
 
     return (
         <div className="border border-slate-300 rounded-lg overflow-hidden bg-white shadow-sm hover:border-slate-400 transition-colors relative">
+
+            {/* Input Invisível para Upload */}
             <input
                 type="file"
                 ref={fileInputRef}
@@ -233,7 +227,7 @@ const RichTextEditor = ({ value, onChange }: RichTextEditorProps) => {
                 </BubbleMenu>
             )}
 
-            <div className="bg-slate-50 border-b border-slate-200 p-1 flex flex-wrap gap-1 items-center sticky top-0 z-10">
+            <div className="bg-slate-50 border-b border-slate-200 p-1 flex flex-wrap gap-1 items-center">
                 <ToolbarBtn onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')} icon={Bold} title="Negrito" />
                 <ToolbarBtn onClick={() => editor.chain().focus().toggleItalic().run()} isActive={editor.isActive('italic')} icon={Italic} title="Itálico" />
                 <div className="w-px h-6 bg-slate-300 mx-1" />
@@ -244,6 +238,7 @@ const RichTextEditor = ({ value, onChange }: RichTextEditorProps) => {
                 <ToolbarBtn onClick={() => editor.chain().focus().toggleOrderedList().run()} isActive={editor.isActive('orderedList')} icon={ListOrdered} title="Lista Numerada" />
                 <ToolbarBtn onClick={() => editor.chain().focus().toggleBlockquote().run()} isActive={editor.isActive('blockquote')} icon={Quote} title="Citação" />
                 <div className="w-px h-6 bg-slate-300 mx-1" />
+
                 <ToolbarBtn
                     onClick={triggerImageUpload}
                     isActive={false}
@@ -251,6 +246,7 @@ const RichTextEditor = ({ value, onChange }: RichTextEditorProps) => {
                     title="Inserir Imagem"
                     disabled={isUploading}
                 />
+
                 <div className="flex-grow" />
                 <ToolbarBtn onClick={() => editor.chain().focus().undo().run()} icon={Undo} title="Desfazer" />
                 <ToolbarBtn onClick={() => editor.chain().focus().redo().run()} icon={Redo} title="Refazer" />
