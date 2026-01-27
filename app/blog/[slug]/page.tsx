@@ -7,9 +7,14 @@ import { BlogPost } from '@/types/blog';
 import { Metadata } from 'next';
 import { cache } from 'react';
 
+// ISR: Revalida a cada 60 segundos
 export const revalidate = 60;
 
+// Permite gerar páginas dinamicamente
 export const dynamicParams = true;
+
+// ⚠️ REMOVA ESTA FUNÇÃO - ela causa o erro no build
+// export async function generateStaticParams() { ... }
 
 interface BlogPostPageProps {
     params: Promise<{ slug: string }>;
@@ -83,11 +88,6 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             notFound();
         }
 
-        const normalizeCategory = (cat: string): 'general' | 'case_study' => {
-            if (cat === 'case_study') return 'case_study';
-            return 'general';
-        };
-
         const normalizedPost: BlogPost = {
             _id: data._id.toString(),
             id: data._id.toString(),
@@ -99,7 +99,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             content: data.content,
             date: new Date(data.createdAt).toLocaleDateString('pt-BR'),
             readTime: data.readTime || "5 min",
-            category: normalizeCategory(data.category || 'general'),
+            category: data.category || "Artigo",
             authorId: data.authorId || "",
             writer: {
                 name: data.writer?.name || "",
