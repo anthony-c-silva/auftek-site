@@ -7,17 +7,30 @@ import { BlogPost } from '@/types/blog';
 import { Metadata } from 'next';
 import { cache } from 'react';
 
-// ISR: Revalida a cada 60 segundos
 export const revalidate = 60;
-
-// Permite gerar páginas dinamicamente
 export const dynamicParams = true;
-
-// ⚠️ REMOVA ESTA FUNÇÃO - ela causa o erro no build
-// export async function generateStaticParams() { ... }
 
 interface BlogPostPageProps {
     params: Promise<{ slug: string }>;
+}
+
+export async function generateStaticParams() {
+    try {
+        await connectDB();
+
+        const posts = await Post.find({
+            status: 'published',
+            deletedAt: null
+        }, 'slug').lean().exec();
+
+        return posts.map((post: any) => ({
+            slug: post.slug,
+        }));
+    } catch (error) {
+        console.error('Error generating static params:', error);
+        // Retorna array vazio para não quebrar o build
+        return [];
+    }
 }
 
 const getPost = cache(async (slug: string) => {
