@@ -9,7 +9,7 @@ const eslintConfig = defineConfig([
 
   {
     rules: {
-      // Desabilita checagem de 'any' explícito
+      // Desabilita checagem de 'any' explícitoo
       "@typescript-eslint/no-explicit-any": "off",
 
       // Desabilita warnings de variáveis não usadas
