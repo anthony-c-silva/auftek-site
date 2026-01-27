@@ -104,7 +104,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         readTime: data.readTime || "5 min",
         category: data.category || "Artigo",
 
-        authorId: data.authorId || "",
+        authorId: data.authorId?.toString() || "",
         writer: {
             name: data.writer?.name || "",
             email: data.writer?.email || ""
