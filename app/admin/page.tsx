@@ -9,6 +9,7 @@ import {
     PlusCircle,
     Users,
     BarChart3, // 1. Novo ícone importado
+    Share2,
 } from "lucide-react";
 
 import { AdminPostList } from "@/components/admin/AdminPostList";
@@ -84,6 +85,15 @@ export default function AdminDashboard() {
 
                     {/* GRUPO DE AÇÕES */}
                     <div className="flex gap-3 w-full md:w-auto">
+
+                        {/* Botão Redes Sociais (Todos os usuários) */}
+                        <button
+                            onClick={() => router.push("/admin/social-media")}
+                            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-slate-300 bg-white text-slate-700 font-bold hover:bg-slate-50 hover:text-blue-600 transition shadow-sm active:scale-[0.98]"
+                        >
+                            <Share2 size={18} />
+                            <span className="hidden sm:inline">Redes Sociais</span>
+                        </button>
 
                         {isAdmin && (
                             <>
