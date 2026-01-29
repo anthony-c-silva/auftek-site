@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { LoadingScreen } from '@/components/layout/LoadingScreen';
 
 interface User {
     name: string;
@@ -60,6 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     const login = async (email: string, password: string) => {
+        setIsLoading(true);
         try {
             const res = await fetch('/api/auth/login', {
                 method: 'POST',
@@ -75,7 +77,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
                 setIsAdmin(userRole === 'admin');
 
-                // CORREÇÃO AQUI: Adicionado photoUrl
                 setUser({
                     name: userData.name || "Usuário",
                     email: email,
@@ -84,11 +85,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 });
 
                 router.push('/admin');
+
+                setTimeout(() => setIsLoading(false), 1000);
+
                 return true;
             }
+
+            setIsLoading(false); 
             return false;
         } catch (error) {
             console.error("Erro no login:", error);
+            setIsLoading(false);
             return false;
         }
     };
@@ -107,7 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return (
         <AuthContext.Provider value={{ isAdmin, user, isLoading, login, logout }}>
-            {children}
+            {isLoading ? <LoadingScreen /> : children}
         </AuthContext.Provider>
     );
 }

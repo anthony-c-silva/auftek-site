@@ -8,18 +8,15 @@ import { usePathname, useRouter } from "next/navigation";
 import { NAV_LINKS } from "../../data/constants";
 import { useScroll, scrollToElement } from "../../hooks/useScroll";
 import { Logo } from "../ui/Logo";
-import { Avatar } from "../ui/Avatar"; // Componente Avatar
+import { Avatar } from "../ui/Avatar";
 import { cn } from "../../lib/utils";
-import { useAuth } from "@/context/AuthContext"; // Contexto de Autenticação
+import { useAuth } from "@/context/AuthContext";
 
 export const Header: React.FC = () => {
-  // --- HOOKS E ESTADOS ---
   const { user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Estado para Dropdown de Idioma
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
-  // Estado para Dropdown de Perfil (User)
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
   const scrolled = useScroll(20);
@@ -27,10 +24,8 @@ export const Header: React.FC = () => {
   const router = useRouter();
   const isHomePage = pathname === "/";
 
-  // Ref para fechar o dropdown de perfil ao clicar fora
   const profileRef = useRef<HTMLDivElement>(null);
 
-  // --- IDIOMAS ---
   const [lang, setLang] = useState("pt");
   const languages = [
     { code: "pt", label: "Português", flag: "🇧🇷" },
@@ -39,9 +34,6 @@ export const Header: React.FC = () => {
   ];
   const activeLang = languages.find((l) => l.code === lang)!;
 
-  // --- EFEITOS ---
-
-  // Bloqueia scroll do body no mobile
   useEffect(() => {
     if (isMenuOpen) {
       document.body.style.overflow = "hidden";
@@ -50,7 +42,6 @@ export const Header: React.FC = () => {
     }
   }, [isMenuOpen]);
 
-  // Fecha dropdown de perfil ao clicar fora
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {

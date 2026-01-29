@@ -6,6 +6,10 @@
   --color-auftek-green: #a9deca;
   --color-auftek-slate: #1a2c42;
   --font-sans: 'Inter', sans-serif;
+  
+  --animate-delay-150: 150ms;
+  --animate-delay-300: 300ms;
+  --animate-delay-700: 700ms;
 }
 
 /* Seus estilos globais extras */
@@ -17,4 +21,17 @@ body {
   background: rgba(14, 34, 59, 0.7);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(30, 144, 255, 0.2);
+}
+
+/* Animation delay utilities */
+.delay-150 {
+  animation-delay: 150ms;
+}
+
+.delay-300 {
+  animation-delay: 300ms;
+}
+
+.delay-700 {
+  animation-delay: 700ms;
 }
