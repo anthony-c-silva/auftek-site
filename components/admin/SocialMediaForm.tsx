@@ -4,13 +4,15 @@ import React, { useState } from "react";
 import { Upload, X, Loader2, Sparkles, Image as ImageIcon } from "lucide-react";
 
 interface SocialMediaFormProps {
-  onGenerate: (data: { images: string[]; text: string; context: string }) => void;
+  onGenerate: (data: { images: string[]; text: string; context: string; additionalPrompt?: string }) => void;
   isGenerating: boolean;
+  campaign?: any;
 }
 
-export function SocialMediaForm({ onGenerate, isGenerating }: SocialMediaFormProps) {
+export function SocialMediaForm({ onGenerate, isGenerating, campaign }: SocialMediaFormProps) {
   const [images, setImages] = useState<string[]>([]);
   const [context, setContext] = useState("");
+  const [additionalPrompt, setAdditionalPrompt] = useState("");
   const [uploading, setUploading] = useState(false);
 
   const handleFileUpload = async (files: FileList | null) => {
@@ -23,19 +25,31 @@ export function SocialMediaForm({ onGenerate, isGenerating }: SocialMediaFormPro
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
 
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          uploadedImages.push(reader.result as string);
-          if (uploadedImages.length === files.length) {
-            setImages([...images, ...uploadedImages]);
-            setUploading(false);
-          }
-        };
-        reader.readAsDataURL(file);
+        // Upload to KingHost
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('folder', 'social-media');
+
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Erro ao fazer upload da imagem');
+        }
+
+        const result = await response.json();
+        if (result.url) {
+          uploadedImages.push(result.url);
+        }
       }
+
+      setImages([...images, ...uploadedImages]);
+      setUploading(false);
     } catch (error) {
       console.error("Erro ao processar imagens:", error);
-      alert("Erro ao processar as imagens");
+      alert("Erro ao fazer upload das imagens");
       setUploading(false);
     }
   };
@@ -50,12 +64,13 @@ export function SocialMediaForm({ onGenerate, isGenerating }: SocialMediaFormPro
       alert("Por favor, adicione pelo menos uma imagem e descreva o contexto.");
       return;
     }
-    onGenerate({ images, text: "", context });
+    onGenerate({ images, text: "", context, additionalPrompt: additionalPrompt.trim() || undefined });
   };
 
   const handleReset = () => {
     setImages([]);
     setContext("");
+    setAdditionalPrompt("");
   };
 
   return (
@@ -123,6 +138,24 @@ export function SocialMediaForm({ onGenerate, isGenerating }: SocialMediaFormPro
         )}
       </div>
 
+      {/* Campaign Info */}
+      {campaign && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <h3 className="text-sm font-bold text-blue-900 mb-2">Campanha Selecionada</h3>
+          <p className="text-sm text-blue-800 font-medium mb-1">{campaign.name}</p>
+          {campaign.theme && (
+            <p className="text-xs text-blue-700 mb-1">
+              <span className="font-medium">Tema:</span> {campaign.theme}
+            </p>
+          )}
+          {campaign.tone && (
+            <p className="text-xs text-blue-700">
+              <span className="font-medium">Tom:</span> {campaign.tone}
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Context Input */}
       <div>
         <label htmlFor="context" className="block text-sm font-bold text-slate-700 mb-2">
@@ -139,6 +172,28 @@ export function SocialMediaForm({ onGenerate, isGenerating }: SocialMediaFormPro
         />
         <p className="text-xs text-slate-500 mt-1">
           A IA irá gerar automaticamente um texto curto para a imagem baseado neste contexto. Formato: 4:5 (Feed do Instagram)
+        </p>
+      </div>
+
+      {/* Additional Prompt (Optional) */}
+      <div>
+        <label htmlFor="additionalPrompt" className="block text-sm font-bold text-slate-700 mb-2">
+          Instruções Adicionais para IA
+        </label>
+        <textarea
+          id="additionalPrompt"
+          value={additionalPrompt}
+          onChange={(e) => setAdditionalPrompt(e.target.value)}
+          placeholder="Ex: Use cores quentes, foque em elementos de verão, tom mais descontraído..."
+          className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-slate-900 placeholder:text-slate-400"
+          rows={3}
+          disabled={isGenerating}
+        />
+        <p className="text-xs text-slate-500 mt-1">
+          {campaign
+            ? 'Estas instruções complementam os prompts da campanha para esta publicação específica.'
+            : 'Forneça instruções específicas para a IA sobre estilo, tom ou elementos visuais desejados.'
+          }
         </p>
       </div>
 

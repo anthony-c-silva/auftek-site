@@ -1,45 +1,36 @@
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
-import {defineConfig} from "next/dist/experimental/testmode/playwright";
 
-//DESABILITAMOS OS WARNINGS TEMPORARIAMENTE PARA TESTES DE BUILD !!!!
-const eslintConfig = defineConfig([
+export default [
   ...nextVitals,
   ...nextTs,
 
   {
     rules: {
-      // Desabilita checagem de 'any' explícitoo
-      "@typescript-eslint/no-explicit-any": "off",
+      // TypeScript - Erros de tipagem e variáveis
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-unused-vars": ["warn", {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }],
 
-      // Desabilita warnings de variáveis não usadas
-      "@typescript-eslint/no-unused-vars": "off",
+      // No ESLint 9, usamos apenas a versão do TS se estivermos em um projeto TS
       "no-unused-vars": "off",
 
-      // Desabilita warnings de imports não usados
-      "@typescript-eslint/no-unused-imports": "off",
+      // Segurança e Melhores Práticas
+      "@typescript-eslint/no-var-requires": "error",
 
-      // Desabilita warnings de require
-      "@typescript-eslint/no-var-requires": "off",
+      // Next.js específico
+      "@next/next/no-img-element": "warn",
+      "@next/next/no-html-link-for-pages": "error",
 
-      // Desabilita warnings de funções async sem await
-      "@typescript-eslint/require-await": "off",
+      // React e Hooks
+      "react/no-unescaped-entities": "warn",
+      "react-hooks/exhaustive-deps": "warn",
+      "react-hooks/rules-of-hooks": "error",
 
-      // Desabilita warnings do Next.js Image
-      "@next/next/no-img-element": "off",
-
-      // Desabilita warnings de HTML no href
-      "@next/next/no-html-link-for-pages": "off",
-
-      // Desabilita warnings de componentes não escapados
-      "react/no-unescaped-entities": "off",
-
-      // Desabilita warnings de hooks
-      "react-hooks/exhaustive-deps": "off",
-      "react-hooks/rules-of-hooks": "off",
-
-      // Desabilita warnings de console.log
-      "no-console": "off",
+      // Debugging
+      "no-console": "warn",
     },
   },
-]);
+];

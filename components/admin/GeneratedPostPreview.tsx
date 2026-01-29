@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Copy, Download, Check } from "lucide-react";
+import { Copy, Download, Check, Save } from "lucide-react";
 import { useState } from "react";
 
 interface GeneratedPostPreviewProps {
@@ -9,11 +9,15 @@ interface GeneratedPostPreviewProps {
   overlayText: string;
   description: string;
   originalImages: string[];
+  campaign?: any;
+  context?: string;
 }
 
-export function GeneratedPostPreview({ generatedImage, overlayText, description, originalImages }: GeneratedPostPreviewProps) {
+export function GeneratedPostPreview({ generatedImage, overlayText, description, originalImages, campaign, context }: GeneratedPostPreviewProps) {
   const [copiedDescription, setCopiedDescription] = useState(false);
   const [editedDescription, setEditedDescription] = useState(description);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -30,6 +34,49 @@ export function GeneratedPostPreview({ generatedImage, overlayText, description,
     link.href = generatedImage;
     link.download = `social-media-${Date.now()}.png`;
     link.click();
+  };
+
+  const handleSavePost = async (status: 'draft' | 'published' = 'draft') => {
+    if (!campaign) {
+      alert('Selecione uma campanha para salvar o post');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const response = await fetch(`/api/campaigns/${campaign._id}/posts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          context: context || 'Post gerado via IA',
+          postType: campaign.tone || 'professional',
+          generatedImage,
+          overlayText,
+          description: editedDescription,
+          originalImages,
+          aspectRatio: '4:5',
+          status: status,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Erro ao salvar post');
+      }
+
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+      alert(status === 'draft' ? 'Rascunho salvo com sucesso!' : 'Post publicado com sucesso!');
+    } catch (error: any) {
+      console.error('Erro ao salvar post:', error);
+      alert(error.message || 'Erro ao salvar post');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handlePublish = () => {
+    handleSavePost('published');
   };
 
   return (
@@ -92,6 +139,59 @@ export function GeneratedPostPreview({ generatedImage, overlayText, description,
             {editedDescription.length} caracteres
           </p>
         </div>
+
+        {/* Action Buttons */}
+        {campaign && (
+          <div className="mt-4 flex gap-3">
+            {/* Save Draft Button */}
+            <button
+              onClick={() => handleSavePost('draft')}
+              disabled={isSaving || saved}
+              className="flex-1 px-4 py-3 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition disabled:opacity-50 font-medium flex items-center justify-center gap-2"
+            >
+              {isSaving ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Salvando...
+                </>
+              ) : saved ? (
+                <>
+                  <Check size={18} />
+                  Salvo!
+                </>
+              ) : (
+                <>
+                  <Save size={18} />
+                  Salvar Rascunho
+                </>
+              )}
+            </button>
+
+            {/* Publish Button */}
+            <button
+              onClick={handlePublish}
+              disabled={isSaving || saved}
+              className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 font-medium flex items-center justify-center gap-2"
+            >
+              {isSaving ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Publicando...
+                </>
+              ) : saved ? (
+                <>
+                  <Check size={18} />
+                  Publicado!
+                </>
+              ) : (
+                <>
+                  <Check size={18} />
+                  Publicar
+                </>
+              )}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
