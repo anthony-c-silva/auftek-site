@@ -157,19 +157,17 @@ export default function SocialMediaPage() {
                 <FolderOpen size={18} />
                 Campanhas
               </button>
-              {/* Approvals tab - admin only */}
-              {user.role === 'admin' && (
-                  <button
-                      onClick={() => setViewMode('approvals')}
-                      className={`flex items-center gap-2 px-4 py-3 font-medium text-sm transition border-b-2 ${viewMode === 'approvals'
-                          ? 'border-blue-600 text-blue-600'
-                          : 'border-transparent text-slate-600 hover:text-slate-900'
-                      }`}
-                  >
-                    <ClipboardCheck size={18} />
-                    Publicações
-                  </button>
-              )}
+              {/* Approvals tab - visible for all users */}
+              <button
+                  onClick={() => setViewMode('approvals')}
+                  className={`flex items-center gap-2 px-4 py-3 font-medium text-sm transition border-b-2 ${viewMode === 'approvals'
+                      ? 'border-blue-600 text-blue-600'
+                      : 'border-transparent text-slate-600 hover:text-slate-900'
+                  }`}
+              >
+                <ClipboardCheck size={18} />
+                Publicações
+              </button>
               {viewMode === 'campaigns' && !selectedCampaign && (
                   <button
                       onClick={() => setShowCreateCampaignModal(true)}
@@ -247,7 +245,7 @@ export default function SocialMediaPage() {
                     <CampaignList onSelectCampaign={handleCampaignSelect} />
                 )}
               </>
-          ) : viewMode === 'approvals' && user.role === 'admin' ? (
+          ) : viewMode === 'approvals' ? (
               <>
                 {/* Sub-tabs for Approvals */}
                 <div className="mb-6">
@@ -261,7 +259,7 @@ export default function SocialMediaPage() {
                                   : 'border-transparent text-slate-600 hover:text-slate-900'
                           }`}
                       >
-                        Pendentes
+                        {user.role === 'admin' ? 'Pendentes' : 'Minhas Pendentes'}
                       </button>
                       <button
                           onClick={() => setApprovalSubView('all')}
@@ -271,7 +269,7 @@ export default function SocialMediaPage() {
                                   : 'border-transparent text-slate-600 hover:text-slate-900'
                           }`}
                       >
-                        Todas
+                        Todas Aprovadas
                       </button>
                     </div>
                   </div>
