@@ -3,13 +3,17 @@
 import React, { useState } from "react";
 import { Upload, X, Loader2, Sparkles, Image as ImageIcon } from "lucide-react";
 
+type ImageMode = 'static' | 'ai' | null;
+
 interface SocialMediaFormProps {
   onGenerate: (data: { images: string[]; text: string; context: string; additionalPrompt?: string }) => void;
+  onStaticPost?: (data: { image: string; context: string; description?: string }) => void;
   isGenerating: boolean;
-  campaign?: any;
+  campaign?: { _id: string; name: string; theme?: string; tone?: string };
 }
 
-export function SocialMediaForm({ onGenerate, isGenerating, campaign }: SocialMediaFormProps) {
+export function SocialMediaForm({ onGenerate, onStaticPost, isGenerating, campaign }: SocialMediaFormProps) {
+  const [imageMode, setImageMode] = useState<ImageMode>(null);
   const [images, setImages] = useState<string[]>([]);
   const [context, setContext] = useState("");
   const [additionalPrompt, setAdditionalPrompt] = useState("");
@@ -60,11 +64,29 @@ export function SocialMediaForm({ onGenerate, isGenerating, campaign }: SocialMe
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (images.length === 0 || !context.trim()) {
-      alert("Por favor, adicione pelo menos uma imagem e descreva o contexto.");
+
+    if (!imageMode) {
+      alert("Por favor, selecione o tipo de publicação.");
       return;
     }
-    onGenerate({ images, text: "", context, additionalPrompt: additionalPrompt.trim() || undefined });
+
+    if (imageMode === 'static') {
+      if (images.length === 0 || !context.trim()) {
+        alert("Por favor, adicione uma imagem e descreva o contexto.");
+        return;
+      }
+      onStaticPost?.({
+        image: images[0],
+        context,
+        description: additionalPrompt.trim() || undefined
+      });
+    } else {
+      if (images.length === 0 || !context.trim()) {
+        alert("Por favor, adicione pelo menos uma imagem e descreva o contexto.");
+        return;
+      }
+      onGenerate({ images, text: "", context, additionalPrompt: additionalPrompt.trim() || undefined });
+    }
   };
 
   const handleReset = () => {
@@ -75,40 +97,90 @@ export function SocialMediaForm({ onGenerate, isGenerating, campaign }: SocialMe
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Image Upload Section */}
+      {/* Image Mode Toggle */}
       <div>
         <label className="block text-sm font-bold text-slate-700 mb-2">
-          Imagens
+          Tipo de Publicação
+        </label>
+        <div className="bg-slate-100 p-1 rounded-lg flex">
+          <button
+            type="button"
+            onClick={() => setImageMode('static')}
+            className={`flex-1 px-4 py-2.5 rounded-md text-sm font-medium transition flex items-center justify-center gap-2 ${imageMode === 'static'
+              ? 'bg-white text-blue-600 shadow-sm'
+              : 'text-slate-600 hover:text-slate-900'
+              }`}
+          >
+            <ImageIcon size={18} />
+            Imagem Pronta
+          </button>
+          <button
+            type="button"
+            onClick={() => setImageMode('ai')}
+            className={`flex-1 px-4 py-2.5 rounded-md text-sm font-medium transition flex items-center justify-center gap-2 ${imageMode === 'ai'
+              ? 'bg-white text-blue-600 shadow-sm'
+              : 'text-slate-600 hover:text-slate-900'
+              }`}
+          >
+            <Sparkles size={18} />
+            Gerar com IA
+          </button>
+        </div>
+        {!imageMode && (
+          <p className="text-xs text-amber-600 mt-2">
+            Selecione o tipo de publicação para continuar
+          </p>
+        )}
+      </div>
+
+      {/* Image Upload Section - Only enabled after mode selection */}
+      <div className={!imageMode ? 'opacity-50 pointer-events-none' : ''}>
+        <label className="block text-sm font-bold text-slate-700 mb-2">
+          {imageMode === 'static' ? 'Imagem' : 'Imagens'}
         </label>
 
         {/* Upload Area */}
-        <div className="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors">
+        <div className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${!imageMode ? 'border-slate-200 bg-slate-50' : 'border-slate-300 hover:border-blue-400'
+          }`}>
           <input
             type="file"
             id="image-upload"
-            multiple
+            multiple={imageMode === 'ai'}
             accept="image/*"
             onChange={(e) => handleFileUpload(e.target.files)}
             className="hidden"
-            disabled={uploading || isGenerating}
+            disabled={!imageMode || uploading || isGenerating}
           />
           <label
             htmlFor="image-upload"
-            className="cursor-pointer flex flex-col items-center gap-2"
+            className={`flex flex-col items-center gap-2 ${!imageMode ? 'cursor-not-allowed' : 'cursor-pointer'}`}
           >
             {uploading ? (
               <>
                 <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
                 <p className="text-sm text-slate-600">Fazendo upload...</p>
               </>
+            ) : !imageMode ? (
+              <>
+                <Upload className="w-12 h-12 text-slate-300" />
+                <p className="text-sm text-slate-400">
+                  Selecione o tipo de publicação acima
+                </p>
+              </>
             ) : (
               <>
                 <Upload className="w-12 h-12 text-slate-400" />
                 <p className="text-sm text-slate-600">
-                  Clique para fazer upload ou arraste imagens aqui
+                  {imageMode === 'static'
+                    ? 'Clique para fazer upload da imagem'
+                    : 'Clique para fazer upload ou arraste imagens aqui'
+                  }
                 </p>
                 <p className="text-xs text-slate-400">
-                  Suporta múltiplas imagens
+                  {imageMode === 'static'
+                    ? 'Selecione uma imagem pronta'
+                    : 'Suporta múltiplas imagens'
+                  }
                 </p>
               </>
             )}
@@ -171,48 +243,61 @@ export function SocialMediaForm({ onGenerate, isGenerating, campaign }: SocialMe
           disabled={isGenerating}
         />
         <p className="text-xs text-slate-500 mt-1">
-          A IA irá gerar automaticamente um texto curto para a imagem baseado neste contexto. Formato: 4:5 (Feed do Instagram)
-        </p>
-      </div>
-
-      {/* Additional Prompt (Optional) */}
-      <div>
-        <label htmlFor="additionalPrompt" className="block text-sm font-bold text-slate-700 mb-2">
-          Instruções Adicionais para IA
-        </label>
-        <textarea
-          id="additionalPrompt"
-          value={additionalPrompt}
-          onChange={(e) => setAdditionalPrompt(e.target.value)}
-          placeholder="Ex: Use cores quentes, foque em elementos de verão, tom mais descontraído..."
-          className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-slate-900 placeholder:text-slate-400"
-          rows={3}
-          disabled={isGenerating}
-        />
-        <p className="text-xs text-slate-500 mt-1">
-          {campaign
-            ? 'Estas instruções complementam os prompts da campanha para esta publicação específica.'
-            : 'Forneça instruções específicas para a IA sobre estilo, tom ou elementos visuais desejados.'
+          {imageMode === 'ai'
+            ? 'A IA irá gerar automaticamente um texto curto para a imagem baseado neste contexto. Formato: 4:5 (Feed do Instagram)'
+            : 'Descreva o contexto da publicação. A IA irá gerar a descrição baseada neste texto.'
           }
         </p>
       </div>
+
+      {/* Additional Prompt (Optional) - Only show for AI mode */}
+      {
+        imageMode === 'ai' && (
+          <div>
+            <label htmlFor="additionalPrompt" className="block text-sm font-bold text-slate-700 mb-2">
+              Instruções Adicionais para IA
+            </label>
+            <textarea
+              id="additionalPrompt"
+              value={additionalPrompt}
+              onChange={(e) => setAdditionalPrompt(e.target.value)}
+              placeholder="Ex: Use cores quentes, foque em elementos de verão, tom mais descontraído..."
+              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-slate-900 placeholder:text-slate-400"
+              rows={3}
+              disabled={isGenerating}
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              {campaign
+                ? 'Estas instruções complementam os prompts da campanha para esta publicação específica.'
+                : 'Forneça instruções específicas para a IA sobre estilo, tom ou elementos visuais desejados.'
+              }
+            </p>
+          </div>
+        )
+      }
 
       {/* Action Buttons */}
       <div className="flex gap-3">
         <button
           type="submit"
           disabled={isGenerating || uploading || images.length === 0 || !context.trim()}
-          className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed font-bold flex items-center justify-center gap-2"
+          className={`flex-1 text-white px-6 py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed font-bold flex items-center justify-center gap-2 ${imageMode === 'static' ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
+            }`}
         >
           {isGenerating ? (
             <>
               <Loader2 className="animate-spin" size={20} />
-              Gerando...
+              {imageMode === 'ai' ? 'Gerando...' : 'Processando...'}
             </>
-          ) : (
+          ) : imageMode === 'ai' ? (
             <>
               <Sparkles size={20} />
               Gerar com IA
+            </>
+          ) : (
+            <>
+              <ImageIcon size={20} />
+              Criar Publicação
             </>
           )}
         </button>
@@ -225,6 +310,6 @@ export function SocialMediaForm({ onGenerate, isGenerating, campaign }: SocialMe
           Limpar
         </button>
       </div>
-    </form>
+    </form >
   );
 }

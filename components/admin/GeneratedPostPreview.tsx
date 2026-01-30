@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Copy, Download, Check, Save } from "lucide-react";
+import { Copy, Download, Check, Save, Send } from "lucide-react";
 import { useState } from "react";
 
 interface GeneratedPostPreviewProps {
@@ -9,11 +9,12 @@ interface GeneratedPostPreviewProps {
   overlayText: string;
   description: string;
   originalImages: string[];
-  campaign?: any;
+  campaign?: { _id: string; tone?: string; name?: string };
   context?: string;
+  isAdmin?: boolean;
 }
 
-export function GeneratedPostPreview({ generatedImage, overlayText, description, originalImages, campaign, context }: GeneratedPostPreviewProps) {
+export function GeneratedPostPreview({ generatedImage, overlayText, description, originalImages, campaign, context, isAdmin = false }: GeneratedPostPreviewProps) {
   const [copiedDescription, setCopiedDescription] = useState(false);
   const [editedDescription, setEditedDescription] = useState(description);
   const [isSaving, setIsSaving] = useState(false);
@@ -66,10 +67,18 @@ export function GeneratedPostPreview({ generatedImage, overlayText, description,
 
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-      alert(status === 'draft' ? 'Rascunho salvo com sucesso!' : 'Post publicado com sucesso!');
-    } catch (error: any) {
+
+      if (status === 'draft') {
+        alert('Rascunho salvo com sucesso!');
+      } else if (isAdmin) {
+        alert('Post publicado com sucesso!');
+      } else {
+        alert('Post enviado para aprovação!');
+      }
+    } catch (error: unknown) {
       console.error('Erro ao salvar post:', error);
-      alert(error.message || 'Erro ao salvar post');
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao salvar post';
+      alert(errorMessage);
     } finally {
       setIsSaving(false);
     }
@@ -167,7 +176,7 @@ export function GeneratedPostPreview({ generatedImage, overlayText, description,
               )}
             </button>
 
-            {/* Publish Button */}
+            {/* Publish/Submit Button */}
             <button
               onClick={handlePublish}
               disabled={isSaving || saved}
@@ -176,17 +185,17 @@ export function GeneratedPostPreview({ generatedImage, overlayText, description,
               {isSaving ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Publicando...
+                  {isAdmin ? 'Publicando...' : 'Enviando...'}
                 </>
               ) : saved ? (
                 <>
                   <Check size={18} />
-                  Publicado!
+                  {isAdmin ? 'Publicado!' : 'Enviado!'}
                 </>
               ) : (
                 <>
-                  <Check size={18} />
-                  Publicar
+                  {isAdmin ? <Check size={18} /> : <Send size={18} />}
+                  {isAdmin ? 'Publicar' : 'Enviar para Aprovação'}
                 </>
               )}
             </button>

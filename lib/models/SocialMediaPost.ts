@@ -11,7 +11,10 @@ export interface ISocialMediaPost extends Document {
   description: string;
   originalImages?: string[];
   aspectRatio: string;
-  status: 'draft' | 'published';
+  status: 'draft' | 'pending' | 'published' | 're-evaluation' | 'rejected';
+  approvedBy?: mongoose.Types.ObjectId;
+  rejectionReason?: string;
+  submittedAt?: Date | null;
   publishedAt?: Date | null;
   deletedAt?: Date | null;
   createdAt: Date;
@@ -48,7 +51,8 @@ const SocialMediaPostSchema: Schema = new Schema(
     },
     overlayText: {
       type: String,
-      required: [true, "O texto sobreposto é obrigatório"],
+      required: false,
+      default: '',
       trim: true
     },
     description: {
@@ -66,9 +70,22 @@ const SocialMediaPostSchema: Schema = new Schema(
     },
     status: {
       type: String,
-      enum: ['draft', 'published'],
+      enum: ['draft', 'pending', 'published', 're-evaluation', 'rejected'],
       default: 'draft',
       index: true
+    },
+    approvedBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      default: null
+    },
+    rejectionReason: {
+      type: String,
+      default: ''
+    },
+    submittedAt: {
+      type: Date,
+      default: null
     },
     publishedAt: {
       type: Date,

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import Campaign from "@/lib/models/Campaign";
 import SocialMediaPost from "@/lib/models/SocialMediaPost";
+import User from "@/lib/models/User";
 import { getAuthenticatedUser } from "@/lib/auth-server";
 import mongoose from "mongoose";
 
@@ -27,7 +28,7 @@ export async function GET(
       );
     }
 
-    // Verify campaign exists and user owns it
+    // Verify campaign exists (any authenticated user can access)
     const campaign = await Campaign.findOne({
       _id: id,
       deletedAt: null
@@ -37,13 +38,6 @@ export async function GET(
       return NextResponse.json(
         { error: "Campanha não encontrada." },
         { status: 404 }
-      );
-    }
-
-    if (campaign.authorId.toString() !== user._id.toString()) {
-      return NextResponse.json(
-        { error: "Você não tem permissão para acessar esta campanha." },
-        { status: 403 }
       );
     }
 
@@ -64,9 +58,28 @@ export async function GET(
       .sort({ createdAt: -1 })
       .lean();
 
+    // Enrich posts with author information
+    const enrichedPosts = await Promise.all(
+      posts.map(async (post) => {
+        const author = await User.findById(post.authorId)
+          .select('name email photoUrl')
+          .lean();
+
+        return {
+          ...post,
+          author: author ? {
+            _id: author._id,
+            name: author.name,
+            email: author.email,
+            photoUrl: author.photoUrl
+          } : null
+        };
+      })
+    );
+
     return NextResponse.json({
       success: true,
-      posts
+      posts: enrichedPosts
     });
 
   } catch (error: any) {
@@ -100,7 +113,7 @@ export async function POST(
       );
     }
 
-    // Verify campaign exists and user owns it
+    // Verify campaign exists (any authenticated user can add posts - will require approval)
     const campaign = await Campaign.findOne({
       _id: id,
       deletedAt: null
@@ -110,13 +123,6 @@ export async function POST(
       return NextResponse.json(
         { error: "Campanha não encontrada." },
         { status: 404 }
-      );
-    }
-
-    if (campaign.authorId.toString() !== user._id.toString()) {
-      return NextResponse.json(
-        { error: "Você não tem permissão para adicionar publicações a esta campanha." },
-        { status: 403 }
       );
     }
 
@@ -146,18 +152,28 @@ export async function POST(
       );
     }
 
-    if (!overlayText || !overlayText.trim()) {
-      return NextResponse.json(
-        { error: "O texto sobreposto é obrigatório." },
-        { status: 400 }
-      );
-    }
-
     if (!description || !description.trim()) {
       return NextResponse.json(
         { error: "A descrição é obrigatória." },
         { status: 400 }
       );
+    }
+
+    // Determine final status based on user role
+    let finalStatus: 'draft' | 'pending' | 'published' = 'draft';
+    let publishedAt: Date | null = null;
+    let submittedAt: Date | null = null;
+
+    if (status === 'published') {
+      if (user.role === 'admin') {
+        // Admins can publish directly
+        finalStatus = 'published';
+        publishedAt = new Date();
+      } else {
+        // Non-admins submit for approval
+        finalStatus = 'pending';
+        submittedAt = new Date();
+      }
     }
 
     const post = await SocialMediaPost.create({
@@ -170,8 +186,9 @@ export async function POST(
       description: description.trim(),
       originalImages: originalImages || [],
       aspectRatio: '4:5',
-      status: status === 'published' ? 'published' : 'draft',
-      publishedAt: status === 'published' ? new Date() : null
+      status: finalStatus,
+      submittedAt,
+      publishedAt
     });
 
     return NextResponse.json({

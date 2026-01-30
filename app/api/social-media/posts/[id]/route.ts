@@ -61,7 +61,7 @@ export async function GET(
   }
 }
 
-// PATCH - Update post
+// PATCH - Update post (includes approval/rejection workflow)
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -95,8 +95,11 @@ export async function PATCH(
       );
     }
 
-    // Check authorization
-    if (post.authorId.toString() !== user._id.toString()) {
+    const isAdmin = user.role === 'admin';
+    const isAuthor = post.authorId.toString() === user._id.toString();
+
+    // Check authorization - admins can update any post, authors can update their own
+    if (!isAdmin && !isAuthor) {
       return NextResponse.json(
         { error: "Você não tem permissão para editar esta publicação." },
         { status: 403 }
@@ -104,9 +107,9 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { description, status } = body;
+    const { description, status, rejectionReason } = body;
 
-    // Only allow updating description and status
+    // Update description if provided
     if (description !== undefined) {
       if (!description.trim()) {
         return NextResponse.json(
@@ -117,20 +120,71 @@ export async function PATCH(
       post.description = description.trim();
     }
 
+    // Handle status changes
     if (status !== undefined) {
-      if (status !== 'draft' && status !== 'published') {
+      const validStatuses = ['draft', 'pending', 'published', 're-evaluation', 'rejected'];
+      if (!validStatuses.includes(status)) {
         return NextResponse.json(
-          { error: "Status inválido. Use 'draft' ou 'published'." },
+          { error: "Status inválido." },
           { status: 400 }
         );
       }
 
-      // If changing to published and not already published, set publishedAt
-      if (status === 'published' && post.status !== 'published') {
-        post.publishedAt = new Date();
+      // --- ADMIN ACTIONS ---
+      if (isAdmin) {
+        // Admin approving a pending post
+        if (status === 'published' && post.status === 'pending') {
+          post.status = 'published';
+          post.publishedAt = new Date();
+          post.approvedBy = user._id;
+          post.rejectionReason = '';
+        }
+        // Admin rejecting a post
+        else if (status === 'rejected') {
+          if (!rejectionReason || !rejectionReason.trim()) {
+            return NextResponse.json(
+              { error: "O motivo da rejeição é obrigatório." },
+              { status: 400 }
+            );
+          }
+          post.status = 'rejected';
+          post.rejectionReason = rejectionReason.trim();
+          post.approvedBy = undefined;
+        }
+        // Admin can set any status directly
+        else {
+          post.status = status;
+          if (status === 'published' && !post.publishedAt) {
+            post.publishedAt = new Date();
+            post.approvedBy = user._id;
+          }
+        }
       }
-
-      post.status = status;
+      // --- AUTHOR ACTIONS ---
+      else if (isAuthor) {
+        // Author resubmitting after rejection
+        if (status === 'pending' && (post.status === 'rejected' || post.status === 're-evaluation' || post.status === 'draft')) {
+          post.status = 'pending';
+          post.submittedAt = new Date();
+          post.rejectionReason = '';
+        }
+        // Author trying to publish directly - redirect to pending
+        else if (status === 'published') {
+          post.status = 'pending';
+          post.submittedAt = new Date();
+        }
+        // Author can save as draft
+        else if (status === 'draft') {
+          post.status = 'draft';
+        }
+        // Author cannot set other statuses
+        else {
+          return NextResponse.json(
+            { error: "Você não tem permissão para definir este status." },
+            { status: 403 }
+          );
+        }
+      }
     }
 
     await post.save();
@@ -140,7 +194,7 @@ export async function PATCH(
       post: post.toObject()
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error updating post:", error);
     return NextResponse.json(
       { error: "Erro ao atualizar publicação." },

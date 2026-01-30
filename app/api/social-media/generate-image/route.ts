@@ -146,7 +146,6 @@ export async function POST(request: Request) {
 
       // Check if it's already base64 or a URL
       if (img.startsWith('data:')) {
-        // Already base64
         base64Data = img.replace(/^data:image\/\w+;base64,/, "");
         const mimeMatch = img.match(/^data:(image\/\w+);base64,/);
         mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";

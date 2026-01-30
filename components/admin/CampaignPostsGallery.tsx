@@ -1,7 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Calendar, MessageSquare, Sparkles, ArrowLeft } from "lucide-react";
+import { X, Calendar, MessageSquare, ArrowLeft, Clock, Check, AlertCircle, Send, RefreshCw, User } from "lucide-react";
+
+interface Author {
+  _id: string;
+  name: string;
+  email: string;
+  photoUrl?: string;
+}
 
 interface Post {
   _id: string;
@@ -11,6 +18,9 @@ interface Post {
   context: string;
   postType?: string;
   originalImages?: string[];
+  status: 'draft' | 'pending' | 'published' | 're-evaluation' | 'rejected';
+  rejectionReason?: string;
+  author?: Author | null;
   createdAt: string;
 }
 
@@ -72,6 +82,50 @@ export function CampaignPostsGallery({ campaignId, campaignName, onClose }: Camp
     return type ? types[type] || type : 'Não especificado';
   };
 
+  const getStatusBadge = (status: Post['status']) => {
+    const statusConfig = {
+      draft: { label: 'Rascunho', color: 'bg-slate-500', icon: null },
+      pending: { label: 'Pendente', color: 'bg-yellow-500', icon: Clock },
+      published: { label: 'Publicado', color: 'bg-green-500', icon: Check },
+      're-evaluation': { label: 'Em Revisão', color: 'bg-orange-500', icon: RefreshCw },
+      rejected: { label: 'Rejeitado', color: 'bg-red-500', icon: AlertCircle }
+    };
+    const config = statusConfig[status] || statusConfig.draft;
+    const IconComponent = config.icon;
+    return (
+      <span className={`${config.color} text-white text-xs px-2 py-1 rounded-full flex items-center gap-1`}>
+        {IconComponent && <IconComponent size={12} />}
+        {config.label}
+      </span>
+    );
+  };
+
+  const handleResubmit = async (postId: string) => {
+    try {
+      const response = await fetch(`/api/social-media/posts/${postId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'pending' })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Erro ao reenviar post');
+      }
+
+      // Update local state
+      setPosts(posts.map(p =>
+        p._id === postId ? { ...p, status: 'pending', rejectionReason: '' } : p
+      ));
+      setSelectedPost(null);
+      alert('Post reenviado para aprovação!');
+    } catch (error) {
+      console.error('Erro ao reenviar:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao reenviar post';
+      alert(errorMessage);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
@@ -131,6 +185,10 @@ export function CampaignPostsGallery({ campaignId, campaignName, onClose }: Camp
                     alt={post.overlayText}
                     className="w-full h-full object-cover"
                   />
+                  {/* Status Badge */}
+                  <div className="absolute top-2 right-2">
+                    {getStatusBadge(post.status)}
+                  </div>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
                     <div className="absolute bottom-0 left-0 right-0 p-3">
                       <p className="text-white text-sm font-medium line-clamp-2">
@@ -202,7 +260,7 @@ export function CampaignPostsGallery({ campaignId, campaignName, onClose }: Camp
               </div>
 
               {/* Metadata Grid */}
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-200">
+              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-slate-200">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 mb-1">
                     Cunho/Tom
@@ -218,6 +276,27 @@ export function CampaignPostsGallery({ campaignId, campaignName, onClose }: Camp
                   <div className="flex items-center gap-1 text-slate-900 text-sm">
                     <Calendar size={14} />
                     {formatDate(selectedPost.createdAt)}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1">
+                    Publicado por
+                  </label>
+                  <div className="flex items-center gap-2">
+                    {selectedPost.author?.photoUrl ? (
+                      <img
+                        src={selectedPost.author.photoUrl}
+                        alt={selectedPost.author.name}
+                        className="w-6 h-6 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-6 h-6 bg-slate-200 rounded-full flex items-center justify-center">
+                        <User size={14} className="text-slate-500" />
+                      </div>
+                    )}
+                    <p className="text-slate-900 text-sm truncate">
+                      {selectedPost.author?.name || 'Desconhecido'}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -240,6 +319,42 @@ export function CampaignPostsGallery({ campaignId, campaignName, onClose }: Camp
                   </div>
                 </div>
               )}
+
+              {/* Status Section */}
+              <div className="pt-4 border-t border-slate-200">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 mb-1">
+                      Status
+                    </label>
+                    {getStatusBadge(selectedPost.status)}
+                  </div>
+                </div>
+
+                {/* Rejection Reason */}
+                {selectedPost.status === 'rejected' && selectedPost.rejectionReason && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle size={18} className="text-red-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-bold text-red-700 mb-1">Motivo da Rejeição</p>
+                        <p className="text-sm text-red-600">{selectedPost.rejectionReason}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Resubmit Button */}
+                {(selectedPost.status === 'rejected' || selectedPost.status === 're-evaluation') && (
+                  <button
+                    onClick={() => handleResubmit(selectedPost._id)}
+                    className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium flex items-center justify-center gap-2"
+                  >
+                    <Send size={18} />
+                    Reenviar para Aprovação
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
