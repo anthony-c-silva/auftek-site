@@ -33,6 +33,8 @@ interface PendingPost {
   generatedImage: string;
   overlayText: string;
   description: string;
+  status: 'pending' | 're-evaluation';
+  rejectionReason?: string;
   submittedAt: string;
   createdAt: string;
   campaign: Campaign | null;
@@ -44,13 +46,16 @@ interface PostDetailModalProps {
   onClose: () => void;
   onApprove: (postId: string) => Promise<void>;
   onReject: (postId: string, reason: string) => Promise<void>;
+  onResubmit: (postId: string, description: string) => Promise<void>;
   isProcessing: boolean;
   isAdmin: boolean;
 }
 
-function PostDetailModal({ post, onClose, onApprove, onReject, isProcessing, isAdmin }: PostDetailModalProps) {
+function PostDetailModal({ post, onClose, onApprove, onReject, onResubmit, isProcessing, isAdmin }: PostDetailModalProps) {
   const [rejectionReason, setRejectionReason] = useState("");
   const [showRejectForm, setShowRejectForm] = useState(false);
+  const [isEditing, setIsEditing] = useState(post.status === 're-evaluation' && !isAdmin);
+  const [editedDescription, setEditedDescription] = useState(post.description);
 
   const handleReject = async () => {
     if (!rejectionReason.trim()) {
@@ -60,190 +65,255 @@ function PostDetailModal({ post, onClose, onApprove, onReject, isProcessing, isA
     await onReject(post._id, rejectionReason);
   };
 
+  const handleResubmit = async () => {
+    if (!editedDescription.trim()) {
+      alert("A descrição não pode estar vazia.");
+      return;
+    }
+    await onResubmit(post._id, editedDescription);
+  };
+
   return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-          {/* Header */}
-          <div className="border-b border-slate-200 p-4 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-slate-800">Revisar Publicação</h2>
-            <button
-                onClick={onClose}
-                className="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-100 rounded-full"
-            >
-              <X size={20} />
-            </button>
-          </div>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+        {/* Header */}
+        <div className="border-b border-slate-200 p-4 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-slate-800">Revisar Publicação</h2>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-600 p-2 hover:bg-slate-100 rounded-full"
+          >
+            <X size={20} />
+          </button>
+        </div>
 
-          {/* Content */}
-          <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Image */}
-              <div>
-                <img
-                    src={post.generatedImage}
-                    alt="Post preview"
-                    className="w-full rounded-lg border border-slate-200"
-                />
-              </div>
+        {/* Content */}
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)]">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Image */}
+            <div>
+              <img
+                src={post.generatedImage}
+                alt="Post preview"
+                className="w-full rounded-lg border border-slate-200"
+              />
+            </div>
 
-              {/* Details */}
-              <div className="space-y-4">
-                {/* Author & Campaign Info */}
-                <div className="bg-slate-50 rounded-lg p-4 space-y-3">
-                  <div className="flex items-center gap-3">
-                    <User size={18} className="text-slate-400" />
-                    <div>
-                      <p className="text-sm font-medium text-slate-700">{post.author?.name || 'Autor desconhecido'}</p>
-                      <p className="text-xs text-slate-500">{post.author?.email}</p>
-                    </div>
+            {/* Details */}
+            <div className="space-y-4">
+              {/* Author & Campaign Info */}
+              <div className="bg-slate-50 rounded-lg p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <User size={18} className="text-slate-400" />
+                  <div>
+                    <p className="text-sm font-medium text-slate-700">{post.author?.name || 'Autor desconhecido'}</p>
+                    <p className="text-xs text-slate-500">{post.author?.email}</p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <FolderOpen size={18} className="text-slate-400" />
-                    <div>
-                      <p className="text-sm font-medium text-slate-700">{post.campaign?.name || 'Campanha não encontrada'}</p>
-                      {post.campaign?.theme && (
-                          <p className="text-xs text-slate-500">{post.campaign.theme}</p>
-                      )}
-                    </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <FolderOpen size={18} className="text-slate-400" />
+                  <div>
+                    <p className="text-sm font-medium text-slate-700">{post.campaign?.name || 'Campanha não encontrada'}</p>
+                    {post.campaign?.theme && (
+                      <p className="text-xs text-slate-500">{post.campaign.theme}</p>
+                    )}
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Clock size={18} className="text-slate-400" />
-                    <p className="text-sm text-slate-600">
-                      Enviado em {new Date(post.submittedAt || post.createdAt).toLocaleDateString('pt-BR', {
+                </div>
+                <div className="flex items-center gap-3">
+                  <Clock size={18} className="text-slate-400" />
+                  <p className="text-sm text-slate-600">
+                    Enviado em {new Date(post.submittedAt || post.createdAt).toLocaleDateString('pt-BR', {
                       day: '2-digit',
                       month: 'long',
                       year: 'numeric',
                       hour: '2-digit',
                       minute: '2-digit'
                     })}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Context */}
-                <div>
-                  <h4 className="text-sm font-bold text-slate-700 mb-2">Contexto</h4>
-                  <p className="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg">{post.context}</p>
-                </div>
-
-                {/* Overlay Text */}
-                <div>
-                  <h4 className="text-sm font-bold text-slate-700 mb-2">Texto da Imagem</h4>
-                  <p className="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg">{post.overlayText}</p>
-                </div>
-
-                {/* Description */}
-                <div>
-                  <h4 className="text-sm font-bold text-slate-700 mb-2">Descrição</h4>
-                  <p className="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg whitespace-pre-wrap">{post.description}</p>
+                  </p>
                 </div>
               </div>
-            </div>
 
-            {/* Rejection Form */}
-            {showRejectForm && (
-                <div className="mt-6 bg-red-50 border border-red-200 rounded-lg p-4">
-                  <h4 className="text-sm font-bold text-red-700 mb-2 flex items-center gap-2">
-                    <AlertCircle size={18} />
-                    Motivo da Rejeição
-                  </h4>
+              {/* Context */}
+              <div>
+                <h4 className="text-sm font-bold text-slate-700 mb-2">Contexto</h4>
+                <p className="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg">{post.context}</p>
+              </div>
+
+              {/* Overlay Text */}
+              <div>
+                <h4 className="text-sm font-bold text-slate-700 mb-2">Texto da Imagem</h4>
+                <p className="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg">{post.overlayText}</p>
+              </div>
+
+              {/* Description - editable for author when in re-evaluation */}
+              <div>
+                <h4 className="text-sm font-bold text-slate-700 mb-2">
+                  Descrição {isEditing && <span className="text-blue-600 font-normal">(Editável)</span>}
+                </h4>
+                {isEditing ? (
                   <textarea
-                      value={rejectionReason}
-                      onChange={(e) => setRejectionReason(e.target.value)}
-                      placeholder="Descreva o motivo da rejeição para que o autor possa corrigir..."
-                      className="w-full text-sm text-slate-700 bg-white p-3 rounded border border-red-300 focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none min-h-[100px]"
+                    value={editedDescription}
+                    onChange={(e) => setEditedDescription(e.target.value)}
+                    className="w-full text-sm text-slate-700 bg-white p-3 rounded-lg border border-blue-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none min-h-[120px]"
+                    placeholder="Edite a descrição..."
                   />
-                </div>
-            )}
+                ) : (
+                  <p className="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg whitespace-pre-wrap">{post.description}</p>
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* Footer Actions */}
-          <div className="border-t border-slate-200 p-4 flex gap-3 justify-end bg-slate-50">
-            {isAdmin ? (
-                showRejectForm ? (
-                    <>
-                      <button
-                          onClick={() => setShowRejectForm(false)}
-                          disabled={isProcessing}
-                          className="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg transition font-medium"
-                      >
-                        Cancelar
-                      </button>
-                      <button
-                          onClick={handleReject}
-                          disabled={isProcessing || !rejectionReason.trim()}
-                          className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium flex items-center gap-2 disabled:opacity-50"
-                      >
-                        {isProcessing ? (
-                            <>
-                              <Loader2 size={18} className="animate-spin" />
-                              Rejeitando...
-                            </>
-                        ) : (
-                            <>
-                              <X size={18} />
-                              Confirmar Rejeição
-                            </>
-                        )}
-                      </button>
-                    </>
-                ) : (
-                    <>
-                      <button
-                          onClick={() => setShowRejectForm(true)}
-                          disabled={isProcessing}
-                          className="px-6 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition font-medium flex items-center gap-2"
-                      >
-                        <X size={18} />
-                        Rejeitar
-                      </button>
-                      <button
-                          onClick={() => onApprove(post._id)}
-                          disabled={isProcessing}
-                          className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium flex items-center gap-2 disabled:opacity-50"
-                      >
-                        {isProcessing ? (
-                            <>
-                              <Loader2 size={18} className="animate-spin" />
-                              Aprovando...
-                            </>
-                        ) : (
-                            <>
-                              <Check size={18} />
-                              Aprovar e Publicar
-                            </>
-                        )}
-                      </button>
-                    </>
-                )
-            ) : (
+          {/* Previous Rejection Reason - shown when post is in re-evaluation */}
+          {post.status === 're-evaluation' && post.rejectionReason && (
+            <div className="mt-6 bg-orange-50 border border-orange-200 rounded-lg p-4">
+              <h4 className="text-sm font-bold text-orange-700 mb-2 flex items-center gap-2">
+                <RefreshCw size={18} />
+                Post em Reavaliação - Motivo da Rejeição Anterior
+              </h4>
+              <p className="text-sm text-orange-600">{post.rejectionReason}</p>
+            </div>
+          )}
+
+          {/* Rejection Form */}
+          {showRejectForm && (
+            <div className="mt-6 bg-red-50 border border-red-200 rounded-lg p-4">
+              <h4 className="text-sm font-bold text-red-700 mb-2 flex items-center gap-2">
+                <AlertCircle size={18} />
+                Motivo da Rejeição
+              </h4>
+              <textarea
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                placeholder="Descreva o motivo da rejeição para que o autor possa corrigir..."
+                className="w-full text-sm text-slate-700 bg-white p-3 rounded border border-red-300 focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none min-h-[100px]"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Footer Actions */}
+        <div className="border-t border-slate-200 p-4 flex gap-3 justify-end bg-slate-50">
+          {isAdmin ? (
+            showRejectForm ? (
+              <>
                 <button
-                    onClick={onClose}
-                    className="px-6 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition font-medium"
+                  onClick={() => setShowRejectForm(false)}
+                  disabled={isProcessing}
+                  className="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg transition font-medium"
                 >
-                  Fechar
+                  Cancelar
                 </button>
-            )}
-          </div>
+                <button
+                  onClick={handleReject}
+                  disabled={isProcessing || !rejectionReason.trim()}
+                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium flex items-center gap-2 disabled:opacity-50"
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      Rejeitando...
+                    </>
+                  ) : (
+                    <>
+                      <X size={18} />
+                      Confirmar Rejeição
+                    </>
+                  )}
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => setShowRejectForm(true)}
+                  disabled={isProcessing}
+                  className="px-6 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition font-medium flex items-center gap-2"
+                >
+                  <X size={18} />
+                  Rejeitar
+                </button>
+                <button
+                  onClick={() => onApprove(post._id)}
+                  disabled={isProcessing}
+                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium flex items-center gap-2 disabled:opacity-50"
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      Aprovando...
+                    </>
+                  ) : (
+                    <>
+                      <Check size={18} />
+                      Aprovar e Publicar
+                    </>
+                  )}
+                </button>
+              </>
+            )
+          ) : (
+            // Non-admin view - show edit/resubmit for re-evaluation, or just close
+            post.status === 're-evaluation' ? (
+              <>
+                <button
+                  onClick={onClose}
+                  disabled={isProcessing}
+                  className="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg transition font-medium"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleResubmit}
+                  disabled={isProcessing || !editedDescription.trim()}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium flex items-center gap-2 disabled:opacity-50"
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      Reenviando...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw size={18} />
+                      Reenviar para Aprovação
+                    </>
+                  )}
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={onClose}
+                className="px-6 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition font-medium"
+              >
+                Fechar
+              </button>
+            )
+          )}
         </div>
       </div>
-  );
+    </div>
+  )
 }
 
-export function PendingPostsReview() {
+interface PendingPostsReviewProps {
+  onEditPost?: (post: PendingPost) => void;
+}
+
+export function PendingPostsReview({ onEditPost }: PendingPostsReviewProps) {
   const { user } = useAuth();
   const [posts, setPosts] = useState<PendingPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedPost, setSelectedPost] = useState<PendingPost | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const isAdmin = user?.role === 'admin';
 
   const fetchPendingPosts = async () => {
     setIsLoading(true);
     try {
       // For admins, get all pending posts; for non-admins, get only their own
       const url = user?.role === 'admin'
-          ? '/api/social-media/pending'
-          : '/api/social-media/pending?mine=true';
+        ? '/api/social-media/pending'
+        : '/api/social-media/pending?mine=true';
 
       const response = await fetch(url);
       if (!response.ok) {
@@ -319,122 +389,161 @@ export function PendingPostsReview() {
     }
   };
 
+  // Handler for author resubmitting after editing
+  const handleResubmit = async (postId: string, newDescription: string) => {
+    setIsProcessing(true);
+    try {
+      const response = await fetch(`/api/social-media/posts/${postId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          description: newDescription,
+          status: 'pending'
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Erro ao reenviar post');
+      }
+
+      // Remove from list and close modal
+      setPosts(posts.filter(p => p._id !== postId));
+      setSelectedPost(null);
+      alert('Post reenviado para aprovação!');
+    } catch (error) {
+      console.error('Error resubmitting post:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao reenviar post';
+      alert(errorMessage);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   if (isLoading) {
     return (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 size={32} className="animate-spin text-blue-600" />
-        </div>
+      <div className="flex items-center justify-center py-12">
+        <Loader2 size={32} className="animate-spin text-blue-600" />
+      </div>
     );
   }
 
   if (posts.length === 0) {
     return (
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-12 text-center">
-          <Check size={48} className="text-green-500 mx-auto mb-4" />
-          <h3 className="text-lg font-bold text-slate-800 mb-2">Nenhum post pendente</h3>
-          <p className="text-slate-500 text-sm">
-            {user?.role === 'admin'
-                ? 'Todas as publicações foram revisadas. Volte mais tarde para verificar novas submissões.'
-                : 'Você não tem publicações pendentes de aprovação no momento.'
-            }
-          </p>
-          <button
-              onClick={fetchPendingPosts}
-              className="mt-4 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition flex items-center gap-2 mx-auto"
-          >
-            <RefreshCw size={18} />
-            Atualizar
-          </button>
-        </div>
+      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-12 text-center">
+        <Check size={48} className="text-green-500 mx-auto mb-4" />
+        <h3 className="text-lg font-bold text-slate-800 mb-2">Nenhum post pendente</h3>
+        <p className="text-slate-500 text-sm">
+          {user?.role === 'admin'
+            ? 'Todas as publicações foram revisadas. Volte mais tarde para verificar novas submissões.'
+            : 'Você não tem publicações pendentes de aprovação no momento.'
+          }
+        </p>
+        <button
+          onClick={fetchPendingPosts}
+          className="mt-4 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition flex items-center gap-2 mx-auto"
+        >
+          <RefreshCw size={18} />
+          Atualizar
+        </button>
+      </div>
     );
   }
 
   return (
-      <div>
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-xl font-bold text-slate-800">
-              {user?.role === 'admin' ? 'Posts Pendentes' : 'Minhas Publicações Pendentes'}
-            </h2>
-            <p className="text-sm text-slate-500">
-              {posts.length} publicação(ões) aguardando aprovação
-            </p>
-          </div>
-          <button
-              onClick={fetchPendingPosts}
-              className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition flex items-center gap-2"
-          >
-            <RefreshCw size={18} />
-            Atualizar
-          </button>
+    <div>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-xl font-bold text-slate-800">
+            {user?.role === 'admin' ? 'Posts Pendentes' : 'Minhas Publicações Pendentes'}
+          </h2>
+          <p className="text-sm text-slate-500">
+            {posts.length} publicação(ões) aguardando aprovação
+          </p>
         </div>
+        <button
+          onClick={fetchPendingPosts}
+          className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition flex items-center gap-2"
+        >
+          <RefreshCw size={18} />
+          Atualizar
+        </button>
+      </div>
 
-        {/* Posts Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {posts.map((post) => (
-              <div
-                  key={post._id}
-                  className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition"
-              >
-                {/* Thumbnail */}
-                <div className="aspect-square relative">
-                  <img
-                      src={post.generatedImage}
-                      alt="Post preview"
-                      className="w-full h-full object-cover"
-                  />
-                  <div className="absolute top-2 right-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
-                    <Clock size={12} />
-                    Pendente
-                  </div>
+      {/* Posts Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {posts.map((post) => (
+          <div
+            key={post._id}
+            className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition"
+          >
+            {/* Thumbnail */}
+            <div className="aspect-square relative">
+              <img
+                src={post.generatedImage}
+                alt="Post preview"
+                className="w-full h-full object-cover"
+              />
+              <div className={`absolute top-2 right-2 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1 ${post.status === 're-evaluation' ? 'bg-orange-500' : 'bg-yellow-500'}`}>
+                {post.status === 're-evaluation' ? <RefreshCw size={12} /> : <Clock size={12} />}
+                {post.status === 're-evaluation' ? 'Reavaliação' : 'Pendente'}
+              </div>
+            </div>
+
+            {/* Info */}
+            <div className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-6 h-6 bg-slate-200 rounded-full flex items-center justify-center">
+                  <User size={14} className="text-slate-500" />
                 </div>
-
-                {/* Info */}
-                <div className="p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-6 h-6 bg-slate-200 rounded-full flex items-center justify-center">
-                      <User size={14} className="text-slate-500" />
-                    </div>
-                    <span className="text-sm font-medium text-slate-700 truncate">
+                <span className="text-sm font-medium text-slate-700 truncate">
                   {post.author?.name || 'Autor'}
                 </span>
-                  </div>
+              </div>
 
-                  <p className="text-xs text-slate-500 mb-3 line-clamp-2">
-                    {post.context}
-                  </p>
+              <p className="text-xs text-slate-500 mb-3 line-clamp-2">
+                {post.context}
+              </p>
 
-                  <div className="flex items-center justify-between text-xs text-slate-400">
-                    <span>{post.campaign?.name || 'Sem campanha'}</span>
-                    <span>
+              <div className="flex items-center justify-between text-xs text-slate-400">
+                <span>{post.campaign?.name || 'Sem campanha'}</span>
+                <span>
                   {new Date(post.submittedAt || post.createdAt).toLocaleDateString('pt-BR')}
                 </span>
-                  </div>
-
-                  <button
-                      onClick={() => setSelectedPost(post)}
-                      className="w-full mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium flex items-center justify-center gap-2"
-                  >
-                    <Eye size={16} />
-                    Revisar
-                  </button>
-                </div>
               </div>
-          ))}
-        </div>
 
-        {/* Detail Modal */}
-        {selectedPost && (
-            <PostDetailModal
-                post={selectedPost}
-                onClose={() => setSelectedPost(null)}
-                onApprove={handleApprove}
-                onReject={handleReject}
-                isProcessing={isProcessing}
-                isAdmin={user?.role === 'admin'}
-            />
-        )}
+              <button
+                onClick={() => {
+                  // For non-admin with re-evaluation posts, go to full edit if onEditPost is provided
+                  if (!isAdmin && post.status === 're-evaluation' && onEditPost) {
+                    onEditPost(post);
+                  } else {
+                    setSelectedPost(post);
+                  }
+                }}
+                className="w-full mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium flex items-center justify-center gap-2"
+              >
+                <Eye size={16} />
+                {!isAdmin && post.status === 're-evaluation' && onEditPost ? 'Editar e Reenviar' : 'Revisar'}
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
+
+      {/* Detail Modal */}
+      {selectedPost && (
+        <PostDetailModal
+          post={selectedPost}
+          onClose={() => setSelectedPost(null)}
+          onApprove={handleApprove}
+          onReject={handleReject}
+          onResubmit={handleResubmit}
+          isProcessing={isProcessing}
+          isAdmin={user?.role === 'admin'}
+        />
+      )}
+    </div>
   );
 }

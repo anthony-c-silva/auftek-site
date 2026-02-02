@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Copy, Download, Check, Save, Send } from "lucide-react";
+import { Copy, Download, Check, Save, Send, AlertCircle } from "lucide-react";
 import { useState } from "react";
 
 interface GeneratedPostPreviewProps {
@@ -12,9 +12,13 @@ interface GeneratedPostPreviewProps {
   campaign?: { _id: string; tone?: string; name?: string };
   context?: string;
   isAdmin?: boolean;
+  // Edit mode props
+  editPostId?: string;
+  rejectionReason?: string;
+  onEditComplete?: () => void;
 }
 
-export function GeneratedPostPreview({ generatedImage, overlayText, description, originalImages, campaign, context, isAdmin = false }: GeneratedPostPreviewProps) {
+export function GeneratedPostPreview({ generatedImage, overlayText, description, originalImages, campaign, context, isAdmin = false, editPostId, rejectionReason, onEditComplete }: GeneratedPostPreviewProps) {
   const [copiedDescription, setCopiedDescription] = useState(false);
   const [editedDescription, setEditedDescription] = useState(description);
   const [isSaving, setIsSaving] = useState(false);
@@ -45,20 +49,39 @@ export function GeneratedPostPreview({ generatedImage, overlayText, description,
 
     setIsSaving(true);
     try {
-      const response = await fetch(`/api/campaigns/${campaign._id}/posts`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          context: context || 'Post gerado via IA',
-          postType: campaign.tone || 'professional',
-          generatedImage,
-          overlayText,
-          description: editedDescription,
-          originalImages,
-          aspectRatio: '4:5',
-          status: status,
-        }),
-      });
+      let response;
+
+      if (editPostId) {
+        // Edit mode - update existing post
+        response = await fetch(`/api/social-media/posts/${editPostId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            generatedImage,
+            overlayText,
+            description: editedDescription,
+            originalImages,
+            context: context || 'Post gerado via IA',
+            status: 'pending', // Always go to pending when resubmitting
+          }),
+        });
+      } else {
+        // Create mode - create new post
+        response = await fetch(`/api/campaigns/${campaign._id}/posts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            context: context || 'Post gerado via IA',
+            postType: campaign.tone || 'professional',
+            generatedImage,
+            overlayText,
+            description: editedDescription,
+            originalImages,
+            aspectRatio: '4:5',
+            status: status,
+          }),
+        });
+      }
 
       if (!response.ok) {
         const error = await response.json();
@@ -68,7 +91,10 @@ export function GeneratedPostPreview({ generatedImage, overlayText, description,
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
 
-      if (status === 'draft') {
+      if (editPostId) {
+        alert('Post reenviado para aprovação!');
+        onEditComplete?.();
+      } else if (status === 'draft') {
         alert('Rascunho salvo com sucesso!');
       } else if (isAdmin) {
         alert('Post publicado com sucesso!');
@@ -90,10 +116,23 @@ export function GeneratedPostPreview({ generatedImage, overlayText, description,
 
   return (
     <div className="space-y-6">
+      {/* Rejection Reason Banner - shown in edit mode */}
+      {editPostId && rejectionReason && (
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <AlertCircle size={20} className="text-orange-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <h4 className="text-sm font-bold text-orange-700 mb-1">Motivo da Rejeição Anterior</h4>
+              <p className="text-sm text-orange-600">{rejectionReason}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
         <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-          <span className="bg-blue-600 text-white px-2 py-1 rounded text-sm">IA</span>
-          Resultados Gerados
+          <span className="bg-blue-600 text-white px-2 py-1 rounded text-sm">{editPostId ? 'Editar' : 'IA'}</span>
+          {editPostId ? 'Editar Publicação' : 'Resultados Gerados'}
         </h3>
 
         {/* Generated Image */}

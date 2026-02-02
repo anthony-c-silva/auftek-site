@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import SocialMediaPost from "@/lib/models/SocialMediaPost";
-import Campaign from "@/lib/models/Campaign";
 import { getAuthenticatedUser } from "@/lib/auth-server";
 import mongoose from "mongoose";
 
@@ -61,7 +60,6 @@ export async function GET(
   }
 }
 
-// PATCH - Update post (includes approval/rejection workflow)
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -98,7 +96,6 @@ export async function PATCH(
     const isAdmin = user.role === 'admin';
     const isAuthor = post.authorId.toString() === user._id.toString();
 
-    // Check authorization - admins can update any post, authors can update their own
     if (!isAdmin && !isAuthor) {
       return NextResponse.json(
         { error: "Você não tem permissão para editar esta publicação." },
@@ -107,7 +104,20 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { description, status, rejectionReason } = body;
+    const { description, status, rejectionReason, generatedImage, overlayText, originalImages, context } = body;
+
+    if (generatedImage !== undefined) {
+      post.generatedImage = generatedImage;
+    }
+    if (overlayText !== undefined) {
+      post.overlayText = overlayText;
+    }
+    if (originalImages !== undefined) {
+      post.originalImages = originalImages;
+    }
+    if (context !== undefined) {
+      post.context = context;
+    }
 
     // Update description if provided
     if (description !== undefined) {
@@ -130,16 +140,13 @@ export async function PATCH(
         );
       }
 
-      // --- ADMIN ACTIONS ---
       if (isAdmin) {
-        // Admin approving a pending post
         if (status === 'published' && post.status === 'pending') {
           post.status = 'published';
           post.publishedAt = new Date();
           post.approvedBy = user._id;
           post.rejectionReason = '';
         }
-        // Admin rejecting a post
         else if (status === 'rejected') {
           if (!rejectionReason || !rejectionReason.trim()) {
             return NextResponse.json(
@@ -147,11 +154,10 @@ export async function PATCH(
               { status: 400 }
             );
           }
-          post.status = 'rejected';
+          post.status = 're-evaluation';
           post.rejectionReason = rejectionReason.trim();
           post.approvedBy = undefined;
         }
-        // Admin can set any status directly
         else {
           post.status = status;
           if (status === 'published' && !post.publishedAt) {
@@ -160,24 +166,19 @@ export async function PATCH(
           }
         }
       }
-      // --- AUTHOR ACTIONS ---
       else if (isAuthor) {
-        // Author resubmitting after rejection
         if (status === 'pending' && (post.status === 'rejected' || post.status === 're-evaluation' || post.status === 'draft')) {
           post.status = 'pending';
           post.submittedAt = new Date();
           post.rejectionReason = '';
         }
-        // Author trying to publish directly - redirect to pending
         else if (status === 'published') {
           post.status = 'pending';
           post.submittedAt = new Date();
         }
-        // Author can save as draft
         else if (status === 'draft') {
           post.status = 'draft';
         }
-        // Author cannot set other statuses
         else {
           return NextResponse.json(
             { error: "Você não tem permissão para definir este status." },
@@ -203,7 +204,6 @@ export async function PATCH(
   }
 }
 
-// DELETE - Soft delete post
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -237,7 +237,6 @@ export async function DELETE(
       );
     }
 
-    // Check authorization
     if (post.authorId.toString() !== user._id.toString()) {
       return NextResponse.json(
         { error: "Você não tem permissão para excluir esta publicação." },
@@ -245,7 +244,6 @@ export async function DELETE(
       );
     }
 
-    // Soft delete the post
     post.deletedAt = new Date();
     await post.save();
 

@@ -5,7 +5,6 @@ import Campaign from "@/lib/models/Campaign";
 import User from "@/lib/models/User";
 import { getAuthenticatedUser } from "@/lib/auth-server";
 
-// GET - List pending posts (admin sees all, non-admin sees their own with ?mine=true)
 export async function GET(request: Request) {
   try {
     const user = await getAuthenticatedUser();
@@ -16,7 +15,6 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const mineOnly = searchParams.get('mine') === 'true';
 
-    // Non-admins can only access with mine=true (their own posts)
     if (user.role !== 'admin' && !mineOnly) {
       return NextResponse.json(
         { error: "Apenas administradores podem acessar todas as publicações pendentes." },
@@ -26,9 +24,9 @@ export async function GET(request: Request) {
 
     await connectDB();
 
-    // Build query - filter by author if not admin or if mine=true
+
     const query: Record<string, unknown> = {
-      status: 'pending',
+      status: { $in: ['pending', 're-evaluation'] },
       deletedAt: null
     };
 
@@ -36,12 +34,10 @@ export async function GET(request: Request) {
       query.authorId = user._id;
     }
 
-    // Get pending posts with campaign and author info
     const posts = await SocialMediaPost.find(query)
       .sort({ submittedAt: -1, createdAt: -1 })
       .lean();
 
-    // Enrich posts with campaign and author information
     const enrichedPosts = await Promise.all(
       posts.map(async (post) => {
         const campaign = await Campaign.findById(post.campaignId).lean();
