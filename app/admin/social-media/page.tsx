@@ -132,8 +132,8 @@ export default function SocialMediaPage() {
       const descriptionResult = await descriptionResponse.json();
 
       setGeneratedContent({
-        generatedImage: data.image, // Use the original image directly
-        overlayText: "", // No overlay text for static images
+        generatedImage: data.image,
+        overlayText: "",
         description: descriptionResult.description,
         originalImages: [data.image],
         context: data.context,

@@ -177,7 +177,7 @@ export async function POST(request: Request) {
         
         REQUISITOS OBRIGATÓRIOS:
         1. Mescle todas as imagens fornecidas em uma composição única e atraente
-        2. Adicione o texto "${overlayText}" de forma DESTACADA e LEGÍVEL sobre a imagem, palavras não podem quebrar linhas
+        2. Adicione o texto "${overlayText}" de forma DESTACADA e LEGÍVEL NO CENTRO DA IMAGEM, palavras não podem quebrar linhas
         3. Use tipografia moderna, profissional e em negrito
         4. O texto não deve ter cores que contrastem tanto com o fundo
         5. Layout otimizado para ${formatDescription} com proporção exata 4:5
