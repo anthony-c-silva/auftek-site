@@ -24,7 +24,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Contexto não fornecido." }, { status: 400 });
     }
 
-    // Fetch campaign context if campaignId is provided
     let campaignContext = "";
     let previousPostsContext = "";
     let campaign: any = null;
@@ -39,7 +38,6 @@ export async function POST(request: Request) {
         );
       }
 
-      // Fetch campaign
       campaign = await Campaign.findOne({
         _id: campaignId,
         deletedAt: null
@@ -52,7 +50,6 @@ export async function POST(request: Request) {
         );
       }
 
-      // Check authorization
       if (campaign.authorId.toString() !== user._id.toString()) {
         return NextResponse.json(
           { error: "Você não tem permissão para acessar esta campanha." },
@@ -60,7 +57,6 @@ export async function POST(request: Request) {
         );
       }
 
-      // Build campaign context
       if (campaign.theme) {
         campaignContext = `\n\nTEMA DA CAMPANHA:\n${campaign.theme}`;
       }
@@ -80,7 +76,6 @@ export async function POST(request: Request) {
         campaignContext += `\nTOM/CUNHO: ${toneDesc.toUpperCase()}`;
       }
 
-      // Fetch last 3 posts from this campaign for context continuity
       const previousPosts = await SocialMediaPost.find({
         campaignId: campaignId,
         deletedAt: null
@@ -91,7 +86,7 @@ export async function POST(request: Request) {
 
       if (previousPosts.length > 0) {
         const postSummaries = previousPosts
-          .reverse() // Show oldest to newest
+          .reverse()
           .map((post, index) => `${index + 1}. Texto: "${post.overlayText}" | Contexto: ${post.context}`)
           .join('\n');
 
@@ -99,9 +94,6 @@ export async function POST(request: Request) {
       }
     }
 
-    const aspectRatio = "4:5";
-
-    const textModel = genAI.getGenerativeModel({ model: "gemini-3-pro-image-preview" });
 
     const textPrompt = `
         Você é um especialista em marketing de redes sociais.
@@ -131,26 +123,21 @@ export async function POST(request: Request) {
         Retorne APENAS o texto, sem aspas ou explicações.
         `;
 
-    const textResult = await textModel.generateContent(textPrompt);
-    const textResponse = await textResult.response;
-    const overlayText = textResponse.text().trim().replace(/^["']|["']$/g, '');
-
-    const imageModel = genAI.getGenerativeModel({
-      model: "gemini-3-pro-image-preview"
+    const textResult = await genAI.models.generateContent({
+      model: "gemini-3-pro-image-preview",
+      contents: textPrompt,
     });
+    const overlayText = (textResult.text || "").trim().replace(/^["']|["']$/g, '');
 
-    // Process images - download URLs and convert to base64
     const imageParts = await Promise.all(images.map(async (img: string) => {
       let base64Data: string;
       let mimeType: string;
 
-      // Check if it's already base64 or a URL
       if (img.startsWith('data:')) {
         base64Data = img.replace(/^data:image\/\w+;base64,/, "");
         const mimeMatch = img.match(/^data:(image\/\w+);base64,/);
         mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
       } else {
-        // It's a URL - download and convert to base64
         const imageResponse = await fetch(img);
         if (!imageResponse.ok) {
           throw new Error(`Erro ao baixar imagem: ${img}`);
@@ -160,14 +147,13 @@ export async function POST(request: Request) {
         const buffer = Buffer.from(arrayBuffer);
         base64Data = buffer.toString('base64');
 
-        // Determine mime type from response or URL
         const contentType = imageResponse.headers.get('content-type');
         mimeType = contentType || 'image/png';
       }
 
       return {
-        inline_data: {
-          mime_type: mimeType,
+        inlineData: {
+          mimeType: mimeType,
           data: base64Data
         }
       };
@@ -191,9 +177,9 @@ export async function POST(request: Request) {
         
         REQUISITOS OBRIGATÓRIOS:
         1. Mescle todas as imagens fornecidas em uma composição única e atraente
-        2. Adicione o texto "${overlayText}" de forma DESTACADA e LEGÍVEL sobre a imagem
+        2. Adicione o texto "${overlayText}" de forma DESTACADA e LEGÍVEL sobre a imagem, palavras não podem quebrar linhas
         3. Use tipografia moderna, profissional e em negrito
-        4. O texto deve ter cores que contrastem bem com o fundo
+        4. O texto não deve ter cores que contrastem tanto com o fundo
         5. Layout otimizado para ${formatDescription} com proporção exata 4:5
         6. Design limpo, moderno e profissional
         7. O texto deve estar CLARAMENTE VISÍVEL e ser o elemento principal
@@ -202,32 +188,25 @@ export async function POST(request: Request) {
         ${campaign?.customPromptImage ? `\n        \n        INSTRUÇÕES ADICIONAIS DE DESIGN DO USUÁRIO:\n        ${campaign.customPromptImage}` : ''}
         `;
 
-    const parts = [
-      { text: imagePrompt },
-      ...imageParts
-    ];
-
-
-    const imageResult = await imageModel.generateContent({
-      contents: [{
-        role: "user",
-        parts: parts
-      }],
-      generationConfig: {
+    const imageResult = await genAI.models.generateContent({
+      model: "gemini-3-pro-image-preview",
+      contents: [
+        { text: imagePrompt },
+        ...imageParts
+      ],
+      config: {
         responseModalities: ["TEXT", "IMAGE"],
         imageConfig: {
-          aspectRatio: aspectRatio,
-          imageSize: "2K"  // Options: "1K", "2K", "4K"
+          aspectRatio: "4:5",
+          imageSize: "1K"
         }
       }
-    } as any);
-
-    const imageResponse = await imageResult.response;
+    });
 
     let generatedImageBase64 = "";
 
-    if (imageResponse.candidates && imageResponse.candidates.length > 0) {
-      for (const part of imageResponse.candidates[0].content.parts) {
+    if (imageResult.candidates && imageResult.candidates.length > 0) {
+      for (const part of imageResult.candidates[0].content?.parts || []) {
         if (part.inlineData) {
           generatedImageBase64 = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
           break;
@@ -239,17 +218,14 @@ export async function POST(request: Request) {
       throw new Error("Nenhuma imagem foi gerada pela IA");
     }
 
-    // Convert base64 to blob and upload to KingHost
     const base64Data = generatedImageBase64.split(',')[1];
     const mimeType = generatedImageBase64.match(/data:([^;]+);/)?.[1] || 'image/png';
     const buffer = Buffer.from(base64Data, 'base64');
 
-    // Create a File-like object for upload
     const blob = new Blob([buffer], { type: mimeType });
     const fileName = `social-media-${Date.now()}.png`;
     const file = new File([blob], fileName, { type: mimeType });
 
-    // Upload to KingHost
     const uploadUrl = process.env.KINGHOST_UPLOAD_URL;
     const apiSecret = process.env.KINGHOST_API_SECRET;
 
@@ -281,7 +257,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      generatedImage: uploadResult.url, // Return KingHost URL instead of base64
+      generatedImage: uploadResult.url,
       overlayText: overlayText,
       message: "Imagem gerada e enviada com sucesso!"
     });

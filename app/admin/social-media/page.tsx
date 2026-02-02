@@ -56,7 +56,6 @@ export default function SocialMediaPage() {
     setGeneratedContent(null);
 
     try {
-      // Generate merged image with text overlay using Gemini
       const imageResponse = await fetch("/api/social-media/generate-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -75,7 +74,6 @@ export default function SocialMediaPage() {
 
       const imageResult = await imageResponse.json();
 
-      // Generate description with OpenAI
       const descriptionResponse = await fetch("/api/social-media/generate-description", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

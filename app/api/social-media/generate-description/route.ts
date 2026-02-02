@@ -22,7 +22,6 @@ export async function POST(request: Request) {
 
     const contextInfo = context || "post profissional";
 
-    // Fetch campaign context if campaignId is provided
     let campaignContext = "";
     let previousPostsContext = "";
     let campaign: any = null;
@@ -37,16 +36,13 @@ export async function POST(request: Request) {
         );
       }
 
-      // Fetch campaign
       campaign = await Campaign.findOne({
         _id: campaignId,
         deletedAt: null
       }).lean();
 
       if (campaign) {
-        // Check authorization
         if (campaign.authorId.toString() === user._id.toString()) {
-          // Build campaign context
           if (campaign.theme) {
             campaignContext = `\n\nTEMA DA CAMPANHA: ${campaign.theme}`;
           }
@@ -66,7 +62,6 @@ export async function POST(request: Request) {
             campaignContext += `\nTOM/CUNHO: ${toneDesc.toUpperCase()}`;
           }
 
-          // Fetch last 3 posts from this campaign for context continuity
           const previousPosts = await SocialMediaPost.find({
             campaignId: campaignId,
             deletedAt: null

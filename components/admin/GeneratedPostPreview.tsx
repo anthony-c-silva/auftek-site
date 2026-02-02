@@ -12,7 +12,6 @@ interface GeneratedPostPreviewProps {
   campaign?: { _id: string; tone?: string; name?: string };
   context?: string;
   isAdmin?: boolean;
-  // Edit mode props
   editPostId?: string;
   rejectionReason?: string;
   onEditComplete?: () => void;
@@ -52,7 +51,6 @@ export function GeneratedPostPreview({ generatedImage, overlayText, description,
       let response;
 
       if (editPostId) {
-        // Edit mode - update existing post
         response = await fetch(`/api/social-media/posts/${editPostId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -62,11 +60,10 @@ export function GeneratedPostPreview({ generatedImage, overlayText, description,
             description: editedDescription,
             originalImages,
             context: context || 'Post gerado via IA',
-            status: 'pending', // Always go to pending when resubmitting
+            status: 'pending',
           }),
         });
       } else {
-        // Create mode - create new post
         response = await fetch(`/api/campaigns/${campaign._id}/posts`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -120,7 +117,7 @@ export function GeneratedPostPreview({ generatedImage, overlayText, description,
       {editPostId && rejectionReason && (
         <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
           <div className="flex items-start gap-3">
-            <AlertCircle size={20} className="text-orange-600 flex-shrink-0 mt-0.5" />
+            <AlertCircle size={20} className="text-orange-600 shrink-0 mt-0.5" />
             <div>
               <h4 className="text-sm font-bold text-orange-700 mb-1">Motivo da Rejeição Anterior</h4>
               <p className="text-sm text-orange-600">{rejectionReason}</p>
@@ -129,7 +126,7 @@ export function GeneratedPostPreview({ generatedImage, overlayText, description,
         </div>
       )}
 
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
+      <div className="bg-linear-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
         <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
           <span className="bg-blue-600 text-white px-2 py-1 rounded text-sm">{editPostId ? 'Editar' : 'IA'}</span>
           {editPostId ? 'Editar Publicação' : 'Resultados Gerados'}
