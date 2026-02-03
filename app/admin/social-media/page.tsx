@@ -258,6 +258,14 @@ export default function SocialMediaPage() {
                           setApprovalSubView('pending');
                         }}
                       />
+                    ) : isGenerating ? (
+                      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-12 text-center">
+                        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                        <p className="text-slate-600 font-medium mb-2">Gerando publicação...</p>
+                        <p className="text-slate-400 text-sm">
+                          A IA está criando a imagem e descrição
+                        </p>
+                      </div>
                     ) : (
                       <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-12 text-center">
                         <Share2 size={48} className="text-slate-300 mx-auto mb-4" />
