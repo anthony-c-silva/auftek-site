@@ -14,38 +14,22 @@ export async function GET(request: Request) {
     }
 
     const { searchParams } = new URL(request.url);
-    const mineOnly = searchParams.get('mine') === 'true';
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '20', 10)));
     const search = searchParams.get('search')?.trim() || '';
-
-    if (user.role !== 'admin' && !mineOnly) {
-      return NextResponse.json(
-        { error: "Apenas administradores podem acessar todas as publicações pendentes." },
-        { status: 403 }
-      );
-    }
 
     await connectDB();
 
     const skip = (page - 1) * limit;
 
-    // Build base match conditions
     const baseMatch: Record<string, unknown> = {
-      status: { $in: ['pending', 're-evaluation'] },
+      status: 'scheduled',
       deletedAt: null
     };
 
-    if (user.role !== 'admin' || mineOnly) {
-      baseMatch.authorId = new mongoose.Types.ObjectId(user._id);
-    }
-
-    // If search is provided, use aggregation pipeline
     if (search) {
       const pipeline: mongoose.PipelineStage[] = [
-        // Stage 1: Match pending posts
         { $match: baseMatch },
-        // Stage 2: Lookup author information
         {
           $lookup: {
             from: 'users',
@@ -58,7 +42,6 @@ export async function GET(request: Request) {
             ]
           }
         },
-        // Stage 3: Lookup campaign information
         {
           $lookup: {
             from: 'campaigns',
@@ -71,14 +54,12 @@ export async function GET(request: Request) {
             ]
           }
         },
-        // Stage 4: Unwind lookups
         {
           $addFields: {
             author: { $arrayElemAt: ['$authorData', 0] },
             campaign: { $arrayElemAt: ['$campaignData', 0] }
           }
         },
-        // Stage 5: Filter by search query (overlayText or author name)
         {
           $match: {
             $or: [
@@ -87,23 +68,15 @@ export async function GET(request: Request) {
             ]
           }
         },
-        // Stage 6: Remove temporary lookup arrays
-        {
-          $project: {
-            authorData: 0,
-            campaignData: 0
-          }
-        }
+        { $project: { authorData: 0, campaignData: 0 } }
       ];
 
-      // Get total count for pagination
       const countPipeline: mongoose.PipelineStage[] = [...pipeline, { $count: 'total' }];
       const countResult = await SocialMediaPost.aggregate(countPipeline);
       const total = countResult[0]?.total || 0;
 
-      // Add sorting and pagination
       pipeline.push(
-        { $sort: { submittedAt: -1, createdAt: -1 } },
+        { $sort: { scheduledAt: 1 } },
         { $skip: skip },
         { $limit: limit }
       );
@@ -124,17 +97,15 @@ export async function GET(request: Request) {
       });
     }
 
-    // Without search: Use simpler query with better performance
     const [posts, total] = await Promise.all([
       SocialMediaPost.find(baseMatch)
-        .sort({ submittedAt: -1, createdAt: -1 })
+        .sort({ scheduledAt: 1 })
         .skip(skip)
         .limit(limit)
         .lean(),
       SocialMediaPost.countDocuments(baseMatch)
     ]);
 
-    // Fetch related authors and campaigns
     const authorIds = [...new Set(posts.map(p => p.authorId.toString()))];
     const campaignIds = [...new Set(posts.map(p => p.campaignId.toString()))];
 
@@ -147,11 +118,9 @@ export async function GET(request: Request) {
         .lean()
     ]);
 
-    // Create lookup maps
     const authorMap = new Map(authors.map(a => [a._id.toString(), a]));
     const campaignMap = new Map(campaigns.map(c => [c._id.toString(), c]));
 
-    // Enrich posts with author and campaign data
     const enrichedPosts = posts.map(post => ({
       ...post,
       author: authorMap.get(post.authorId.toString()) || null,
@@ -172,9 +141,9 @@ export async function GET(request: Request) {
     });
 
   } catch (error: unknown) {
-    console.error("Error fetching pending posts:", error);
+    console.error("Error fetching scheduled posts:", error);
     return NextResponse.json(
-      { error: "Erro ao buscar publicações pendentes." },
+      { error: "Erro ao buscar publicações agendadas." },
       { status: 500 }
     );
   }

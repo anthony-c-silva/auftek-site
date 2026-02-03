@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   Clock,
   Check,
@@ -10,7 +10,10 @@ import {
   FolderOpen,
   Loader2,
   AlertCircle,
-  RefreshCw
+  RefreshCw,
+  Search,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -307,30 +310,78 @@ export function PendingPostsReview({ onEditPost }: PendingPostsReviewProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const isAdmin = user?.role === 'admin';
 
-  const fetchPendingPosts = async () => {
+  // Search and pagination state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalPosts, setTotalPosts] = useState(0);
+  const postsPerPage = 20;
+
+  // Debounce timer ref
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Debounce search input
+  useEffect(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setCurrentPage(1);
+    }, 300);
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [searchQuery]);
+
+  const fetchPendingPosts = useCallback(async (page: number, search: string) => {
     setIsLoading(true);
     try {
-      // For admins, get all pending posts; for non-admins, get only their own
-      const url = user?.role === 'admin'
-        ? '/api/social-media/pending'
-        : '/api/social-media/pending?mine=true';
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: postsPerPage.toString(),
+      });
 
-      const response = await fetch(url);
+      if (user?.role !== 'admin') {
+        params.set('mine', 'true');
+      }
+
+      if (search.trim()) {
+        params.set('search', search.trim());
+      }
+
+      const response = await fetch(`/api/social-media/pending?${params.toString()}`);
       if (!response.ok) {
         throw new Error('Erro ao buscar posts pendentes');
       }
       const data = await response.json();
       setPosts(data.posts || []);
+      setTotalPages(data.pagination?.totalPages || 1);
+      setTotalPosts(data.pagination?.total || 0);
     } catch (error) {
       console.error('Error fetching pending posts:', error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user?.role, postsPerPage]);
 
+  // Fetch posts when page or debounced search changes
   useEffect(() => {
-    fetchPendingPosts();
-  }, []);
+    if (user) {
+      fetchPendingPosts(currentPage, debouncedSearch);
+    }
+  }, [currentPage, debouncedSearch, fetchPendingPosts, user]);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   const handleApprove = async (postId: string) => {
     setIsProcessing(true);
@@ -428,7 +479,8 @@ export function PendingPostsReview({ onEditPost }: PendingPostsReviewProps) {
     );
   }
 
-  if (posts.length === 0) {
+  // Only show empty state when there are no posts AND no active search
+  if (posts.length === 0 && !debouncedSearch && totalPosts === 0) {
     return (
       <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-12 text-center">
         <Check size={48} className="text-green-500 mx-auto mb-4" />
@@ -440,7 +492,7 @@ export function PendingPostsReview({ onEditPost }: PendingPostsReviewProps) {
           }
         </p>
         <button
-          onClick={fetchPendingPosts}
+          onClick={() => fetchPendingPosts(currentPage, debouncedSearch)}
           className="mt-4 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition flex items-center gap-2 mx-auto"
         >
           <RefreshCw size={18} />
@@ -453,23 +505,59 @@ export function PendingPostsReview({ onEditPost }: PendingPostsReviewProps) {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h2 className="text-xl font-bold text-slate-800">
             {user?.role === 'admin' ? 'Posts Pendentes' : 'Minhas Publicações Pendentes'}
           </h2>
           <p className="text-sm text-slate-500">
-            {posts.length} publicação(ões) aguardando aprovação
+            {debouncedSearch
+              ? `${posts.length} de ${totalPosts} publicação(ões)`
+              : `${totalPosts} publicação(ões) aguardando aprovação`
+            }
           </p>
         </div>
         <button
-          onClick={fetchPendingPosts}
+          onClick={() => fetchPendingPosts(currentPage, debouncedSearch)}
           className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition flex items-center gap-2"
         >
           <RefreshCw size={18} />
           Atualizar
         </button>
       </div>
+
+      {/* Search Bar */}
+      <div className="mb-6">
+        <div className="relative">
+          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Buscar por autor ou título do post..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
+            >
+              <X size={16} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* No Results Message */}
+      {posts.length === 0 && debouncedSearch && !isLoading && (
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-8 text-center mb-6">
+          <Search size={32} className="text-slate-300 mx-auto mb-3" />
+          <p className="text-slate-600 font-medium">Nenhum resultado encontrado</p>
+          <p className="text-slate-400 text-sm mt-1">
+            Tente buscar por outro autor ou título
+          </p>
+        </div>
+      )}
 
       {/* Posts Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -531,6 +619,57 @@ export function PendingPostsReview({ onEditPost }: PendingPostsReviewProps) {
           </div>
         ))}
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="mt-8 flex items-center justify-center gap-2">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          >
+            <ChevronLeft size={18} />
+          </button>
+
+          {/* Page Numbers */}
+          <div className="flex items-center gap-1">
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(page => {
+                if (page === 1 || page === totalPages) return true;
+                if (Math.abs(page - currentPage) <= 1) return true;
+                return false;
+              })
+              .map((page, index, arr) => {
+                const showEllipsisBefore = index > 0 && page - arr[index - 1] > 1;
+                return (
+                  <React.Fragment key={page}>
+                    {showEllipsisBefore && (
+                      <span className="px-2 text-slate-400">...</span>
+                    )}
+                    <button
+                      onClick={() => handlePageChange(page)}
+                      className={`min-w-[36px] h-9 rounded-lg font-medium text-sm transition ${currentPage === page
+                          ? 'bg-blue-600 text-white'
+                          : 'text-slate-600 hover:bg-slate-100 border border-slate-200'
+                        }`}
+                    >
+                      {page}
+                    </button>
+                  </React.Fragment>
+                );
+              })
+            }
+          </div>
+
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
+      )}
 
       {/* Detail Modal */}
       {selectedPost && (
