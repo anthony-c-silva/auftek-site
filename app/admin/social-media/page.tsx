@@ -206,7 +206,7 @@ export default function SocialMediaPage() {
                   </h1>
                   <p className="text-slate-500 text-sm mt-1">
                     {editingPost
-                      ? 'Edite a publicação rejeitada. Você pode regenerar a imagem ou apenas modificar o conteúdo.'
+                      ? 'Edite a publicação rejeitada.'
                       : `Criando post para a campanha "${selectedCampaign.name}". A IA manterá consistência com posts anteriores.`
                     }
                   </p>
@@ -320,7 +320,7 @@ export default function SocialMediaPage() {
                   description: post.description,
                   context: post.context,
                   rejectionReason: post.rejectionReason,
-                  campaign: post.campaign,
+                  campaign: post.campaign ?? null,
                 });
                 if (post.campaign) {
                   setSelectedCampaign(post.campaign);

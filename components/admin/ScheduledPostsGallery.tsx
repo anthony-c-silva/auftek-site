@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Trash2
 } from "lucide-react";
+import { PostDetailModal, PostForModal } from "./PostDetailModal";
 
 interface Author {
   _id: string;
@@ -42,7 +43,7 @@ interface ScheduledPost {
 }
 
 export function ScheduledPostsGallery() {
-  const [posts, setPosts] = useState<ScheduledPost[]>([]);
+  const [posts, setPosts] = useState<PostForModal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -50,6 +51,7 @@ export function ScheduledPostsGallery() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalPosts, setTotalPosts] = useState(0);
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
+  const [selectedPost, setSelectedPost] = useState<PostForModal | null>(null);
   const postsPerPage = 20;
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -107,7 +109,10 @@ export function ScheduledPostsGallery() {
     }
   };
 
-  const handleDelete = async (post: ScheduledPost) => {
+  const handleDelete = async (postId: string) => {
+    const post = posts.find(p => p._id === postId);
+    if (!post || !post.scheduledAt) return;
+
     const scheduledDate = new Date(post.scheduledAt).toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
@@ -120,15 +125,16 @@ export function ScheduledPostsGallery() {
       return;
     }
 
-    setDeletingPostId(post._id);
+    setDeletingPostId(postId);
     try {
-      const response = await fetch(`/api/social-media/posts/${post._id}`, {
+      const response = await fetch(`/api/social-media/posts/${postId}`, {
         method: 'DELETE'
       });
 
       if (!response.ok) throw new Error('Erro ao excluir post');
 
-      setPosts(posts.filter(p => p._id !== post._id));
+      setPosts(posts.filter(p => p._id !== postId));
+      setSelectedPost(null);
       setTotalPosts(prev => prev - 1);
     } catch (error) {
       console.error('Error deleting post:', error);
@@ -245,11 +251,12 @@ export function ScheduledPostsGallery() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {posts.map((post) => {
-          const scheduled = formatScheduledDate(post.scheduledAt);
+          const scheduled = formatScheduledDate(post.scheduledAt || post.createdAt);
           return (
             <div
               key={post._id}
-              className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition group"
+              onClick={() => setSelectedPost(post)}
+              className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition group cursor-pointer"
             >
               <div className="aspect-square relative">
                 <img
@@ -262,7 +269,7 @@ export function ScheduledPostsGallery() {
                   {scheduled.countdown || 'Agendado'}
                 </div>
                 <button
-                  onClick={() => handleDelete(post)}
+                  onClick={(e) => { e.stopPropagation(); handleDelete(post._id); }}
                   disabled={deletingPostId === post._id}
                   className="absolute top-2 left-2 p-2 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition hover:bg-red-700 disabled:opacity-50"
                   title="Excluir post agendado"
@@ -334,8 +341,8 @@ export function ScheduledPostsGallery() {
                     <button
                       onClick={() => handlePageChange(page)}
                       className={`min-w-[36px] h-9 rounded-lg font-medium text-sm transition ${currentPage === page
-                          ? 'bg-blue-600 text-white'
-                          : 'text-slate-600 hover:bg-slate-100 border border-slate-200'
+                        ? 'bg-blue-600 text-white'
+                        : 'text-slate-600 hover:bg-slate-100 border border-slate-200'
                         }`}
                     >
                       {page}
@@ -354,6 +361,15 @@ export function ScheduledPostsGallery() {
             <ChevronRight size={18} />
           </button>
         </div>
+      )}
+
+      {/* Detail Modal */}
+      {selectedPost && (
+        <PostDetailModal
+          post={selectedPost}
+          onClose={() => setSelectedPost(null)}
+          onDelete={handleDelete}
+        />
       )}
     </div>
   );
