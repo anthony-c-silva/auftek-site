@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Copy, Download, Check, Save, Send, AlertCircle, Calendar } from "lucide-react";
+import { Copy, Check, Save, Send, AlertCircle, Calendar } from "lucide-react";
 import { useState } from "react";
 
 interface GeneratedPostPreviewProps {
@@ -41,12 +41,7 @@ export function GeneratedPostPreview({ generatedImage, overlayText, description,
     }
   };
 
-  const downloadImage = () => {
-    const link = document.createElement('a');
-    link.href = generatedImage;
-    link.download = `social-media-${Date.now()}.png`;
-    link.click();
-  };
+
 
   const handleSavePost = async (status: 'draft' | 'published' = 'draft') => {
     if (!campaign) {
@@ -146,23 +141,19 @@ export function GeneratedPostPreview({ generatedImage, overlayText, description,
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
             <h4 className="text-sm font-bold text-slate-700">Imagem Gerada</h4>
-            {generatedImage && (
-              <button
-                onClick={downloadImage}
-                className="text-slate-500 hover:text-blue-600 transition p-2 hover:bg-blue-50 rounded flex items-center gap-1"
-                title="Baixar imagem"
-              >
-                <Download size={18} />
-                <span className="text-xs">Baixar</span>
-              </button>
-            )}
           </div>
           {generatedImage ? (
-            <div className="relative">
+            <div className="relative select-none">
               <img
                 src={generatedImage}
                 alt="Imagem gerada"
-                className="w-full rounded-lg border-2 border-white shadow-lg"
+                className="w-full rounded-lg border-2 border-white shadow-lg pointer-events-none"
+                onContextMenu={(e) => e.preventDefault()}
+                onDragStart={(e) => e.preventDefault()}
+              />
+              <div
+                className="absolute inset-0 rounded-lg"
+                onContextMenu={(e) => e.preventDefault()}
               />
             </div>
           ) : (

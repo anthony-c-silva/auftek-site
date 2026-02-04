@@ -42,42 +42,47 @@ export async function POST(request: Request) {
       }).lean();
 
       if (campaign) {
-        if (campaign.authorId.toString() === user._id.toString()) {
-          if (campaign.theme) {
-            campaignContext = `\n\nTEMA DA CAMPANHA: ${campaign.theme}`;
-          }
+        if (campaign.theme) {
+          campaignContext = `\n\nTEMA DA CAMPANHA: ${campaign.theme}`;
+        }
 
-          if (campaign.tone) {
-            const toneDescriptions: Record<string, string> = {
-              educational: 'educativo e didático',
-              informational: 'informativo e objetivo',
-              promotional: 'promocional e persuasivo',
-              inspirational: 'inspirador e motivacional',
-              entertaining: 'divertido e descontraído',
-              professional: 'profissional e corporativo',
-              casual: 'casual e amigável'
-            };
+        if (campaign.tone) {
+          const toneDescriptions: Record<string, string> = {
+            educational: 'educativo e didático',
+            informational: 'informativo e objetivo',
+            promotional: 'promocional e persuasivo',
+            inspirational: 'inspirador e motivacional',
+            entertaining: 'divertido e descontraído',
+            professional: 'profissional e corporativo',
+            casual: 'casual e amigável'
+          };
 
-            const toneDesc = toneDescriptions[campaign.tone] || campaign.tone;
-            campaignContext += `\nTOM/CUNHO: ${toneDesc.toUpperCase()}`;
-          }
+          const toneDesc = toneDescriptions[campaign.tone] || campaign.tone;
+          campaignContext += `\nTOM/CUNHO: ${toneDesc.toUpperCase()}`;
+        }
 
-          const previousPosts = await SocialMediaPost.find({
-            campaignId: campaignId,
-            deletedAt: null
-          })
-            .sort({ createdAt: -1 })
-            .limit(3)
-            .lean();
+        const previousPosts = await SocialMediaPost.find({
+          campaignId: campaignId,
+          deletedAt: null,
+          status: { $in: ['published', 'pending'] }
+        })
+          .sort({ createdAt: -1 })
+          .limit(3)
+          .lean();
 
-          if (previousPosts.length > 0) {
-            const postDescriptions = previousPosts
-              .reverse()
-              .map((post, index) => `${index + 1}. "${post.description}"`)
-              .join('\n');
+        if (previousPosts.length > 0) {
+          const postSummaries = previousPosts
+            .reverse()
+            .map((post, index) => {
+              const parts = [];
+              if (post.overlayText) parts.push(`Texto da imagem: "${post.overlayText}"`);
+              if (post.description) parts.push(`Descrição: "${post.description.substring(0, 150)}..."`);
+              if (post.context) parts.push(`Contexto: ${post.context}`);
+              return `${index + 1}. ${parts.join(' | ')}`;
+            })
+            .join('\n');
 
-            previousPostsContext = `\n\nDESCRIÇÕES ANTERIORES NESTA CAMPANHA:\n${postDescriptions}\n\nMantenha consistência de tom e mensagem com as descrições anteriores.`;
-          }
+          previousPostsContext = `\n\nPUBLICAÇÕES ANTERIORES NESTA CAMPANHA:\n${postSummaries}\n\nMantenha consistência de tom e mensagem com as descrições anteriores.`;
         }
       }
     }

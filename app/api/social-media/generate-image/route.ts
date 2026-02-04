@@ -50,13 +50,6 @@ export async function POST(request: Request) {
         );
       }
 
-      if (campaign.authorId.toString() !== user._id.toString()) {
-        return NextResponse.json(
-          { error: "Você não tem permissão para acessar esta campanha." },
-          { status: 403 }
-        );
-      }
-
       if (campaign.theme) {
         campaignContext = `\n\nTEMA DA CAMPANHA:\n${campaign.theme}`;
       }
@@ -78,7 +71,8 @@ export async function POST(request: Request) {
 
       const previousPosts = await SocialMediaPost.find({
         campaignId: campaignId,
-        deletedAt: null
+        deletedAt: null,
+        status: { $in: ['published', 'pending'] }
       })
         .sort({ createdAt: -1 })
         .limit(3)
@@ -87,10 +81,16 @@ export async function POST(request: Request) {
       if (previousPosts.length > 0) {
         const postSummaries = previousPosts
           .reverse()
-          .map((post, index) => `${index + 1}. Texto: "${post.overlayText}" | Contexto: ${post.context}`)
+          .map((post, index) => {
+            const parts = [];
+            if (post.overlayText) parts.push(`Texto: "${post.overlayText}"`);
+            if (post.description) parts.push(`Descrição: "${post.description.substring(0, 100)}..."`);
+            if (post.context) parts.push(`Contexto: ${post.context}`);
+            return `${index + 1}. ${parts.join(' | ')}`;
+          })
           .join('\n');
 
-        previousPostsContext = `\n\nPUBLICAÇÕES ANTERIORES NESTA CAMPANHA:\n${postSummaries}\n\nMantenha consistência de tom e tema com as publicações anteriores.`;
+        previousPostsContext = `\n\nPUBLICAÇÕES ANTERIORES NESTA CAMPANHA:\n${postSummaries}\n\nMantenha consistência de tom, estilo visual e mensagem com as publicações anteriores.`;
       }
     }
 

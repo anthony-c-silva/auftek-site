@@ -173,20 +173,37 @@ export function PostDetailModal({
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Image with actions */}
-          <div className="relative rounded-lg overflow-hidden border border-slate-200">
+          <div className={`relative rounded-lg overflow-hidden border border-slate-200 ${post.status !== 'published' ? 'select-none' : ''}`}>
             <img
               src={post.generatedImage}
               alt={post.overlayText || "Post preview"}
-              className="w-full"
+              className={`w-full ${post.status !== 'published' ? 'pointer-events-none' : ''}`}
+              onContextMenu={post.status !== 'published' ? (e) => e.preventDefault() : undefined}
+              onDragStart={post.status !== 'published' ? (e) => e.preventDefault() : undefined}
             />
+            {post.status !== 'published' && (
+              <div
+                className="absolute inset-0"
+                onContextMenu={(e) => e.preventDefault()}
+              />
+            )}
             <div className="absolute top-3 right-3 flex gap-2">
-              <button
-                onClick={handleDownload}
-                className="p-2 bg-white/90 hover:bg-white rounded-full shadow-md transition"
-                title="Baixar imagem"
-              >
-                <Download size={16} className="text-slate-600" />
-              </button>
+              {post.status === 'published' ? (
+                <button
+                  onClick={handleDownload}
+                  className="p-2 bg-white/90 hover:bg-white rounded-full shadow-md transition"
+                  title="Baixar imagem"
+                >
+                  <Download size={16} className="text-slate-600" />
+                </button>
+              ) : (
+                <div
+                  className="p-2 bg-white/60 rounded-full shadow-md cursor-not-allowed"
+                  title="Download disponível apenas para publicações aprovadas"
+                >
+                  <Download size={16} className="text-slate-400" />
+                </div>
+              )}
             </div>
           </div>
 
