@@ -7,19 +7,20 @@ import { SectionTitle } from "../../components/ui/Section";
 interface FormData {
   nome: string;
   email: string;
-  cnpj: string;
-  endereco: string;
+  telefone: string;
+  nome_empresa: string;
   mensagem: string;
 }
 
 type FormStatus = "idle" | "success" | "duplicate";
 
 export const Contact: React.FC = () => {
+  // 2. Estado inicial atualizado
   const [formData, setFormData] = useState<FormData>({
     nome: "",
     email: "",
-    cnpj: "",
-    endereco: "",
+    telefone: "",
+    nome_empresa: "",
     mensagem: "",
   });
 
@@ -64,33 +65,30 @@ export const Contact: React.FC = () => {
     e.preventDefault();
     setStatus("success");
 
-    const payload = { ...formData };
-
     fetch("/api/opportunities", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(formData),
     })
       .then(async (response) => {
         if (response.status === 409) {
           setStatus("duplicate");
-        } else {
-          if (response.ok) {
-            timeoutRef.current = setTimeout(() => {
-              setFormData({
-                nome: "",
-                email: "",
-                cnpj: "",
-                endereco: "",
-                mensagem: "",
-              });
-              setStatus("idle");
-            }, 4000);
-          }
+        } else if (response.ok) {
+          timeoutRef.current = setTimeout(() => {
+            // 3. Reset do formulário com os campos novos
+            setFormData({
+              nome: "",
+              email: "",
+              telefone: "",
+              nome_empresa: "",
+              mensagem: "",
+            });
+            setStatus("idle");
+          }, 4000);
         }
       })
       .catch((err) => {
-        console.error("Erro silencioso de rede:", err);
+        console.error("Erro de rede:", err);
       });
   };
 
@@ -99,10 +97,11 @@ export const Contact: React.FC = () => {
       id="contato" // IMPORTANTE: O ID deve ser exatamente igual ao do href do menu
       className="relative z-20 bg-auftek-dark text-white text-center px-6 py-24 border-t border-white/10 overflow-hidden"
     >
-      {/* ... (Todo o seu layout e inputs continuam iguais aqui) ... */}
-      
       <div className="max-w-4xl mx-auto relative z-10">
-        <SectionTitle align="center" subtitle="Fale hoje mesmo com um especialista">
+        <SectionTitle
+          align="center"
+          subtitle="Fale hoje mesmo com um especialista"
+        >
           Entre em Contato
         </SectionTitle>
 
@@ -110,8 +109,8 @@ export const Contact: React.FC = () => {
           <div className="absolute inset-0 bg-gradient-to-br from-auftek-blue/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
           <form className="space-y-5 relative z-10" onSubmit={handleSubmit}>
-             {/* ... Inputs de Nome, Email, CNPJ, Endereco ... */}
-             <div className="space-y-1 text-left">
+            {/* Campo: Nome */}
+            <div className="space-y-1 text-left">
               <label className="text-xs text-gray-400 ml-1 uppercase tracking-wide font-bold">
                 Nome
               </label>
@@ -125,7 +124,9 @@ export const Contact: React.FC = () => {
                 className="w-full px-4 py-3.5 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-auftek-blue/50 focus:bg-black/40 transition-all"
               />
             </div>
-             <div className="space-y-1 text-left">
+
+            {/* Campo: Email */}
+            <div className="space-y-1 text-left">
               <label className="text-xs text-gray-400 ml-1 uppercase tracking-wide font-bold">
                 Email
               </label>
@@ -139,44 +140,47 @@ export const Contact: React.FC = () => {
                 className="w-full px-4 py-3.5 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-auftek-blue/50 focus:bg-black/40 transition-all"
               />
             </div>
-            
-             <div className="space-y-1 text-left">
-              <label className="text-xs text-gray-400 ml-1 uppercase tracking-wide font-bold">
-                CNPJ
-              </label>
-              <input
-                type="text"
-                name="cnpj"
-                value={formData.cnpj}
-                onChange={handleChange}
-                placeholder="00.000.000/0000-00"
-                required
-                className="w-full px-4 py-3.5 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-auftek-blue/50 focus:bg-black/40 transition-all"
-              />
-            </div>
 
+            {/* Campo: Telefone (Antigo CNPJ) */}
             <div className="space-y-1 text-left">
               <label className="text-xs text-gray-400 ml-1 uppercase tracking-wide font-bold">
-                Endereço
+                Telefone
               </label>
               <input
                 type="text"
-                name="endereco"
-                value={formData.endereco}
+                name="telefone"
+                value={formData.telefone}
                 onChange={handleChange}
-                placeholder="Rua, Número..."
+                placeholder="(00) 00000-0000"
                 required
                 className="w-full px-4 py-3.5 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-auftek-blue/50 focus:bg-black/40 transition-all"
               />
             </div>
 
+            {/* Campo: Nome da Empresa (Antigo Endereço) */}
+            <div className="space-y-1 text-left">
+              <label className="text-xs text-gray-400 ml-1 uppercase tracking-wide font-bold">
+                Nome da Empresa
+              </label>
+              <input
+                type="text"
+                name="nome_empresa"
+                value={formData.nome_empresa}
+                onChange={handleChange}
+                placeholder="Sua Empresa"
+                required
+                className="w-full px-4 py-3.5 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/30 focus:outline-none focus:border-auftek-blue/50 focus:bg-black/40 transition-all"
+              />
+            </div>
+
+            {/* Campo: Mensagem */}
             <div className="space-y-1 text-left">
               <label className="text-xs text-gray-400 ml-1 uppercase tracking-wide font-bold">
                 Mensagem
               </label>
               <textarea
                 name="mensagem"
-                value={formData.mensagem} // O valor agora é controlado pelo State
+                value={formData.mensagem}
                 onChange={handleChange}
                 placeholder="Como podemos ajudar?"
                 rows={4}
@@ -188,7 +192,9 @@ export const Contact: React.FC = () => {
               variant="primary"
               type="submit"
               disabled={status === "success"}
-              className={`w-full py-4 text-lg mt-4 shadow-lg shadow-auftek-blue/25 hover:shadow-auftek-blue/40 transition-all duration-300 ${status === "success" ? "!bg-green-600 !border-green-500" : ""}`}
+              className={`w-full py-4 text-lg mt-4 shadow-lg shadow-auftek-blue/25 hover:shadow-auftek-blue/40 transition-all duration-300 ${
+                status === "success" ? "!bg-green-600 !border-green-500" : ""
+              }`}
             >
               {status === "idle" && "Solicitar Contato"}
               {status === "success" && "Enviado com Sucesso!"}
