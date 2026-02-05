@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { Upload, X, Loader2, Sparkles, Image as ImageIcon, Layers } from "lucide-react";
+import { Upload, X, Loader2, Sparkles, Image as ImageIcon, Layers, Palette } from "lucide-react";
+import { StyleSelectionModal, StyleTemplate } from "./StyleSelectionModal";
 
 type ImageMode = 'static' | 'ai' | null;
 
 interface SocialMediaFormProps {
-  onGenerate: (data: { images: string[]; text: string; context: string; additionalPrompt?: string; isCarousel?: boolean; carouselCount?: number }) => void;
+  onGenerate: (data: { images: string[]; text: string; context: string; additionalPrompt?: string; isCarousel?: boolean; carouselCount?: number; styleTemplate?: StyleTemplate }) => void;
   onStaticPost?: (data: { image: string; context: string; description?: string }) => void;
   isGenerating: boolean;
   campaign?: { _id: string; name: string; theme?: string; tone?: string };
@@ -20,6 +21,8 @@ export function SocialMediaForm({ onGenerate, onStaticPost, isGenerating, campai
   const [isCarousel, setIsCarousel] = useState(false);
   const [carouselCount, setCarouselCount] = useState(3);
   const [uploading, setUploading] = useState(false);
+  const [selectedStyle, setSelectedStyle] = useState<StyleTemplate | null>(null);
+  const [isStyleModalOpen, setIsStyleModalOpen] = useState(false);
 
   const handleFileUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
@@ -94,6 +97,7 @@ export function SocialMediaForm({ onGenerate, onStaticPost, isGenerating, campai
         additionalPrompt: additionalPrompt.trim() || undefined,
         isCarousel: isCarousel || undefined,
         carouselCount: isCarousel ? carouselCount : undefined,
+        styleTemplate: selectedStyle || undefined,
       });
     }
   };
@@ -104,6 +108,7 @@ export function SocialMediaForm({ onGenerate, onStaticPost, isGenerating, campai
     setAdditionalPrompt("");
     setIsCarousel(false);
     setCarouselCount(3);
+    setSelectedStyle(null);
   };
 
   return (
@@ -324,6 +329,58 @@ export function SocialMediaForm({ onGenerate, onStaticPost, isGenerating, campai
           )}
         </div>
       )}
+
+      {/* Style Selection - Only for AI mode */}
+      {imageMode === 'ai' && (
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Palette size={18} className="text-slate-500" />
+              <div>
+                <span className="text-sm font-medium text-slate-700">Template de Estilo</span>
+                <p className="text-xs text-slate-500">Opcional - A IA seguirá o estilo visual selecionado</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsStyleModalOpen(true)}
+              disabled={isGenerating}
+              className="px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition disabled:opacity-50"
+            >
+              {selectedStyle ? 'Alterar' : 'Selecionar'}
+            </button>
+          </div>
+
+          {selectedStyle && (
+            <div className="mt-3 flex items-center gap-3 p-3 bg-white rounded-lg border border-slate-200">
+              <img
+                src={selectedStyle.preview}
+                alt={selectedStyle.name}
+                className="w-16 h-20 object-cover rounded"
+              />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-slate-900">{selectedStyle.name}</p>
+                <p className="text-xs text-slate-500">{selectedStyle.images.slides.length} exemplo(s) de slide</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedStyle(null)}
+                className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Style Selection Modal */}
+      <StyleSelectionModal
+        isOpen={isStyleModalOpen}
+        onClose={() => setIsStyleModalOpen(false)}
+        onSelect={setSelectedStyle}
+        selectedStyle={selectedStyle}
+      />
 
       {/* Action Buttons */}
       <div className="flex gap-3">

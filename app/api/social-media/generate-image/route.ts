@@ -8,6 +8,26 @@ import mongoose from "mongoose";
 
 export const maxDuration = 300;
 
+async function loadImageAsBase64(url: string): Promise<{ mimeType: string; data: string } | null> {
+  try {
+    const fullUrl = url.startsWith('/') ? `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}${url}` : url;
+    const response = await fetch(fullUrl);
+    if (!response.ok) return null;
+
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const mimeType = response.headers.get('content-type') || 'image/png';
+
+    return {
+      mimeType,
+      data: buffer.toString('base64')
+    };
+  } catch (error) {
+    console.error('Erro ao carregar imagem de estilo:', error);
+    return null;
+  }
+}
+
 async function uploadToKingHost(buffer: Buffer, mimeType: string, fileName: string): Promise<string> {
   const uploadUrl = process.env.KINGHOST_UPLOAD_URL;
   const apiSecret = process.env.KINGHOST_API_SECRET;
@@ -53,7 +73,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { images, context, campaignId, additionalPrompt, isCarousel, carouselCount } = body;
+    const { images, context, campaignId, additionalPrompt, isCarousel, carouselCount, styleTemplate } = body;
 
     if (!images || images.length === 0) {
       return NextResponse.json({ error: "Nenhuma imagem fornecida." }, { status: 400 });
@@ -200,21 +220,58 @@ export async function POST(request: Request) {
 
     const formatDescription = "formato retrato 4:5 (ideal para feed de Instagram)";
 
+    // Carregar imagens de estilo se template foi selecionado
+    let styleContext = "";
+    let styleCoverPart: { inlineData: { mimeType: string; data: string } } | null = null;
+    const styleSlideParts: { inlineData: { mimeType: string; data: string } }[] = [];
+
+    if (styleTemplate?.images) {
+      // Carregar imagem de capa do estilo
+      if (styleTemplate.images.cover) {
+        const coverData = await loadImageAsBase64(styleTemplate.images.cover);
+        if (coverData) {
+          styleCoverPart = { inlineData: coverData };
+        }
+      }
+
+      // Carregar imagens de slides do estilo
+      if (styleTemplate.images.slides && styleTemplate.images.slides.length > 0) {
+        for (const slideUrl of styleTemplate.images.slides) {
+          const slideData = await loadImageAsBase64(slideUrl);
+          if (slideData) {
+            styleSlideParts.push({ inlineData: slideData });
+          }
+        }
+      }
+
+      styleContext = `
+        ESTILO VISUAL DE REFERÊNCIA:
+        Você receberá imagens de referência do estilo "${styleTemplate.name}".
+        IMPORTANTE: Analise cuidadosamente estas imagens de referência e REPRODUZA o mesmo estilo visual:
+        - Mesma paleta de cores
+        - Mesmo estilo de tipografia (fonte, peso, tamanho relativo)
+        - Mesma composição e layout
+        - Mesmos elementos decorativos e efeitos visuais
+        - Mesmo tratamento de fundo e gradientes
+        A imagem gerada DEVE parecer parte da mesma série/campanha das imagens de referência.
+      `;
+    }
+
     //prompt da imagem principal
     const imagePrompt = `
         Crie uma imagem profissional para redes sociais mesclando as imagens fornecidas de forma criativa e harmoniosa.
-        
+        ${styleContext}
         TEXTO PARA SOBREPOR NA IMAGEM:
         "${overlayText}"
-        
+
         CONTEXTO:
         ${context}${campaignContext}${previousPostsContext}
         ${additionalPrompt ? `\n\nINSTRUÇÕES ESPECÍFICAS DESTA PUBLICAÇÃO:\n${additionalPrompt}` : ''}
-        
+
         FORMATO:
         ${formatDescription}
         IMPORTANTE: A imagem DEVE ter proporção 4:5 (retrato vertical para Instagram).
-        
+
         REQUISITOS OBRIGATÓRIOS:
         1. Mescle todas as imagens fornecidas em uma composição única e atraente
         2. Adicione o texto "${overlayText}" de forma DESTACADA e LEGÍVEL NO CENTRO DA IMAGEM, palavras não podem quebrar linhas
@@ -225,13 +282,15 @@ export async function POST(request: Request) {
         7. O texto deve estar CLARAMENTE VISÍVEL e ser o elemento principal
         8. Use efeitos de sombra ou contorno no texto para melhorar a legibilidade
         ${previousPostsContext ? '9. Mantenha consistência visual com as publicações anteriores da campanha' : ''}
-        ${campaign?.customPromptImage ? `\n        \n        INSTRUÇÕES ADICIONAIS DE DESIGN DO USUÁRIO:\n        ${campaign.customPromptImage}` : ''}
+        ${campaign?.customPromptImage ? `\n        INSTRUÇÕES ADICIONAIS DE DESIGN DO USUÁRIO:\n        ${campaign.customPromptImage}` : ''}
+        ${styleCoverPart ? '\n        IMAGEM DE REFERÊNCIA DE ESTILO: A primeira imagem após o prompt é o estilo visual a ser seguido.' : ''}
         `;
 
     const imageResult = await genAI.models.generateContent({
       model: GEMINI_MODEL,
       contents: [
         { text: imagePrompt },
+        ...(styleCoverPart ? [styleCoverPart] : []),
         ...imageParts
       ],
       config: {
@@ -272,7 +331,7 @@ export async function POST(request: Request) {
       const splitResult = await genAI.models.generateContent({
         model: GEMINI_MODEL,
         contents: `
-          Você é um professor especialista criando conteúdo educativo para um carrossel do Instagram.
+          Você é um comunicador criando conteúdo para um carrossel do Instagram.
 
           CONTEXTO DO ASSUNTO:
           ${context}${campaignContext}
@@ -282,28 +341,32 @@ export async function POST(request: Request) {
           "${overlayText}"
 
           TAREFA:
-          Crie exatamente ${slideCount} textos descritivos para os slides de conteúdo do carrossel.
-          Cada slide deve ENSINAR algo específico sobre o assunto, como um mini-parágrafo informativo.
-          Pense como se estivesse escrevendo uma legenda educativa para o Instagram.
+          Crie exatamente ${slideCount} textos para os slides do carrossel.
+          Escreva como se estivesse CONVERSANDO com alguém sobre o assunto.
+          Cada slide deve fluir naturalmente, como uma explicação amigável.
 
-          REGRAS OBRIGATÓRIAS:
+          ESTILO DE ESCRITA:
+          - Tom conversacional e acolhedor
+          - Como se você estivesse explicando para um amigo
+          - Frases naturais, não tópicos ou bullet points
+          - Pode usar expressões como "Sabia que...", "O interessante é que...", "Na prática..."
+          - Entre 15-25 palavras por slide
+          - Cada slide aborda um aspecto diferente do tema
+
+          REGRAS:
           - Exatamente ${slideCount} textos
-          - Cada texto deve ter entre 15 e 30 palavras (2-3 frases curtas)
           - Separe cada texto com a marca |||
-          - Seja DESCRITIVO e EXPLICATIVO - não use frases genéricas ou vagas
-          - Cada slide deve trazer um ponto diferente e complementar ao anterior
-          - NÃO comece com o nome do tema (ex: NÃO faça "Microbiologia é...", "A IA pode...")
-          - Comece direto com o conteúdo, variando a forma de iniciar cada texto
           - Em português do Brasil
-          - Tom educativo e acessível
+          - Não use formato de tópico/explicação
+          - Não comece todos da mesma forma
 
           EXEMPLO BOM (tema: benefícios da automação industrial):
-          Sensores inteligentes monitoram a produção em tempo real, identificando falhas antes que causem paradas e prejuízos na linha.|||Ao substituir processos manuais repetitivos, as equipes focam em tarefas estratégicas que exigem criatividade e tomada de decisão.|||O controle preciso de cada etapa reduz o desperdício de matéria-prima em até 30%, otimizando custos e sustentabilidade.
+          Sabia que sensores inteligentes conseguem prever falhas antes mesmo delas acontecerem? Isso evita paradas inesperadas na produção.|||Com a automação cuidando das tarefas repetitivas, as equipes podem focar no que realmente importa: criar e inovar.|||O mais impressionante é a redução de desperdício. Algumas empresas já economizam até 30% em matéria-prima.
 
           EXEMPLO RUIM:
-          Automação industrial: sensores|||Automação: reduz processos manuais|||Benefícios: reduz desperdício
+          Monitoramento: sensores detectam falhas|||Produtividade: automação libera equipes|||Economia: reduz desperdício em 30%
 
-          Retorne APENAS os textos separados por |||, sem explicações extras.
+          Retorne APENAS os textos separados por |||.
         `,
       });
 
@@ -330,9 +393,21 @@ export async function POST(request: Request) {
         for (let attempt = 0; attempt < 2 && !slideSuccess; attempt++) {
           try {
             //prompt para imagens se carrossel
-            const slidePrompt = `
-              Crie uma imagem profissional para um slide de carrossel do Instagram.why io
+            const slideStyleContext = styleSlideParts.length > 0 ? `
+              ESTILO VISUAL DE REFERÊNCIA PARA SLIDES:
+              Você receberá ${styleSlideParts.length} imagem(ns) de referência de estilo para slides.
+              IMPORTANTE: Analise estas imagens e REPRODUZA EXATAMENTE o mesmo estilo visual:
+              - Mesma paleta de cores de fundo
+              - Mesmo estilo de tipografia
+              - Mesma composição e layout
+              - Mesma POSIÇÃO DO LOGO (topo ou base - mantenha consistente)
+              - Mesmos elementos decorativos
+              O slide gerado DEVE parecer parte da mesma série das imagens de referência.
+            ` : '';
 
+            const slidePrompt = `
+              Crie uma imagem profissional para um slide de carrossel do Instagram.
+              ${slideStyleContext}
               TEXTO PARA SOBREPOR NA IMAGEM:
               "${slideText}"
 
@@ -342,24 +417,20 @@ export async function POST(request: Request) {
               FORMATO:
               Proporção 4:5 (retrato vertical para Instagram)
 
-              IMAGENS FORNECIDAS:
-              - Você receberá imagens, como fotos e logos para gerar uma mescla dessas imagens.
-              - Caso mandado a logo da empresa AUFTEK, sempre será marca d'agua e deve estar alinhada no centro
-              - A primeira imagem do carrossel é a capa e aparecerá a mescla das imagens com um texto na frente de título.
-              - Demais imagens do carrossel seguirão um padrão.
+              POSIÇÃO DO LOGO (REGRA CRÍTICA):
+              - Observe a CAPA do carrossel fornecida
+              - Se o logo está na parte INFERIOR da capa → posicione na parte INFERIOR deste slide
+              - Se o logo está na parte SUPERIOR da capa → posicione na parte SUPERIOR deste slide
+              - MANTENHA A MESMA POSIÇÃO em todos os slides
+              ${styleSlideParts.length > 0 ? '- As primeiras imagens são REFERÊNCIAS DE ESTILO - siga este estilo visual exatamente.' : ''}
 
-              REQUISITOS OBRIGATÓRIOS PARA SLIDES DE CONTEÚDO (PÓS-CAPA):
-              1. ESTILO: Minimalista, focado em legibilidade (Swiss Style).
-              2. FUNDO: Estritamente cor sólida ou gradiente sutil, extraído das cores principais da CAPA fornecida. PROIBIDO o uso de fotos ou texturas complexas no fundo.
-              3. TIPOGRAFIA: Use exatamente a mesma família tipográfica da capa. O texto deve ser grande e centralizado.
-              4. CORES DO TEXTO: Se o texto da capa for branco, use branco. Se for preto, use preto. Mantenha 100% de consistência.
-              5. ELEMENTOS VISUAIS: Use as imagens fornecidas apenas como pequenos ícones de apoio ou a logo como marca d'água centralizada e sutil.
-              6. COMPOSIÇÃO: Espaço negativo amplo. O texto não deve encostar nas bordas.
-              7. Use efeitos sutis de sombra apenas se necessário para garantir contraste absoluto com o fundo sólido.
-              8. Use efeitos sutis de sombra apenas se necessário para garantir contraste absoluto com o fundo sólido.
-              9. Não use fotos de fundo - apenas cores sólidas, ou padrões simples
-              10. Inclua os logos/elementos fornecidos como marca d'água sutil
-              11. USE O MESMO ESTILO (COR, CONTORNO) DE LETRA PARA TODOS OS PAINEIS
+              REQUISITOS PARA O SLIDE:
+              1. FUNDO: Cor sólida ou gradiente sutil das cores da CAPA. Sem fotos no fundo.
+              2. TEXTO: Legível, bem distribuído, pode ocupar 2-4 linhas. Fonte da mesma família da capa.
+              3. CORES: Consistentes com a capa (mesmas cores de texto).
+              4. LOGO: Mesma posição da capa. Marca d'água sutil.
+              5. COMPOSIÇÃO: Espaço negativo amplo. O texto é o elemento principal.
+              6. LEGIBILIDADE: Sombra sutil no texto se necessário para contraste.
               ${campaign?.customPromptImage ? `\nINSTRUÇÕES DE DESIGN:\n${campaign.customPromptImage}` : ''}
             `;
 
@@ -367,6 +438,7 @@ export async function POST(request: Request) {
               model: GEMINI_MODEL,
               contents: [
                 { text: slidePrompt },
+                ...styleSlideParts,
                 {
                   inlineData: {
                     mimeType: coverMimeType,

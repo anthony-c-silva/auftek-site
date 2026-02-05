@@ -58,7 +58,7 @@ export default function SocialMediaPage() {
 
   if (isLoading || !user) return null;
 
-  const handleGenerate = async (data: { images: string[]; text: string; context: string; additionalPrompt?: string; isCarousel?: boolean; carouselCount?: number }) => {
+  const handleGenerate = async (data: { images: string[]; text: string; context: string; additionalPrompt?: string; isCarousel?: boolean; carouselCount?: number; styleTemplate?: { id: string; name: string; images: { cover: string; slides: string[] } } }) => {
     setIsGenerating(true);
     setGeneratedContent(null);
 
@@ -73,6 +73,7 @@ export default function SocialMediaPage() {
           additionalPrompt: data.additionalPrompt,
           isCarousel: data.isCarousel,
           carouselCount: data.carouselCount,
+          styleTemplate: data.styleTemplate,
         }),
       });
 
