@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-import { Upload, X, Loader2, Sparkles, Image as ImageIcon } from "lucide-react";
+import { Upload, X, Loader2, Sparkles, Image as ImageIcon, Layers } from "lucide-react";
 
 type ImageMode = 'static' | 'ai' | null;
 
 interface SocialMediaFormProps {
-  onGenerate: (data: { images: string[]; text: string; context: string; additionalPrompt?: string }) => void;
+  onGenerate: (data: { images: string[]; text: string; context: string; additionalPrompt?: string; isCarousel?: boolean; carouselCount?: number }) => void;
   onStaticPost?: (data: { image: string; context: string; description?: string }) => void;
   isGenerating: boolean;
   campaign?: { _id: string; name: string; theme?: string; tone?: string };
@@ -17,6 +17,8 @@ export function SocialMediaForm({ onGenerate, onStaticPost, isGenerating, campai
   const [images, setImages] = useState<string[]>([]);
   const [context, setContext] = useState("");
   const [additionalPrompt, setAdditionalPrompt] = useState("");
+  const [isCarousel, setIsCarousel] = useState(false);
+  const [carouselCount, setCarouselCount] = useState(3);
   const [uploading, setUploading] = useState(false);
 
   const handleFileUpload = async (files: FileList | null) => {
@@ -85,7 +87,14 @@ export function SocialMediaForm({ onGenerate, onStaticPost, isGenerating, campai
         alert("Por favor, adicione pelo menos uma imagem e descreva o contexto.");
         return;
       }
-      onGenerate({ images, text: "", context, additionalPrompt: additionalPrompt.trim() || undefined });
+      onGenerate({
+        images,
+        text: "",
+        context,
+        additionalPrompt: additionalPrompt.trim() || undefined,
+        isCarousel: isCarousel || undefined,
+        carouselCount: isCarousel ? carouselCount : undefined,
+      });
     }
   };
 
@@ -93,6 +102,8 @@ export function SocialMediaForm({ onGenerate, onStaticPost, isGenerating, campai
     setImages([]);
     setContext("");
     setAdditionalPrompt("");
+    setIsCarousel(false);
+    setCarouselCount(3);
   };
 
   return (
@@ -275,6 +286,44 @@ export function SocialMediaForm({ onGenerate, onStaticPost, isGenerating, campai
           </div>
         )
       }
+
+      {/* Carousel Toggle - Only for AI mode */}
+      {imageMode === 'ai' && (
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isCarousel}
+              onChange={(e) => setIsCarousel(e.target.checked)}
+              disabled={isGenerating}
+              className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+            />
+            <div className="flex items-center gap-2">
+              <Layers size={18} className="text-slate-500" />
+              <span className="text-sm font-medium text-slate-700">Gerar Carrossel</span>
+            </div>
+          </label>
+
+          {isCarousel && (
+            <div className="mt-3 pl-8">
+              <label className="block text-sm text-slate-600 mb-1">Total de slides</label>
+              <select
+                value={carouselCount}
+                onChange={(e) => setCarouselCount(Number(e.target.value))}
+                disabled={isGenerating}
+                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+              >
+                {Array.from({ length: 9 }, (_, i) => i + 2).map(n => (
+                  <option key={n} value={n}>{n} slides</option>
+                ))}
+              </select>
+              <p className="text-xs text-slate-500 mt-1">
+                1 capa + {carouselCount - 1} slide(s) de conteúdo
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Action Buttons */}
       <div className="flex gap-3">

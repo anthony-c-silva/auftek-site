@@ -23,6 +23,9 @@ interface EditingPost {
   description: string;
   context: string;
   rejectionReason?: string;
+  isCarousel?: boolean;
+  carouselImages?: string[];
+  carouselOverlayTexts?: string[];
   campaign: { _id: string; name: string; theme?: string } | null;
 }
 
@@ -40,6 +43,9 @@ export default function SocialMediaPage() {
     description: string;
     originalImages: string[];
     context: string;
+    isCarousel?: boolean;
+    carouselImages?: string[];
+    carouselOverlayTexts?: string[];
   } | null>(null);
   // State for editing a post from re-evaluation
   const [editingPost, setEditingPost] = useState<EditingPost | null>(null);
@@ -52,7 +58,7 @@ export default function SocialMediaPage() {
 
   if (isLoading || !user) return null;
 
-  const handleGenerate = async (data: { images: string[]; text: string; context: string; additionalPrompt?: string }) => {
+  const handleGenerate = async (data: { images: string[]; text: string; context: string; additionalPrompt?: string; isCarousel?: boolean; carouselCount?: number }) => {
     setIsGenerating(true);
     setGeneratedContent(null);
 
@@ -65,6 +71,8 @@ export default function SocialMediaPage() {
           context: data.context,
           campaignId: selectedCampaign?._id || undefined,
           additionalPrompt: data.additionalPrompt,
+          isCarousel: data.isCarousel,
+          carouselCount: data.carouselCount,
         }),
       });
 
@@ -98,6 +106,9 @@ export default function SocialMediaPage() {
         description: descriptionResult.description,
         originalImages: data.images,
         context: data.context,
+        isCarousel: imageResult.isCarousel,
+        carouselImages: imageResult.carouselImages,
+        carouselOverlayTexts: imageResult.carouselOverlayTexts,
       });
 
     } catch (error: unknown) {
@@ -249,6 +260,9 @@ export default function SocialMediaPage() {
                         isAdmin={user.role === 'admin'}
                         editPostId={editingPost?._id}
                         rejectionReason={editingPost?.rejectionReason}
+                        isCarousel={generatedContent.isCarousel}
+                        carouselImages={generatedContent.carouselImages}
+                        carouselOverlayTexts={generatedContent.carouselOverlayTexts}
                         onEditComplete={() => {
                           // Clear editing state and go back to pending posts
                           setEditingPost(null);
@@ -328,6 +342,9 @@ export default function SocialMediaPage() {
                   description: post.description,
                   context: post.context,
                   rejectionReason: post.rejectionReason,
+                  isCarousel: post.isCarousel,
+                  carouselImages: post.carouselImages,
+                  carouselOverlayTexts: post.carouselOverlayTexts,
                   campaign: post.campaign ?? null,
                 });
                 if (post.campaign) {
@@ -339,6 +356,9 @@ export default function SocialMediaPage() {
                   description: post.description,
                   originalImages: [],
                   context: post.context,
+                  isCarousel: post.isCarousel,
+                  carouselImages: post.carouselImages,
+                  carouselOverlayTexts: post.carouselOverlayTexts,
                 });
                 setViewMode('campaigns');
               }} />

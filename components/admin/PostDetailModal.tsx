@@ -13,7 +13,9 @@ import {
   Send,
   Download,
   Copy,
-  Loader2
+  Loader2,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 
 interface Author {
@@ -37,6 +39,9 @@ export interface PostForModal {
   context: string;
   postType?: string;
   originalImages?: string[];
+  isCarousel?: boolean;
+  carouselImages?: string[];
+  carouselOverlayTexts?: string[];
   status: 'draft' | 'pending' | 'scheduled' | 'published' | 're-evaluation' | 'rejected';
   rejectionReason?: string;
   scheduledAt?: string;
@@ -74,6 +79,15 @@ export function PostDetailModal({
   const [editedDescription, setEditedDescription] = useState(post.description);
   const [showEditDescription, setShowEditDescription] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const allSlides = post.isCarousel && post.carouselImages && post.carouselImages.length > 0
+    ? [post.generatedImage, ...post.carouselImages]
+    : [post.generatedImage];
+
+  const allTexts = post.isCarousel && post.carouselOverlayTexts && post.carouselOverlayTexts.length > 0
+    ? [post.overlayText, ...post.carouselOverlayTexts]
+    : [post.overlayText];
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR', {
@@ -125,8 +139,8 @@ export function PostDetailModal({
 
   const handleDownload = () => {
     const link = document.createElement('a');
-    link.href = post.generatedImage;
-    link.download = `post-${post._id}.png`;
+    link.href = allSlides[currentSlide];
+    link.download = `post-${post._id}${post.isCarousel ? `-slide-${currentSlide + 1}` : ''}.png`;
     link.click();
   };
 
@@ -174,9 +188,14 @@ export function PostDetailModal({
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Image with actions */}
           <div className={`relative rounded-lg overflow-hidden border border-slate-200 ${post.status !== 'published' ? 'select-none' : ''}`}>
+            {post.isCarousel && allSlides.length > 1 && (
+              <div className="absolute top-3 left-3 z-10 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
+                {currentSlide + 1}/{allSlides.length}
+              </div>
+            )}
             <img
-              src={post.generatedImage}
-              alt={post.overlayText || "Post preview"}
+              src={allSlides[currentSlide]}
+              alt={allTexts[currentSlide] || "Post preview"}
               className={`w-full ${post.status !== 'published' ? 'pointer-events-none' : ''}`}
               onContextMenu={post.status !== 'published' ? (e) => e.preventDefault() : undefined}
               onDragStart={post.status !== 'published' ? (e) => e.preventDefault() : undefined}
@@ -187,6 +206,40 @@ export function PostDetailModal({
                 onContextMenu={(e) => e.preventDefault()}
               />
             )}
+
+            {/* Carousel Navigation */}
+            {post.isCarousel && allSlides.length > 1 && (
+              <>
+                {currentSlide > 0 && (
+                  <button
+                    onClick={() => setCurrentSlide(currentSlide - 1)}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 bg-white/80 hover:bg-white rounded-full shadow-md transition z-10"
+                  >
+                    <ChevronLeft size={20} className="text-slate-700" />
+                  </button>
+                )}
+                {currentSlide < allSlides.length - 1 && (
+                  <button
+                    onClick={() => setCurrentSlide(currentSlide + 1)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-white/80 hover:bg-white rounded-full shadow-md transition z-10"
+                  >
+                    <ChevronRight size={20} className="text-slate-700" />
+                  </button>
+                )}
+
+                {/* Dot Indicators */}
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+                  {allSlides.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentSlide(idx)}
+                      className={`w-2 h-2 rounded-full transition ${idx === currentSlide ? 'bg-white shadow-sm scale-125' : 'bg-white/60'}`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+
             <div className="absolute top-3 right-3 flex gap-2">
               {post.status === 'published' ? (
                 <button

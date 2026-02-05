@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Copy, Check, Save, Send, AlertCircle, Calendar } from "lucide-react";
+import { Copy, Check, Save, Send, AlertCircle, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 
 interface GeneratedPostPreviewProps {
@@ -14,16 +14,28 @@ interface GeneratedPostPreviewProps {
   isAdmin?: boolean;
   editPostId?: string;
   rejectionReason?: string;
+  isCarousel?: boolean;
+  carouselImages?: string[];
+  carouselOverlayTexts?: string[];
   onEditComplete?: () => void;
 }
 
-export function GeneratedPostPreview({ generatedImage, overlayText, description, originalImages, campaign, context, isAdmin = false, editPostId, rejectionReason, onEditComplete }: GeneratedPostPreviewProps) {
+export function GeneratedPostPreview({ generatedImage, overlayText, description, originalImages, campaign, context, isAdmin = false, editPostId, rejectionReason, isCarousel, carouselImages, carouselOverlayTexts, onEditComplete }: GeneratedPostPreviewProps) {
   const [copiedDescription, setCopiedDescription] = useState(false);
   const [editedDescription, setEditedDescription] = useState(description);
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [isScheduled, setIsScheduled] = useState(false);
   const [scheduledAt, setScheduledAt] = useState('');
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  const allSlides = isCarousel && carouselImages && carouselImages.length > 0
+    ? [generatedImage, ...carouselImages]
+    : [generatedImage];
+
+  const allTexts = isCarousel && carouselOverlayTexts && carouselOverlayTexts.length > 0
+    ? [overlayText, ...carouselOverlayTexts]
+    : [overlayText];
 
   const getMinDateTime = () => {
     const now = new Date();
@@ -65,6 +77,9 @@ export function GeneratedPostPreview({ generatedImage, overlayText, description,
             context: context || 'Post gerado via IA',
             status: 'pending',
             scheduledAt: isScheduled && scheduledAt ? new Date(scheduledAt).toISOString() : null,
+            isCarousel: isCarousel || false,
+            carouselImages: carouselImages || [],
+            carouselOverlayTexts: carouselOverlayTexts || [],
           }),
         });
       } else {
@@ -81,6 +96,9 @@ export function GeneratedPostPreview({ generatedImage, overlayText, description,
             aspectRatio: '4:5',
             status: status,
             scheduledAt: isScheduled && scheduledAt ? new Date(scheduledAt).toISOString() : null,
+            isCarousel: isCarousel || false,
+            carouselImages: carouselImages || [],
+            carouselOverlayTexts: carouselOverlayTexts || [],
           }),
         });
       }
@@ -140,13 +158,20 @@ export function GeneratedPostPreview({ generatedImage, overlayText, description,
         {/* Generated Image */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="text-sm font-bold text-slate-700">Imagem Gerada</h4>
+            <h4 className="text-sm font-bold text-slate-700">
+              {isCarousel ? `Carrossel (${currentSlide + 1}/${allSlides.length})` : 'Imagem Gerada'}
+            </h4>
+            {isCarousel && (
+              <span className="text-xs text-slate-500">
+                {currentSlide === 0 ? 'Capa' : `Slide ${currentSlide + 1}`}
+              </span>
+            )}
           </div>
           {generatedImage ? (
             <div className="relative select-none">
               <img
-                src={generatedImage}
-                alt="Imagem gerada"
+                src={allSlides[currentSlide]}
+                alt={`${currentSlide === 0 ? 'Capa' : `Slide ${currentSlide + 1}`}`}
                 className="w-full rounded-lg border-2 border-white shadow-lg pointer-events-none"
                 onContextMenu={(e) => e.preventDefault()}
                 onDragStart={(e) => e.preventDefault()}
@@ -155,11 +180,51 @@ export function GeneratedPostPreview({ generatedImage, overlayText, description,
                 className="absolute inset-0 rounded-lg"
                 onContextMenu={(e) => e.preventDefault()}
               />
+
+              {/* Carousel Navigation */}
+              {isCarousel && allSlides.length > 1 && (
+                <>
+                  {currentSlide > 0 && (
+                    <button
+                      onClick={() => setCurrentSlide(currentSlide - 1)}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 bg-white/80 hover:bg-white rounded-full shadow-md transition z-10"
+                    >
+                      <ChevronLeft size={20} className="text-slate-700" />
+                    </button>
+                  )}
+                  {currentSlide < allSlides.length - 1 && (
+                    <button
+                      onClick={() => setCurrentSlide(currentSlide + 1)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-white/80 hover:bg-white rounded-full shadow-md transition z-10"
+                    >
+                      <ChevronRight size={20} className="text-slate-700" />
+                    </button>
+                  )}
+
+                  {/* Dot Indicators */}
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+                    {allSlides.map((_, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setCurrentSlide(idx)}
+                        className={`w-2 h-2 rounded-full transition ${idx === currentSlide ? 'bg-white shadow-sm scale-125' : 'bg-white/60'}`}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           ) : (
             <div className="bg-slate-100 rounded-lg p-8 text-center border-2 border-dashed border-slate-300">
               <p className="text-slate-500 text-sm">Processando imagem...</p>
             </div>
+          )}
+
+          {/* Slide text */}
+          {isCarousel && allTexts[currentSlide] && (
+            <p className="text-sm text-slate-600 mt-2 text-center italic">
+              &quot;{allTexts[currentSlide]}&quot;
+            </p>
           )}
         </div>
 

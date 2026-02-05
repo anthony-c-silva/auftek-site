@@ -134,6 +134,9 @@ export async function POST(
       overlayText,
       description,
       originalImages,
+      isCarousel,
+      carouselImages,
+      carouselOverlayTexts,
       status,
       scheduledAt
     } = body;
@@ -190,6 +193,9 @@ export async function POST(
       overlayText: overlayText.trim(),
       description: description.trim(),
       originalImages: originalImages || [],
+      isCarousel: isCarousel || false,
+      carouselImages: carouselImages || [],
+      carouselOverlayTexts: carouselOverlayTexts || [],
       aspectRatio: '4:5',
       status: finalStatus,
       submittedAt,

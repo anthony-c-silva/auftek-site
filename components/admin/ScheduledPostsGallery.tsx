@@ -12,7 +12,8 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
-  Trash2
+  Trash2,
+  Layers
 } from "lucide-react";
 import { PostDetailModal, PostForModal } from "./PostDetailModal";
 
@@ -268,6 +269,12 @@ export function ScheduledPostsGallery() {
                   <Clock size={12} />
                   {scheduled.countdown || 'Agendado'}
                 </div>
+                {post.isCarousel && (
+                  <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                    <Layers size={12} />
+                    {1 + (post.carouselImages?.length || 0)}
+                  </div>
+                )}
                 <button
                   onClick={(e) => { e.stopPropagation(); handleDelete(post._id); }}
                   disabled={deletingPostId === post._id}

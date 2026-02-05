@@ -11,7 +11,8 @@ import {
     CheckCircle,
     Search,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    Layers
 } from "lucide-react";
 import { PostDetailModal, PostForModal } from "./PostDetailModal";
 
@@ -197,6 +198,12 @@ export function PublishedPostsGallery() {
                                 <Check size={12} />
                                 Publicado
                             </div>
+                            {post.isCarousel && (
+                                <div className="absolute top-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                                    <Layers size={12} />
+                                    {1 + (post.carouselImages?.length || 0)}
+                                </div>
+                            )}
                         </div>
 
                         {/* Info */}

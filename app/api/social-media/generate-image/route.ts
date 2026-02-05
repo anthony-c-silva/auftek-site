@@ -6,6 +6,45 @@ import Campaign from "@/lib/models/Campaign";
 import SocialMediaPost from "@/lib/models/SocialMediaPost";
 import mongoose from "mongoose";
 
+export const maxDuration = 300;
+
+async function uploadToKingHost(buffer: Buffer, mimeType: string, fileName: string): Promise<string> {
+  const uploadUrl = process.env.KINGHOST_UPLOAD_URL;
+  const apiSecret = process.env.KINGHOST_API_SECRET;
+
+  if (!uploadUrl || !apiSecret) {
+    throw new Error('Configuração de upload ausente');
+  }
+
+  const uint8 = new Uint8Array(buffer);
+  const blob = new Blob([uint8], { type: mimeType });
+  const file = new File([blob], fileName, { type: mimeType });
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('token', apiSecret);
+  formData.append('folder', 'social-media');
+
+  const uploadResponse = await fetch(uploadUrl, {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!uploadResponse.ok) {
+    const errorText = await uploadResponse.text();
+    console.error("Erro KingHost:", errorText);
+    throw new Error(`Falha ao fazer upload: ${uploadResponse.statusText}`);
+  }
+
+  const uploadResult = await uploadResponse.json();
+
+  if (!uploadResult.url) {
+    throw new Error('URL da imagem não foi retornada pelo servidor');
+  }
+
+  return uploadResult.url;
+}
+
 export async function POST(request: Request) {
   try {
     const user = await getAuthenticatedUser();
@@ -14,7 +53,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { images, context, campaignId, additionalPrompt } = body;
+    const { images, context, campaignId, additionalPrompt, isCarousel, carouselCount } = body;
 
     if (!images || images.length === 0) {
       return NextResponse.json({ error: "Nenhuma imagem fornecida." }, { status: 400 });
@@ -218,46 +257,174 @@ export async function POST(request: Request) {
       throw new Error("Nenhuma imagem foi gerada pela IA");
     }
 
-    const base64Data = generatedImageBase64.split(',')[1];
-    const mimeType = generatedImageBase64.match(/data:([^;]+);/)?.[1] || 'image/png';
-    const buffer = Buffer.from(base64Data, 'base64');
+    const coverBase64Data = generatedImageBase64.split(',')[1];
+    const coverMimeType = generatedImageBase64.match(/data:([^;]+);/)?.[1] || 'image/png';
+    const coverBuffer = Buffer.from(coverBase64Data, 'base64');
 
-    const blob = new Blob([buffer], { type: mimeType });
-    const fileName = `social-media-${Date.now()}.png`;
-    const file = new File([blob], fileName, { type: mimeType });
+    const coverUrl = await uploadToKingHost(coverBuffer, coverMimeType, `social-media-${Date.now()}.png`);
 
-    const uploadUrl = process.env.KINGHOST_UPLOAD_URL;
-    const apiSecret = process.env.KINGHOST_API_SECRET;
+    // Carousel generation
+    if (isCarousel && carouselCount && carouselCount > 1) {
+      const slideCount = Math.min(Math.max(carouselCount - 1, 1), 9);
 
-    if (!uploadUrl || !apiSecret) {
-      throw new Error('Configuração de upload ausente');
-    }
+      // Usar Gemini text model para dividir o contexto em pontos de conteúdo descritivo
+      const splitResult = await genAI.models.generateContent({
+        model: "gemini-2.0-flash",
+        contents: `
+          Você é um professor especialista criando conteúdo educativo para um carrossel do Instagram.
 
-    const formDataToSend = new FormData();
-    formDataToSend.append('file', file);
-    formDataToSend.append('token', apiSecret);
-    formDataToSend.append('folder', 'social-media');
+          CONTEXTO DO ASSUNTO:
+          ${context}${campaignContext}
+          ${additionalPrompt ? `\nINSTRUÇÕES ADICIONAIS:\n${additionalPrompt}` : ''}
 
-    const uploadResponse = await fetch(uploadUrl, {
-      method: 'POST',
-      body: formDataToSend,
-    });
+          TÍTULO DA CAPA:
+          "${overlayText}"
 
-    if (!uploadResponse.ok) {
-      const errorText = await uploadResponse.text();
-      console.error("Erro KingHost:", errorText);
-      throw new Error(`Falha ao fazer upload: ${uploadResponse.statusText}`);
-    }
+          TAREFA:
+          Crie exatamente ${slideCount} textos descritivos para os slides de conteúdo do carrossel.
+          Cada slide deve ENSINAR algo específico sobre o assunto, como um mini-parágrafo informativo.
+          Pense como se estivesse escrevendo uma legenda educativa para o Instagram.
 
-    const uploadResult = await uploadResponse.json();
+          REGRAS OBRIGATÓRIAS:
+          - Exatamente ${slideCount} textos
+          - Cada texto deve ter entre 15 e 30 palavras (2-3 frases curtas)
+          - Separe cada texto com a marca |||
+          - Seja DESCRITIVO e EXPLICATIVO - não use frases genéricas ou vagas
+          - Cada slide deve trazer um ponto diferente e complementar ao anterior
+          - NÃO comece com o nome do tema (ex: NÃO faça "Microbiologia é...", "A IA pode...")
+          - Comece direto com o conteúdo, variando a forma de iniciar cada texto
+          - Em português do Brasil
+          - Tom educativo e acessível
 
-    if (!uploadResult.url) {
-      throw new Error('URL da imagem não foi retornada pelo servidor');
+          EXEMPLO BOM (tema: benefícios da automação industrial):
+          Sensores inteligentes monitoram a produção em tempo real, identificando falhas antes que causem paradas e prejuízos na linha.|||Ao substituir processos manuais repetitivos, as equipes focam em tarefas estratégicas que exigem criatividade e tomada de decisão.|||O controle preciso de cada etapa reduz o desperdício de matéria-prima em até 30%, otimizando custos e sustentabilidade.
+
+          EXEMPLO RUIM:
+          Automação industrial: sensores|||Automação: reduz processos manuais|||Benefícios: reduz desperdício
+
+          Retorne APENAS os textos separados por |||, sem explicações extras.
+        `,
+      });
+
+      const contentPoints = (splitResult.text || "")
+        .trim()
+        .split('|||')
+        .map(part => part.trim().replace(/^[-•*\d.)\s]+/, '').trim())
+        .filter(part => part.length > 0)
+        .slice(0, slideCount);
+
+      // Preencher com textos genéricos se necessário
+      while (contentPoints.length < slideCount) {
+        contentPoints.push(`Saiba mais sobre ${overlayText}`);
+      }
+
+      const carouselImages: string[] = [];
+      const carouselOverlayTexts: string[] = [];
+      const warnings: string[] = [];
+
+      for (let i = 0; i < contentPoints.length; i++) {
+        const slideText = contentPoints[i];
+        let slideSuccess = false;
+
+        for (let attempt = 0; attempt < 2 && !slideSuccess; attempt++) {
+          try {
+            const slidePrompt = `
+              Crie uma imagem profissional para um slide de carrossel do Instagram.
+
+              TEXTO PARA SOBREPOR NA IMAGEM:
+              "${slideText}"
+
+              CONTEXTO:
+              ${context}${campaignContext}
+
+              FORMATO:
+              Proporção 4:5 (retrato vertical para Instagram)
+
+              IMAGENS FORNECIDAS:
+              - A primeira imagem é a CAPA do carrossel (use como referência de cores e estilo visual)
+              - As demais imagens são logos/elementos da marca: inclua-os como MARCA D'ÁGUA discreta (canto inferior, semi-transparente, pequena) no slide
+
+              REQUISITOS OBRIGATÓRIOS:
+              1. Use um fundo limpo e minimalista com cores derivadas da imagem de capa
+              2. O texto deve ser o elemento PRINCIPAL da imagem, centralizado e bem distribuído
+              3. Tipografia moderna e legível - use tamanho MÉDIO adequado para textos mais longos
+              4. O texto pode ocupar 2-4 linhas, bem espaçadas e alinhadas ao centro ou à esquerda
+              5. Use gradientes suaves ou cores sólidas de fundo
+              6. O texto deve estar PERFEITAMENTE LEGÍVEL com bom contraste
+              7. Use efeitos de sombra ou contorno para legibilidade
+              8. Mantenha consistência visual com a imagem de capa
+              9. Não use fotos de fundo - apenas cores, gradientes ou padrões simples
+              10. Inclua os logos/elementos fornecidos como marca d'água sutil
+              ${campaign?.customPromptImage ? `\nINSTRUÇÕES DE DESIGN:\n${campaign.customPromptImage}` : ''}
+            `;
+
+            const slideResult = await genAI.models.generateContent({
+              model: "gemini-3-pro-image-preview",
+              contents: [
+                { text: slidePrompt },
+                {
+                  inlineData: {
+                    mimeType: coverMimeType,
+                    data: coverBase64Data
+                  }
+                },
+                ...imageParts
+              ],
+              config: {
+                responseModalities: ["TEXT", "IMAGE"],
+                imageConfig: {
+                  aspectRatio: "4:5",
+                  imageSize: "1K"
+                }
+              }
+            });
+
+            let slideImageBase64 = "";
+            if (slideResult.candidates && slideResult.candidates.length > 0) {
+              for (const part of slideResult.candidates[0].content?.parts || []) {
+                if (part.inlineData) {
+                  slideImageBase64 = part.inlineData.data || "";
+                  break;
+                }
+              }
+            }
+
+            if (!slideImageBase64) {
+              throw new Error(`Slide ${i + 2}: nenhuma imagem gerada`);
+            }
+
+            const slideBuffer = Buffer.from(slideImageBase64, 'base64');
+            const slideUrl = await uploadToKingHost(slideBuffer, 'image/png', `social-media-carousel-${Date.now()}-${i + 2}.png`);
+
+            carouselImages.push(slideUrl);
+            carouselOverlayTexts.push(slideText);
+            slideSuccess = true;
+          } catch (slideError: unknown) {
+            const errorMsg = slideError instanceof Error ? slideError.message : String(slideError);
+            console.error(`Erro ao gerar slide ${i + 2} (tentativa ${attempt + 1}):`, errorMsg);
+            if (attempt === 1) {
+              warnings.push(`Slide ${i + 2} não pôde ser gerado`);
+            }
+          }
+        }
+      }
+
+      return NextResponse.json({
+        success: true,
+        generatedImage: coverUrl,
+        overlayText: overlayText,
+        isCarousel: true,
+        carouselImages,
+        carouselOverlayTexts,
+        message: warnings.length > 0
+          ? `Carrossel gerado com ${carouselImages.length + 1} de ${carouselCount} slides. ${warnings.join('. ')}`
+          : `Carrossel com ${carouselImages.length + 1} slides gerado com sucesso!`
+      });
     }
 
     return NextResponse.json({
       success: true,
-      generatedImage: uploadResult.url,
+      generatedImage: coverUrl,
       overlayText: overlayText,
       message: "Imagem gerada e enviada com sucesso!"
     });

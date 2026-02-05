@@ -10,6 +10,9 @@ export interface ISocialMediaPost extends Document {
   overlayText: string;
   description: string;
   originalImages?: string[];
+  isCarousel?: boolean;
+  carouselImages?: string[];
+  carouselOverlayTexts?: string[];
   aspectRatio: string;
   status: 'draft' | 'pending' | 'scheduled' | 'published' | 're-evaluation' | 'rejected';
   scheduledAt?: Date | null;
@@ -62,6 +65,18 @@ const SocialMediaPostSchema: Schema = new Schema(
       trim: true
     },
     originalImages: {
+      type: [String],
+      default: []
+    },
+    isCarousel: {
+      type: Boolean,
+      default: false
+    },
+    carouselImages: {
+      type: [String],
+      default: []
+    },
+    carouselOverlayTexts: {
       type: [String],
       default: []
     },

@@ -13,7 +13,8 @@ import {
   RefreshCw,
   Search,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Layers
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { PostDetailModal, PostForModal } from "./PostDetailModal";
@@ -316,6 +317,12 @@ export function PendingPostsReview({ onEditPost }: PendingPostsReviewProps) {
               <div className="absolute top-2 right-2">
                 {getStatusBadge(post.status)}
               </div>
+              {post.isCarousel && (
+                <div className="absolute top-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                  <Layers size={12} />
+                  {1 + (post.carouselImages?.length || 0)}
+                </div>
+              )}
               {/* Rejection indicator */}
               {post.rejectionReason && (
                 <div className="absolute bottom-2 left-2 right-2 bg-orange-100 text-orange-700 text-xs px-2 py-1 rounded flex items-center gap-1">
