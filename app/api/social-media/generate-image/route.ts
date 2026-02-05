@@ -5,6 +5,9 @@ import connectDB from "@/lib/mongodb";
 import Campaign from "@/lib/models/Campaign";
 import SocialMediaPost from "@/lib/models/SocialMediaPost";
 import mongoose from "mongoose";
+import sharp from "sharp";
+import path from "path";
+import fs from "fs";
 
 export const maxDuration = 300;
 
@@ -65,6 +68,39 @@ async function uploadToKingHost(buffer: Buffer, mimeType: string, fileName: stri
   return uploadResult.url;
 }
 
+async function overlayLogo(imageBuffer: Buffer): Promise<Buffer> {
+  const logoPath = path.join(process.cwd(), 'public', 'styles', 'logo-watermark.svg');
+  const logoSvg = fs.readFileSync(logoPath);
+
+  const logoWidth = 150;
+  const logoResized = await sharp(logoSvg)
+    .resize({ width: logoWidth })
+    .png()
+    .toBuffer();
+
+  const image = sharp(imageBuffer);
+  const { width: imgWidth, height: imgHeight } = await image.metadata();
+
+  if (!imgWidth || !imgHeight) {
+    return imageBuffer;
+  }
+
+  const logoMeta = await sharp(logoResized).metadata();
+  const logoHeight = logoMeta.height || 56;
+
+  const left = Math.round((imgWidth - logoWidth) / 2);
+  const top = imgHeight - logoHeight - 30;
+
+  return image
+    .composite([{
+      input: logoResized,
+      left,
+      top,
+    }])
+    .png()
+    .toBuffer();
+}
+
 export async function POST(request: Request) {
   try {
     const user = await getAuthenticatedUser();
@@ -75,8 +111,11 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { images, context, campaignId, additionalPrompt, isCarousel, carouselCount, styleTemplate } = body;
 
-    if (!images || images.length === 0) {
-      return NextResponse.json({ error: "Nenhuma imagem fornecida." }, { status: 400 });
+    const hasImages = images && images.length > 0;
+    const hasStyle = !!styleTemplate?.images;
+
+    if (!hasImages && !hasStyle) {
+      return NextResponse.json({ error: "Forneça imagens ou selecione um template de estilo." }, { status: 400 });
     }
 
     if (!context) {
@@ -188,7 +227,7 @@ export async function POST(request: Request) {
     });
     const overlayText = (textResult.text || "").trim().replace(/^["']|["']$/g, '');
 
-    const imageParts = await Promise.all(images.map(async (img: string) => {
+    const imageParts = await Promise.all((images || []).map(async (img: string) => {
       let base64Data: string;
       let mimeType: string;
 
@@ -259,7 +298,7 @@ export async function POST(request: Request) {
 
     //prompt da imagem principal
     const imagePrompt = `
-        Crie uma imagem profissional para redes sociais mesclando as imagens fornecidas de forma criativa e harmoniosa.
+        Crie uma imagem profissional para redes sociais${hasImages ? ' mesclando as imagens fornecidas de forma criativa e harmoniosa' : ''}.
         ${styleContext}
         TEXTO PARA SOBREPOR NA IMAGEM:
         "${overlayText}"
@@ -273,7 +312,7 @@ export async function POST(request: Request) {
         IMPORTANTE: A imagem DEVE ter proporção 4:5 (retrato vertical para Instagram).
 
         REQUISITOS OBRIGATÓRIOS:
-        1. Mescle todas as imagens fornecidas em uma composição única e atraente
+        ${hasImages ? '1. Mescle todas as imagens fornecidas em uma composição única e atraente' : '1. Crie uma composição visual atraente baseada no contexto fornecido'}
         2. Adicione o texto "${overlayText}" de forma DESTACADA e LEGÍVEL NO CENTRO DA IMAGEM, palavras não podem quebrar linhas
         3. Use tipografia moderna, profissional e em negrito
         4. O texto não deve ter cores que contrastem tanto com o fundo
@@ -281,7 +320,8 @@ export async function POST(request: Request) {
         6. Design limpo, moderno e profissional
         7. O texto deve estar CLARAMENTE VISÍVEL e ser o elemento principal
         8. Use efeitos de sombra ou contorno no texto para melhorar a legibilidade
-        ${previousPostsContext ? '9. Mantenha consistência visual com as publicações anteriores da campanha' : ''}
+        9. NÃO inclua nenhum logo, marca d'água ou branding na imagem. O logo será adicionado automaticamente.
+        ${previousPostsContext ? '10. Mantenha consistência visual com as publicações anteriores da campanha' : ''}
         ${campaign?.customPromptImage ? `\n        INSTRUÇÕES ADICIONAIS DE DESIGN DO USUÁRIO:\n        ${campaign.customPromptImage}` : ''}
         ${styleCoverPart ? '\n        IMAGEM DE REFERÊNCIA DE ESTILO: A primeira imagem após o prompt é o estilo visual a ser seguido.' : ''}
         `;
@@ -319,9 +359,10 @@ export async function POST(request: Request) {
 
     const coverBase64Data = generatedImageBase64.split(',')[1];
     const coverMimeType = generatedImageBase64.match(/data:([^;]+);/)?.[1] || 'image/png';
-    const coverBuffer = Buffer.from(coverBase64Data, 'base64');
+    const coverRawBuffer = Buffer.from(coverBase64Data, 'base64');
+    const coverBuffer = await overlayLogo(coverRawBuffer);
 
-    const coverUrl = await uploadToKingHost(coverBuffer, coverMimeType, `social-media-${Date.now()}.png`);
+    const coverUrl = await uploadToKingHost(coverBuffer, 'image/png', `social-media-${Date.now()}.png`);
 
     // Carousel generation
     if (isCarousel && carouselCount && carouselCount > 1) {
@@ -400,7 +441,6 @@ export async function POST(request: Request) {
               - Mesma paleta de cores de fundo
               - Mesmo estilo de tipografia
               - Mesma composição e layout
-              - Mesma POSIÇÃO DO LOGO (topo ou base - mantenha consistente)
               - Mesmos elementos decorativos
               O slide gerado DEVE parecer parte da mesma série das imagens de referência.
             ` : '';
@@ -417,20 +457,15 @@ export async function POST(request: Request) {
               FORMATO:
               Proporção 4:5 (retrato vertical para Instagram)
 
-              POSIÇÃO DO LOGO (REGRA CRÍTICA):
-              - Observe a CAPA do carrossel fornecida
-              - Se o logo está na parte INFERIOR da capa → posicione na parte INFERIOR deste slide
-              - Se o logo está na parte SUPERIOR da capa → posicione na parte SUPERIOR deste slide
-              - MANTENHA A MESMA POSIÇÃO em todos os slides
-              ${styleSlideParts.length > 0 ? '- As primeiras imagens são REFERÊNCIAS DE ESTILO - siga este estilo visual exatamente.' : ''}
+              ${styleSlideParts.length > 0 ? 'As primeiras imagens são REFERÊNCIAS DE ESTILO - siga este estilo visual exatamente.' : ''}
 
               REQUISITOS PARA O SLIDE:
               1. FUNDO: Cor sólida ou gradiente sutil das cores da CAPA. Sem fotos no fundo.
               2. TEXTO: Legível, bem distribuído, pode ocupar 2-4 linhas. Fonte da mesma família da capa.
               3. CORES: Consistentes com a capa (mesmas cores de texto).
-              4. LOGO: Mesma posição da capa. Marca d'água sutil.
-              5. COMPOSIÇÃO: Espaço negativo amplo. O texto é o elemento principal.
-              6. LEGIBILIDADE: Sombra sutil no texto se necessário para contraste.
+              4. COMPOSIÇÃO: Espaço negativo amplo. O texto é o elemento principal.
+              5. LEGIBILIDADE: Sombra sutil no texto se necessário para contraste.
+              6. NÃO inclua nenhum logo, marca d'água ou branding na imagem. O logo será adicionado automaticamente.
               ${campaign?.customPromptImage ? `\nINSTRUÇÕES DE DESIGN:\n${campaign.customPromptImage}` : ''}
             `;
 
@@ -470,7 +505,8 @@ export async function POST(request: Request) {
               throw new Error(`Slide ${i + 2}: nenhuma imagem gerada`);
             }
 
-            const slideBuffer = Buffer.from(slideImageBase64, 'base64');
+            const slideRawBuffer = Buffer.from(slideImageBase64, 'base64');
+            const slideBuffer = await overlayLogo(slideRawBuffer);
             const slideUrl = await uploadToKingHost(slideBuffer, 'image/png', `social-media-carousel-${Date.now()}-${i + 2}.png`);
 
             carouselImages.push(slideUrl);

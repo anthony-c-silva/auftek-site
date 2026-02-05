@@ -86,8 +86,12 @@ export function SocialMediaForm({ onGenerate, onStaticPost, isGenerating, campai
         description: additionalPrompt.trim() || undefined
       });
     } else {
-      if (images.length === 0 || !context.trim()) {
-        alert("Por favor, adicione pelo menos uma imagem e descreva o contexto.");
+      if (!context.trim()) {
+        alert("Por favor, descreva o contexto da publicação.");
+        return;
+      }
+      if (images.length === 0 && !selectedStyle) {
+        alert("Por favor, adicione pelo menos uma imagem ou selecione um template de estilo.");
         return;
       }
       onGenerate({
@@ -195,7 +199,9 @@ export function SocialMediaForm({ onGenerate, onStaticPost, isGenerating, campai
                 <p className="text-xs text-slate-400">
                   {imageMode === 'static'
                     ? 'Selecione uma imagem pronta'
-                    : 'Suporta múltiplas imagens'
+                    : selectedStyle
+                      ? 'Opcional - o template de estilo será usado como referência'
+                      : 'Suporta múltiplas imagens'
                   }
                 </p>
               </>
@@ -386,7 +392,7 @@ export function SocialMediaForm({ onGenerate, onStaticPost, isGenerating, campai
       <div className="flex gap-3">
         <button
           type="submit"
-          disabled={isGenerating || uploading || images.length === 0 || !context.trim()}
+          disabled={isGenerating || uploading || !context.trim() || (images.length === 0 && imageMode === 'static') || (images.length === 0 && !selectedStyle && imageMode === 'ai')}
           className={`flex-1 text-white px-6 py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed font-bold flex items-center justify-center gap-2 ${imageMode === 'static' ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
             }`}
         >
