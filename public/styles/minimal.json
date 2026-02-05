@@ -1,0 +1,8 @@
+{
+  "id": "minimal",
+  "name": "Minimalista",
+  "description": "Design clean e sofisticado com foco no conteúdo",
+  "preview": "/styles/previews/minimal.png",
+  "coverPrompt": "Estilo minimalista e sofisticado. Use paleta de cores neutras: branco, preto, cinza e um tom accent sutil. Muito espaço em branco. Tipografia fina e elegante. Sem elementos decorativos desnecessários. Foco total no texto e nas imagens principais.",
+  "slidePrompt": "Fundo sólido branco ou cinza muito claro. Tipografia elegante e leve em preto ou cinza escuro. Máximo espaço negativo. Sem gradientes ou elementos decorativos. Apenas o texto como elemento central. Estilo editorial e refinado."
+}

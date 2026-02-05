@@ -1,0 +1,51 @@
+{
+  "styles": [
+    {
+      "id": "style1",
+      "name": "Estilo 1",
+      "preview": "/styles/style1/style1-cover.png",
+      "images": {
+        "cover": "/styles/style1/style1-cover.png",
+        "slides": [
+          "/styles/style1/style1-description1.png",
+          "/styles/style1/style1-description2.png",
+          "/styles/style1/style1-description3.png"
+        ]
+      }
+    },
+    {
+      "id": "style2",
+      "name": "Estilo 2",
+      "preview": "/styles/style2/style2-cover.png",
+      "images": {
+        "cover": "/styles/style2/style2-cover.png",
+        "slides": [
+          "/styles/style2/style2-description1.png",
+          "/styles/style2/style2-description2.png",
+          "/styles/style2/style2-description3.png"
+        ]
+      }
+    },
+    {
+      "id": "style3",
+      "name": "Estilo 3",
+      "preview": "/styles/style3/style3-cover.png",
+      "images": {
+        "cover": "/styles/style3/style3-cover.png",
+        "slides": [
+          "/styles/style3/style3-description1.png"
+        ]
+      }
+    }
+  ],
+  "util": {
+    "assets": [
+      "/styles/util/util-assets1.png",
+      "/styles/util/util-assets2.png"
+    ],
+    "catchphrases": [
+      "/styles/util/util-generic-catchphrase.png",
+      "/styles/util/util-company-catchphrase.png"
+    ]
+  }
+}

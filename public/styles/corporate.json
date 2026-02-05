@@ -1,0 +1,8 @@
+{
+  "id": "corporate",
+  "name": "Corporativo",
+  "description": "Estilo profissional e elegante para comunicação empresarial",
+  "preview": "/styles/previews/corporate.png",
+  "coverPrompt": "Estilo corporativo e profissional. Use cores sóbrias como azul marinho, cinza e branco. Tipografia elegante e séria (sans-serif moderna). Layout limpo e organizado com bastante espaço negativo. Elementos visuais minimalistas. O texto deve ser centralizado com fonte bold e clean.",
+  "slidePrompt": "Fundo com gradiente suave de azul escuro para azul mais claro ou cinza. Tipografia sans-serif moderna e profissional. Texto em branco ou azul claro para contraste. Layout centralizado com margens amplas. Estilo executivo e confiável."
+}
