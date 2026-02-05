@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedUser } from "@/lib/auth-server";
-import genAI from "@/lib/gemini";
+import genAI, { GEMINI_MODEL } from "@/lib/gemini";
 import connectDB from "@/lib/mongodb";
 import Campaign from "@/lib/models/Campaign";
 import SocialMediaPost from "@/lib/models/SocialMediaPost";
@@ -133,7 +133,7 @@ export async function POST(request: Request) {
       }
     }
 
-
+    //prompt do texto da imagem principal
     const textPrompt = `
         Você é um especialista em marketing de redes sociais.
         
@@ -163,7 +163,7 @@ export async function POST(request: Request) {
         `;
 
     const textResult = await genAI.models.generateContent({
-      model: "gemini-3-pro-image-preview",
+      model: GEMINI_MODEL,
       contents: textPrompt,
     });
     const overlayText = (textResult.text || "").trim().replace(/^["']|["']$/g, '');
@@ -200,6 +200,7 @@ export async function POST(request: Request) {
 
     const formatDescription = "formato retrato 4:5 (ideal para feed de Instagram)";
 
+    //prompt da imagem principal
     const imagePrompt = `
         Crie uma imagem profissional para redes sociais mesclando as imagens fornecidas de forma criativa e harmoniosa.
         
@@ -228,7 +229,7 @@ export async function POST(request: Request) {
         `;
 
     const imageResult = await genAI.models.generateContent({
-      model: "gemini-3-pro-image-preview",
+      model: GEMINI_MODEL,
       contents: [
         { text: imagePrompt },
         ...imageParts
@@ -267,9 +268,9 @@ export async function POST(request: Request) {
     if (isCarousel && carouselCount && carouselCount > 1) {
       const slideCount = Math.min(Math.max(carouselCount - 1, 1), 9);
 
-      // Usar Gemini text model para dividir o contexto em pontos de conteúdo descritivo
+      //prompt para os textos se carrossel
       const splitResult = await genAI.models.generateContent({
-        model: "gemini-2.0-flash",
+        model: GEMINI_MODEL,
         contents: `
           Você é um professor especialista criando conteúdo educativo para um carrossel do Instagram.
 
@@ -328,8 +329,9 @@ export async function POST(request: Request) {
 
         for (let attempt = 0; attempt < 2 && !slideSuccess; attempt++) {
           try {
+            //prompt para imagens se carrossel
             const slidePrompt = `
-              Crie uma imagem profissional para um slide de carrossel do Instagram.
+              Crie uma imagem profissional para um slide de carrossel do Instagram.why io
 
               TEXTO PARA SOBREPOR NA IMAGEM:
               "${slideText}"
@@ -341,25 +343,28 @@ export async function POST(request: Request) {
               Proporção 4:5 (retrato vertical para Instagram)
 
               IMAGENS FORNECIDAS:
-              - A primeira imagem é a CAPA do carrossel (use como referência de cores e estilo visual)
-              - As demais imagens são logos/elementos da marca: inclua-os como MARCA D'ÁGUA discreta (canto inferior, semi-transparente, pequena) no slide
+              - Você receberá imagens, como fotos e logos para gerar uma mescla dessas imagens.
+              - Caso mandado a logo da empresa AUFTEK, sempre será marca d'agua e deve estar alinhada no centro
+              - A primeira imagem do carrossel é a capa e aparecerá a mescla das imagens com um texto na frente de título.
+              - Demais imagens do carrossel seguirão um padrão.
 
-              REQUISITOS OBRIGATÓRIOS:
-              1. Use um fundo limpo e minimalista com cores solidas derivadas da imagem de capa
-              2. O texto deve ser o elemento PRINCIPAL da imagem, centralizado e bem distribuído
-              3. Tipografia moderna e legível - use tamanho MÉDIO adequado para textos mais longos
-              4. O texto pode ocupar 2-4 linhas, bem espaçadas e alinhadas ao centro ou à esquerda
-              5. Use gradientes suaves ou cores sólidas de fundo
-              6. O texto deve estar PERFEITAMENTE LEGÍVEL com bom contraste
-              7. Use efeitos de sombra ou contorno para legibilidade
-              8. Mantenha consistência visual com a imagem de capa
+              REQUISITOS OBRIGATÓRIOS PARA SLIDES DE CONTEÚDO (PÓS-CAPA):
+              1. ESTILO: Minimalista, focado em legibilidade (Swiss Style).
+              2. FUNDO: Estritamente cor sólida ou gradiente sutil, extraído das cores principais da CAPA fornecida. PROIBIDO o uso de fotos ou texturas complexas no fundo.
+              3. TIPOGRAFIA: Use exatamente a mesma família tipográfica da capa. O texto deve ser grande e centralizado.
+              4. CORES DO TEXTO: Se o texto da capa for branco, use branco. Se for preto, use preto. Mantenha 100% de consistência.
+              5. ELEMENTOS VISUAIS: Use as imagens fornecidas apenas como pequenos ícones de apoio ou a logo como marca d'água centralizada e sutil.
+              6. COMPOSIÇÃO: Espaço negativo amplo. O texto não deve encostar nas bordas.
+              7. Use efeitos sutis de sombra apenas se necessário para garantir contraste absoluto com o fundo sólido.
+              8. Use efeitos sutis de sombra apenas se necessário para garantir contraste absoluto com o fundo sólido.
               9. Não use fotos de fundo - apenas cores sólidas, ou padrões simples
               10. Inclua os logos/elementos fornecidos como marca d'água sutil
+              11. USE O MESMO ESTILO (COR, CONTORNO) DE LETRA PARA TODOS OS PAINEIS
               ${campaign?.customPromptImage ? `\nINSTRUÇÕES DE DESIGN:\n${campaign.customPromptImage}` : ''}
             `;
 
             const slideResult = await genAI.models.generateContent({
-              model: "gemini-3-pro-image-preview",
+              model: GEMINI_MODEL,
               contents: [
                 { text: slidePrompt },
                 {
