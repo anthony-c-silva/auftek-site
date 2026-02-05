@@ -15,13 +15,16 @@ import {
     Layers
 } from "lucide-react";
 import { PostDetailModal, PostForModal } from "./PostDetailModal";
+import { useAuth } from "@/context/AuthContext";
 
 export function PublishedPostsGallery() {
+    const { user } = useAuth();
     const [posts, setPosts] = useState<PostForModal[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedPost, setSelectedPost] = useState<PostForModal | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
@@ -84,6 +87,34 @@ export function PublishedPostsGallery() {
         if (newPage >= 1 && newPage <= totalPages) {
             setCurrentPage(newPage);
             window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
+
+    const handleDelete = async (postId: string) => {
+        if (!confirm('Tem certeza que deseja excluir esta publicação?')) {
+            return;
+        }
+
+        setIsDeleting(true);
+        try {
+            const response = await fetch(`/api/social-media/posts/${postId}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Erro ao excluir publicação');
+            }
+
+            setPosts(posts.filter(p => p._id !== postId));
+            setSelectedPost(null);
+            setTotalPosts(prev => prev - 1);
+        } catch (error) {
+            console.error('Error deleting post:', error);
+            const errorMessage = error instanceof Error ? error.message : 'Erro ao excluir publicação';
+            alert(errorMessage);
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -297,6 +328,9 @@ export function PublishedPostsGallery() {
                 <PostDetailModal
                     post={selectedPost}
                     onClose={() => setSelectedPost(null)}
+                    onDelete={user?.role === 'admin' ? handleDelete : undefined}
+                    isProcessing={isDeleting}
+                    isAdmin={user?.role === 'admin'}
                 />
             )}
         </div>

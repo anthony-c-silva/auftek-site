@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { X, MessageSquare, ArrowLeft, Clock, Check, AlertCircle, RefreshCw, Calendar } from "lucide-react";
 import { PostDetailModal, PostForModal } from "./PostDetailModal";
+import { useAuth } from "@/context/AuthContext";
 
 interface CampaignPostsGalleryProps {
   campaignId: string;
@@ -12,10 +13,12 @@ interface CampaignPostsGalleryProps {
 }
 
 export function CampaignPostsGallery({ campaignId, campaignName, onClose, onEditPost }: CampaignPostsGalleryProps) {
+  const { user } = useAuth();
   const [posts, setPosts] = useState<PostForModal[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPost, setSelectedPost] = useState<PostForModal | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchPosts();
@@ -84,6 +87,33 @@ export function CampaignPostsGallery({ campaignId, campaignName, onClose, onEdit
       alert(errorMessage);
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const handleDelete = async (postId: string) => {
+    if (!confirm('Tem certeza que deseja excluir esta publicação?')) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/social-media/posts/${postId}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Erro ao excluir publicação');
+      }
+
+      setPosts(posts.filter(p => p._id !== postId));
+      setSelectedPost(null);
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao excluir publicação';
+      alert(errorMessage);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -169,12 +199,14 @@ export function CampaignPostsGallery({ campaignId, campaignName, onClose, onEdit
           post={selectedPost}
           onClose={() => setSelectedPost(null)}
           onResubmit={handleResubmit}
+          onDelete={user?.role === 'admin' ? handleDelete : undefined}
           onEdit={onEditPost ? (post) => {
             setSelectedPost(null);
             onClose();
             onEditPost(post);
           } : undefined}
-          isProcessing={isProcessing}
+          isProcessing={isProcessing || isDeleting}
+          isAdmin={user?.role === 'admin'}
         />
       )}
     </div>

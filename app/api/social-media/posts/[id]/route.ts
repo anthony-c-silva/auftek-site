@@ -264,9 +264,9 @@ export async function DELETE(
       );
     }
 
-    if (post.authorId.toString() !== user._id.toString()) {
+    if (user.role !== 'admin') {
       return NextResponse.json(
-        { error: "Você não tem permissão para excluir esta publicação." },
+        { error: "Apenas administradores podem excluir publicações." },
         { status: 403 }
       );
     }

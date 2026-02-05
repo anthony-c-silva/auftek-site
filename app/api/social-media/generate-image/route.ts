@@ -345,7 +345,7 @@ export async function POST(request: Request) {
               - As demais imagens são logos/elementos da marca: inclua-os como MARCA D'ÁGUA discreta (canto inferior, semi-transparente, pequena) no slide
 
               REQUISITOS OBRIGATÓRIOS:
-              1. Use um fundo limpo e minimalista com cores derivadas da imagem de capa
+              1. Use um fundo limpo e minimalista com cores solidas derivadas da imagem de capa
               2. O texto deve ser o elemento PRINCIPAL da imagem, centralizado e bem distribuído
               3. Tipografia moderna e legível - use tamanho MÉDIO adequado para textos mais longos
               4. O texto pode ocupar 2-4 linhas, bem espaçadas e alinhadas ao centro ou à esquerda
@@ -353,7 +353,7 @@ export async function POST(request: Request) {
               6. O texto deve estar PERFEITAMENTE LEGÍVEL com bom contraste
               7. Use efeitos de sombra ou contorno para legibilidade
               8. Mantenha consistência visual com a imagem de capa
-              9. Não use fotos de fundo - apenas cores, gradientes ou padrões simples
+              9. Não use fotos de fundo - apenas cores sólidas, ou padrões simples
               10. Inclua os logos/elementos fornecidos como marca d'água sutil
               ${campaign?.customPromptImage ? `\nINSTRUÇÕES DE DESIGN:\n${campaign.customPromptImage}` : ''}
             `;

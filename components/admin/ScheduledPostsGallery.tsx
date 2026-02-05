@@ -16,6 +16,7 @@ import {
   Layers
 } from "lucide-react";
 import { PostDetailModal, PostForModal } from "./PostDetailModal";
+import { useAuth } from "@/context/AuthContext";
 
 interface Author {
   _id: string;
@@ -44,6 +45,7 @@ interface ScheduledPost {
 }
 
 export function ScheduledPostsGallery() {
+  const { user } = useAuth();
   const [posts, setPosts] = useState<PostForModal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -275,18 +277,20 @@ export function ScheduledPostsGallery() {
                     {1 + (post.carouselImages?.length || 0)}
                   </div>
                 )}
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleDelete(post._id); }}
-                  disabled={deletingPostId === post._id}
-                  className="absolute top-2 left-2 p-2 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition hover:bg-red-700 disabled:opacity-50"
-                  title="Excluir post agendado"
-                >
-                  {deletingPostId === post._id ? (
-                    <Loader2 size={14} className="animate-spin" />
-                  ) : (
-                    <Trash2 size={14} />
-                  )}
-                </button>
+                {user?.role === 'admin' && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleDelete(post._id); }}
+                    disabled={deletingPostId === post._id}
+                    className="absolute top-2 left-2 p-2 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition hover:bg-red-700 disabled:opacity-50"
+                    title="Excluir post agendado"
+                  >
+                    {deletingPostId === post._id ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <Trash2 size={14} />
+                    )}
+                  </button>
+                )}
               </div>
 
               <div className="p-3">
@@ -375,7 +379,9 @@ export function ScheduledPostsGallery() {
         <PostDetailModal
           post={selectedPost}
           onClose={() => setSelectedPost(null)}
-          onDelete={handleDelete}
+          onDelete={user?.role === 'admin' ? handleDelete : undefined}
+          isProcessing={deletingPostId !== null}
+          isAdmin={user?.role === 'admin'}
         />
       )}
     </div>

@@ -31,6 +31,7 @@ export function PendingPostsReview({ onEditPost }: PendingPostsReviewProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -183,6 +184,34 @@ export function PendingPostsReview({ onEditPost }: PendingPostsReviewProps) {
       alert(errorMessage);
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  const handleDelete = async (postId: string) => {
+    if (!confirm('Tem certeza que deseja excluir esta publicação?')) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/social-media/posts/${postId}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Erro ao excluir publicação');
+      }
+
+      setPosts(posts.filter(p => p._id !== postId));
+      setSelectedPost(null);
+      setTotalPosts(prev => prev - 1);
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao excluir publicação';
+      alert(errorMessage);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -425,11 +454,12 @@ export function PendingPostsReview({ onEditPost }: PendingPostsReviewProps) {
           onApprove={handleApprove}
           onReject={handleReject}
           onResubmit={handleResubmit}
+          onDelete={user?.role === 'admin' ? handleDelete : undefined}
           onEdit={onEditPost ? (post) => {
             setSelectedPost(null);
             onEditPost(post);
           } : undefined}
-          isProcessing={isProcessing}
+          isProcessing={isProcessing || isDeleting}
           isAdmin={user?.role === 'admin'}
         />
       )}
