@@ -12,7 +12,8 @@ import {
     Search,
     ChevronLeft,
     ChevronRight,
-    Layers
+    Layers,
+    Trash2
 } from "lucide-react";
 import { PostDetailModal, PostForModal } from "./PostDetailModal";
 import { useAuth } from "@/context/AuthContext";
@@ -25,6 +26,7 @@ export function PublishedPostsGallery() {
     const [searchQuery, setSearchQuery] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
     const [isDeleting, setIsDeleting] = useState(false);
+    const [selectedPostIds, setSelectedPostIds] = useState<Set<string>>(new Set());
 
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
@@ -43,6 +45,7 @@ export function PublishedPostsGallery() {
         debounceTimerRef.current = setTimeout(() => {
             setDebouncedSearch(searchQuery);
             setCurrentPage(1);
+            setSelectedPostIds(new Set());
         }, 300);
 
         return () => {
@@ -86,6 +89,7 @@ export function PublishedPostsGallery() {
     const handlePageChange = (newPage: number) => {
         if (newPage >= 1 && newPage <= totalPages) {
             setCurrentPage(newPage);
+            setSelectedPostIds(new Set());
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     };
@@ -116,6 +120,65 @@ export function PublishedPostsGallery() {
         } finally {
             setIsDeleting(false);
         }
+    };
+
+    const togglePostSelection = (postId: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setSelectedPostIds(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(postId)) {
+                newSet.delete(postId);
+            } else {
+                newSet.add(postId);
+            }
+            return newSet;
+        });
+    };
+
+    const handleBulkDelete = async () => {
+        const count = selectedPostIds.size;
+        if (count === 0) return;
+
+        if (!confirm(`Tem certeza que deseja excluir ${count} publicação(ões)?`)) {
+            return;
+        }
+
+        setIsDeleting(true);
+        let deletedCount = 0;
+        const errors: string[] = [];
+
+        for (const postId of selectedPostIds) {
+            try {
+                const response = await fetch(`/api/social-media/posts/${postId}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    errors.push(error.error || `Erro ao excluir post ${postId}`);
+                } else {
+                    deletedCount++;
+                }
+            } catch (error) {
+                errors.push(`Erro ao excluir post ${postId}`);
+            }
+        }
+
+        if (deletedCount > 0) {
+            setPosts(posts.filter(p => !selectedPostIds.has(p._id)));
+            setTotalPosts(prev => prev - deletedCount);
+            setSelectedPostIds(new Set());
+        }
+
+        if (errors.length > 0) {
+            alert(`${deletedCount} publicação(ões) excluída(s). ${errors.length} erro(s).`);
+        }
+
+        setIsDeleting(false);
+    };
+
+    const clearSelection = () => {
+        setSelectedPostIds(new Set());
     };
 
     const formatDate = (dateString: string) => {
@@ -162,19 +225,48 @@ export function PublishedPostsGallery() {
                 <div>
                     <h2 className="text-xl font-bold text-slate-800">Publicações Aprovadas</h2>
                     <p className="text-sm text-slate-500">
-                        {debouncedSearch
-                            ? `${posts.length} de ${totalPosts} publicação(ões)`
-                            : `${totalPosts} publicação(ões) aprovada(s)`
+                        {selectedPostIds.size > 0
+                            ? `${selectedPostIds.size} selecionada(s)`
+                            : debouncedSearch
+                                ? `${posts.length} de ${totalPosts} publicação(ões)`
+                                : `${totalPosts} publicação(ões) aprovada(s)`
                         }
                     </p>
                 </div>
-                <button
-                    onClick={() => fetchPublishedPosts(currentPage, debouncedSearch)}
-                    className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition flex items-center gap-2"
-                >
-                    <RefreshCw size={18} />
-                    Atualizar
-                </button>
+                <div className="flex items-center gap-2">
+                    {user?.role === 'admin' && selectedPostIds.size > 0 && (
+                        <>
+                            <button
+                                onClick={clearSelection}
+                                className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition flex items-center gap-2"
+                            >
+                                <X size={18} />
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleBulkDelete}
+                                disabled={isDeleting}
+                                className="px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition flex items-center gap-2 disabled:opacity-50"
+                            >
+                                {isDeleting ? (
+                                    <Loader2 size={18} className="animate-spin" />
+                                ) : (
+                                    <Trash2 size={18} />
+                                )}
+                                Excluir ({selectedPostIds.size})
+                            </button>
+                        </>
+                    )}
+                    {selectedPostIds.size === 0 && (
+                        <button
+                            onClick={() => fetchPublishedPosts(currentPage, debouncedSearch)}
+                            className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition flex items-center gap-2"
+                        >
+                            <RefreshCw size={18} />
+                            Atualizar
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Search Bar */}
@@ -212,10 +304,14 @@ export function PublishedPostsGallery() {
 
             {/* Posts Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {posts.map((post) => (
+                {posts.map((post) => {
+                    const isSelected = selectedPostIds.has(post._id);
+                    return (
                     <div
                         key={post._id}
-                        className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition cursor-pointer"
+                        className={`bg-white rounded-lg shadow-sm border-2 overflow-hidden hover:shadow-md transition cursor-pointer ${
+                            isSelected ? 'border-red-500' : 'border-slate-200'
+                        }`}
                         onClick={() => setSelectedPost(post)}
                     >
                         {/* Thumbnail */}
@@ -229,8 +325,22 @@ export function PublishedPostsGallery() {
                                 <Check size={12} />
                                 Publicado
                             </div>
+                            {/* Checkbox for admin */}
+                            {user?.role === 'admin' && (
+                                <button
+                                    onClick={(e) => togglePostSelection(post._id, e)}
+                                    className={`absolute top-2 left-2 w-6 h-6 rounded border-2 flex items-center justify-center transition ${
+                                        isSelected
+                                            ? 'bg-red-500 border-red-500 text-white'
+                                            : 'bg-white/90 border-slate-300 hover:border-red-400'
+                                    }`}
+                                >
+                                    {isSelected && <Check size={14} />}
+                                </button>
+                            )}
+                            {/* Carousel indicator */}
                             {post.isCarousel && (
-                                <div className="absolute top-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                                <div className={`absolute ${user?.role === 'admin' ? 'bottom-2' : 'top-2'} left-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1`}>
                                     <Layers size={12} />
                                     {1 + (post.carouselImages?.length || 0)}
                                 </div>
@@ -269,7 +379,8 @@ export function PublishedPostsGallery() {
                             </div>
                         </div>
                     </div>
-                ))}
+                    );
+                })}
             </div>
 
             {/* Pagination Controls */}
