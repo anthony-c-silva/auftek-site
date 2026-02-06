@@ -16,7 +16,8 @@ import {
   Loader2,
   ChevronLeft,
   ChevronRight,
-  Smartphone
+  Smartphone,
+  LayoutGrid
 } from "lucide-react";
 
 interface Author {
@@ -365,12 +366,10 @@ export function PostDetailModal({
               <span className="text-slate-500">Cunho/Tom:</span>
               <span className="text-slate-700 font-medium">{getPostTypeLabel(post.postType)}</span>
             </div>
-            {post.format === 'stories' && (
-              <div className="flex items-center gap-1.5 bg-purple-50 text-purple-700 px-2.5 py-1 rounded-full text-xs font-medium">
-                <Smartphone size={12} />
-                Stories (9:16)
-              </div>
-            )}
+            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${post.format === 'stories' ? 'bg-purple-50 text-purple-700' : 'bg-blue-50 text-blue-700'}`}>
+              {post.format === 'stories' ? <Smartphone size={12} /> : <LayoutGrid size={12} />}
+              {post.format === 'stories' ? 'Stories (9:16)' : 'Feed (4:5)'}
+            </div>
           </div>
 
           {/* Original Images */}

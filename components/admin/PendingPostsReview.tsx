@@ -15,7 +15,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Layers,
-  Smartphone
+  Smartphone,
+  LayoutGrid
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { PostDetailModal, PostForModal } from "./PostDetailModal";
@@ -353,12 +354,11 @@ export function PendingPostsReview({ onEditPost }: PendingPostsReviewProps) {
                   {1 + (post.carouselImages?.length || 0)}
                 </div>
               )}
-              {post.format === 'stories' && (
-                <div className={`absolute ${post.isCarousel ? 'top-9' : 'top-2'} left-2 bg-purple-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1`}>
-                  <Smartphone size={12} />
-                  Stories
-                </div>
-              )}
+              {/* Format badge */}
+              <div className={`absolute ${post.isCarousel ? 'top-9' : 'top-2'} left-2 ${post.format === 'stories' ? 'bg-purple-600' : 'bg-blue-600'} text-white text-xs px-2 py-1 rounded-full flex items-center gap-1`}>
+                {post.format === 'stories' ? <Smartphone size={12} /> : <LayoutGrid size={12} />}
+                {post.format === 'stories' ? 'Stories' : 'Feed'}
+              </div>
               {/* Rejection indicator */}
               {post.rejectionReason && (
                 <div className="absolute bottom-2 left-2 right-2 bg-orange-100 text-orange-700 text-xs px-2 py-1 rounded flex items-center gap-1">
