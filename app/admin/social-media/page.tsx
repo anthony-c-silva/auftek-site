@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { ArrowLeft, Share2, FolderPlus, FolderOpen, ClipboardCheck } from "lucide-react";
+import { ArrowLeft, Share2, FolderPlus, FolderOpen, ClipboardCheck, LayoutGrid, Smartphone } from "lucide-react";
+import { PostFormat, FORMAT_CONFIG } from "@/lib/format-config";
 import { SocialMediaForm } from "@/components/admin/SocialMediaForm";
 import { GeneratedPostPreview } from "@/components/admin/GeneratedPostPreview";
 import { CampaignList } from "@/components/admin/CampaignList";
@@ -26,6 +27,7 @@ interface EditingPost {
   isCarousel?: boolean;
   carouselImages?: string[];
   carouselOverlayTexts?: string[];
+  format?: PostFormat;
   campaign: { _id: string; name: string; theme?: string } | null;
 }
 
@@ -36,6 +38,7 @@ export default function SocialMediaPage() {
   const [approvalSubView, setApprovalSubView] = useState<ApprovalSubView>('pending');
   const [showCreateCampaignModal, setShowCreateCampaignModal] = useState(false);
   const [selectedCampaign, setSelectedCampaign] = useState<{ _id: string; name: string; theme?: string; tone?: string } | null>(null);
+  const [postFormat, setPostFormat] = useState<PostFormat>('feed');
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedContent, setGeneratedContent] = useState<{
     generatedImage: string;
@@ -46,6 +49,7 @@ export default function SocialMediaPage() {
     isCarousel?: boolean;
     carouselImages?: string[];
     carouselOverlayTexts?: string[];
+    format: PostFormat;
   } | null>(null);
   // State for editing a post from re-evaluation
   const [editingPost, setEditingPost] = useState<EditingPost | null>(null);
@@ -92,6 +96,7 @@ export default function SocialMediaPage() {
         isCarousel: slides.length > 0,
         carouselImages: slides.map((s) => s.url),
         carouselOverlayTexts: slides.map((s) => s.overlayText),
+        format: postFormat,
       });
     } catch (error: unknown) {
       console.error("Erro ao preparar publicação:", error);
@@ -154,25 +159,59 @@ export default function SocialMediaPage() {
               /* Post Creation Form - when campaign is selected */
               <>
                 <div className="mb-6">
-                  <h1 className="text-2xl font-bold text-slate-900">
-                    {editingPost ? 'Editar Publicação' : `Publicar em: ${selectedCampaign.name}`}
-                  </h1>
-                  <p className="text-slate-500 text-sm mt-1">
-                    {editingPost
-                      ? 'Edite a publicação rejeitada.'
-                      : `Criando post para a campanha "${selectedCampaign.name}". A IA manterá consistência com posts anteriores.`
-                    }
-                  </p>
-                  <button
-                    onClick={() => {
-                      setSelectedCampaign(null);
-                      setEditingPost(null);
-                      setGeneratedContent(null);
-                    }}
-                    className="text-sm text-blue-600 hover:text-blue-700 mt-2"
-                  >
-                    {editingPost ? '← Cancelar edição' : '← Voltar para campanhas'}
-                  </button>
+                  <div className="flex items-center justify-between flex-wrap gap-4">
+                    <div>
+                      <h1 className="text-2xl font-bold text-slate-900">
+                        {editingPost ? 'Editar Publicação' : `Publicar em: ${selectedCampaign.name}`}
+                      </h1>
+                      <p className="text-slate-500 text-sm mt-1">
+                        {editingPost
+                          ? 'Edite a publicação rejeitada.'
+                          : `Criando post para a campanha "${selectedCampaign.name}". A IA manterá consistência com posts anteriores.`
+                        }
+                      </p>
+                      <button
+                        onClick={() => {
+                          setSelectedCampaign(null);
+                          setEditingPost(null);
+                          setGeneratedContent(null);
+                        }}
+                        className="text-sm text-blue-600 hover:text-blue-700 mt-2"
+                      >
+                        {editingPost ? '← Cancelar edição' : '← Voltar para campanhas'}
+                      </button>
+                    </div>
+
+                    {/* Format Toggle */}
+                    {!editingPost && (
+                      <div className="flex items-center bg-white border border-slate-200 rounded-lg p-1 shadow-sm">
+                        <button
+                          type="button"
+                          onClick={() => setPostFormat('feed')}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition ${
+                            postFormat === 'feed'
+                              ? 'bg-blue-600 text-white shadow-sm'
+                              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                          }`}
+                        >
+                          <LayoutGrid size={16} />
+                          Feed
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setPostFormat('stories')}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition ${
+                            postFormat === 'stories'
+                              ? 'bg-blue-600 text-white shadow-sm'
+                              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                          }`}
+                        >
+                          <Smartphone size={16} />
+                          Stories
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -185,6 +224,7 @@ export default function SocialMediaPage() {
                       onCompose={handleCompose}
                       isComposing={isGenerating}
                       campaign={selectedCampaign}
+                      postFormat={editingPost?.format || postFormat}
                     />
                   </div>
 
@@ -204,6 +244,7 @@ export default function SocialMediaPage() {
                         isCarousel={generatedContent.isCarousel}
                         carouselImages={generatedContent.carouselImages}
                         carouselOverlayTexts={generatedContent.carouselOverlayTexts}
+                        postFormat={generatedContent.format}
                         onEditComplete={() => {
                           // Clear editing state and go back to pending posts
                           setEditingPost(null);
@@ -276,6 +317,7 @@ export default function SocialMediaPage() {
 
             {approvalSubView === 'pending' ? (
               <PendingPostsReview onEditPost={(post) => {
+                const editFormat = (post.format as PostFormat) || 'feed';
                 setEditingPost({
                   _id: post._id,
                   generatedImage: post.generatedImage,
@@ -286,6 +328,7 @@ export default function SocialMediaPage() {
                   isCarousel: post.isCarousel,
                   carouselImages: post.carouselImages,
                   carouselOverlayTexts: post.carouselOverlayTexts,
+                  format: editFormat,
                   campaign: post.campaign ?? null,
                 });
                 if (post.campaign) {
@@ -300,6 +343,7 @@ export default function SocialMediaPage() {
                   isCarousel: post.isCarousel,
                   carouselImages: post.carouselImages,
                   carouselOverlayTexts: post.carouselOverlayTexts,
+                  format: editFormat,
                 });
                 setViewMode('campaigns');
               }} />

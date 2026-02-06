@@ -8,6 +8,7 @@ import mongoose from "mongoose";
 import sharp from "sharp";
 import path from "path";
 import fs from "fs";
+import { ALLOWED_ASPECT_RATIOS, FORMAT_CONFIG, getFormatByAspectRatio } from "@/lib/format-config";
 
 export const maxDuration = 300;
 
@@ -109,14 +110,11 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { images, context, campaignId, additionalPrompt, isCarousel, carouselCount, styleTemplate } = body;
+    const { context, campaignId, additionalPrompt, isCarousel, carouselCount, styleTemplate, aspectRatio: requestedAspectRatio } = body;
 
-    const hasImages = images && images.length > 0;
-    const hasStyle = !!styleTemplate?.images;
-
-    if (!hasImages && !hasStyle) {
-      return NextResponse.json({ error: "Forneça imagens ou selecione um template de estilo." }, { status: 400 });
-    }
+    const aspectRatio = ALLOWED_ASPECT_RATIOS.includes(requestedAspectRatio) ? requestedAspectRatio : '4:5';
+    const postFormat = getFormatByAspectRatio(aspectRatio);
+    const formatCfg = FORMAT_CONFIG[postFormat];
 
     if (!context) {
       return NextResponse.json({ error: "Contexto não fornecido." }, { status: 400 });
@@ -227,37 +225,7 @@ export async function POST(request: Request) {
     });
     const overlayText = (textResult.text || "").trim().replace(/^["']|["']$/g, '');
 
-    const imageParts = await Promise.all((images || []).map(async (img: string) => {
-      let base64Data: string;
-      let mimeType: string;
-
-      if (img.startsWith('data:')) {
-        base64Data = img.replace(/^data:image\/\w+;base64,/, "");
-        const mimeMatch = img.match(/^data:(image\/\w+);base64,/);
-        mimeType = mimeMatch ? mimeMatch[1] : "image/jpeg";
-      } else {
-        const imageResponse = await fetch(img);
-        if (!imageResponse.ok) {
-          throw new Error(`Erro ao baixar imagem: ${img}`);
-        }
-
-        const arrayBuffer = await imageResponse.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        base64Data = buffer.toString('base64');
-
-        const contentType = imageResponse.headers.get('content-type');
-        mimeType = contentType || 'image/png';
-      }
-
-      return {
-        inlineData: {
-          mimeType: mimeType,
-          data: base64Data
-        }
-      };
-    }));
-
-    const formatDescription = "formato retrato 4:5 (ideal para feed de Instagram)";
+    const formatDescription = formatCfg.formatDescription;
 
     // Carregar imagens de estilo se template foi selecionado
     let styleContext = "";
@@ -298,7 +266,7 @@ export async function POST(request: Request) {
 
     //prompt da imagem principal
     const imagePrompt = `
-        Crie uma imagem profissional para redes sociais${hasImages ? ' mesclando as imagens fornecidas de forma criativa e harmoniosa' : ''}.
+        Crie uma imagem profissional para redes sociais.
         ${styleContext}
         TEXTO PARA SOBREPOR NA IMAGEM:
         "${overlayText}"
@@ -309,21 +277,21 @@ export async function POST(request: Request) {
 
         FORMATO:
         ${formatDescription}
-        IMPORTANTE: A imagem DEVE ter proporção 4:5 (retrato vertical para Instagram).
+        IMPORTANTE: ${formatCfg.promptAspectNote}
 
         REQUISITOS OBRIGATÓRIOS:
-        ${hasImages ? '1. Mescle todas as imagens fornecidas em uma composição única e atraente' : '1. Crie uma composição visual atraente baseada no contexto fornecido'}
+        1. Crie uma composição visual atraente baseada no contexto fornecido
         2. Adicione o texto "${overlayText}" de forma DESTACADA e LEGÍVEL NO CENTRO DA IMAGEM (centralizado vertical e horizontalmente), palavras não podem quebrar linhas
         3. Use tipografia moderna, profissional e em negrito
         4. O texto não deve ter cores que contrastem tanto com o fundo
-        5. Layout otimizado para ${formatDescription} com proporção exata 4:5
+        5. Layout otimizado para ${formatDescription} com proporção exata ${aspectRatio}
         6. Design limpo, moderno e profissional
         7. O texto deve estar CLARAMENTE VISÍVEL e ser o elemento principal
         8. Use efeitos de sombra ou contorno no texto para melhorar a legibilidade
         9. NÃO inclua nenhum logo, marca d'água ou branding na imagem. O logo será adicionado automaticamente.
         10. MUITO IMPORTANTE: Os 15% inferiores da imagem DEVEM ficar LIVRES de texto, elementos importantes ou informações. Essa área será reservada para o logo da empresa. O texto NUNCA deve descer até a parte inferior da imagem.
         11. NÃO inclua setas, indicadores de navegação ou elementos de UI (como setas para "deslizar" ou "scroll"). A imagem deve ser apenas o conteúdo visual.
-        ${previousPostsContext ? '10. Mantenha consistência visual com as publicações anteriores da campanha' : ''}
+        ${previousPostsContext ? '12. Mantenha consistência visual com as publicações anteriores da campanha' : ''}
         ${campaign?.customPromptImage ? `\n        INSTRUÇÕES ADICIONAIS DE DESIGN DO USUÁRIO:\n        ${campaign.customPromptImage}` : ''}
         ${styleCoverPart ? '\n        IMAGEM DE REFERÊNCIA DE ESTILO: A primeira imagem após o prompt é o estilo visual a ser seguido.' : ''}
         `;
@@ -333,12 +301,11 @@ export async function POST(request: Request) {
       contents: [
         { text: imagePrompt },
         ...(styleCoverPart ? [styleCoverPart] : []),
-        ...imageParts
       ],
       config: {
         responseModalities: ["TEXT", "IMAGE"],
         imageConfig: {
-          aspectRatio: "4:5",
+          aspectRatio,
           imageSize: "1K"
         }
       }
@@ -457,7 +424,7 @@ export async function POST(request: Request) {
               ${context}${campaignContext}
 
               FORMATO:
-              Proporção 4:5 (retrato vertical para Instagram)
+              Proporção ${aspectRatio} (${formatCfg.formatDescription})
 
               ${styleSlideParts.length > 0 ? 'As primeiras imagens são REFERÊNCIAS DE ESTILO - siga este estilo visual exatamente.' : ''}
 
@@ -484,12 +451,11 @@ export async function POST(request: Request) {
                     data: coverBase64Data
                   }
                 },
-                ...imageParts
               ],
               config: {
                 responseModalities: ["TEXT", "IMAGE"],
                 imageConfig: {
-                  aspectRatio: "4:5",
+                  aspectRatio,
                   imageSize: "1K"
                 }
               }

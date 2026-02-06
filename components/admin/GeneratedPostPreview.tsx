@@ -3,6 +3,7 @@
 import React from "react";
 import { Copy, Check, Save, Send, AlertCircle, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
+import { PostFormat, FORMAT_CONFIG } from "@/lib/format-config";
 
 interface GeneratedPostPreviewProps {
   generatedImage: string;
@@ -17,10 +18,11 @@ interface GeneratedPostPreviewProps {
   isCarousel?: boolean;
   carouselImages?: string[];
   carouselOverlayTexts?: string[];
+  postFormat?: PostFormat;
   onEditComplete?: () => void;
 }
 
-export function GeneratedPostPreview({ generatedImage, overlayText, description, originalImages, campaign, context, isAdmin = false, editPostId, rejectionReason, isCarousel, carouselImages, carouselOverlayTexts, onEditComplete }: GeneratedPostPreviewProps) {
+export function GeneratedPostPreview({ generatedImage, overlayText, description, originalImages, campaign, context, isAdmin = false, editPostId, rejectionReason, isCarousel, carouselImages, carouselOverlayTexts, postFormat = 'feed', onEditComplete }: GeneratedPostPreviewProps) {
   const [copiedDescription, setCopiedDescription] = useState(false);
   const [editedDescription, setEditedDescription] = useState(description);
   const [isSaving, setIsSaving] = useState(false);
@@ -80,6 +82,8 @@ export function GeneratedPostPreview({ generatedImage, overlayText, description,
             isCarousel: isCarousel || false,
             carouselImages: carouselImages || [],
             carouselOverlayTexts: carouselOverlayTexts || [],
+            format: postFormat,
+            aspectRatio: FORMAT_CONFIG[postFormat].aspectRatio,
           }),
         });
       } else {
@@ -93,7 +97,8 @@ export function GeneratedPostPreview({ generatedImage, overlayText, description,
             overlayText,
             description: editedDescription,
             originalImages,
-            aspectRatio: '4:5',
+            format: postFormat,
+            aspectRatio: FORMAT_CONFIG[postFormat].aspectRatio,
             status: status,
             scheduledAt: isScheduled && scheduledAt ? new Date(scheduledAt).toISOString() : null,
             isCarousel: isCarousel || false,

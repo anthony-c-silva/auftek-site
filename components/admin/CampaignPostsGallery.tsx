@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, MessageSquare, ArrowLeft, Clock, Check, AlertCircle, RefreshCw, Calendar } from "lucide-react";
+import { X, MessageSquare, ArrowLeft, Clock, Check, AlertCircle, RefreshCw, Calendar, Smartphone } from "lucide-react";
 import { PostDetailModal, PostForModal } from "./PostDetailModal";
 import { useAuth } from "@/context/AuthContext";
 
@@ -179,6 +179,12 @@ export function CampaignPostsGallery({ campaignId, campaignName, onClose, onEdit
                   <div className="absolute top-2 right-2">
                     {getStatusBadge(post.status)}
                   </div>
+                  {post.format === 'stories' && (
+                    <div className="absolute top-2 left-2 bg-purple-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                      <Smartphone size={12} />
+                      Stories
+                    </div>
+                  )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
                     <div className="absolute bottom-0 left-0 right-0 p-3">
                       <p className="text-white text-sm font-medium line-clamp-2">

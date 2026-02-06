@@ -13,7 +13,8 @@ import {
     ChevronLeft,
     ChevronRight,
     Layers,
-    Trash2
+    Trash2,
+    Smartphone
 } from "lucide-react";
 import { PostDetailModal, PostForModal } from "./PostDetailModal";
 import { useAuth } from "@/context/AuthContext";
@@ -343,6 +344,13 @@ export function PublishedPostsGallery() {
                                 <div className={`absolute ${user?.role === 'admin' ? 'bottom-2' : 'top-2'} left-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1`}>
                                     <Layers size={12} />
                                     {1 + (post.carouselImages?.length || 0)}
+                                </div>
+                            )}
+                            {/* Stories badge */}
+                            {post.format === 'stories' && (
+                                <div className={`absolute ${post.isCarousel ? 'bottom-8' : (user?.role === 'admin' ? 'bottom-2' : 'bottom-2')} left-2 bg-purple-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1`}>
+                                    <Smartphone size={12} />
+                                    Stories
                                 </div>
                             )}
                         </div>

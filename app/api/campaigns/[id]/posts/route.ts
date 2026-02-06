@@ -137,6 +137,8 @@ export async function POST(
       isCarousel,
       carouselImages,
       carouselOverlayTexts,
+      format,
+      aspectRatio,
       status,
       scheduledAt
     } = body;
@@ -196,7 +198,8 @@ export async function POST(
       isCarousel: isCarousel || false,
       carouselImages: carouselImages || [],
       carouselOverlayTexts: carouselOverlayTexts || [],
-      aspectRatio: '4:5',
+      format: format === 'stories' ? 'stories' : 'feed',
+      aspectRatio: aspectRatio || '4:5',
       status: finalStatus,
       submittedAt,
       publishedAt,

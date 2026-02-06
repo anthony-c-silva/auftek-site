@@ -5,6 +5,7 @@ import { Upload, X, Loader2, Sparkles, Image as ImageIcon, Palette, GripVertical
 import { Reorder } from "framer-motion";
 import { StyleSelectionModal, StyleTemplate } from "./StyleSelectionModal";
 import { ImageCropModal } from "./ImageCropModal";
+import { PostFormat, FORMAT_CONFIG } from "@/lib/format-config";
 
 interface GalleryItem {
   id: string;
@@ -21,9 +22,10 @@ interface SocialMediaFormProps {
   }) => void;
   isComposing: boolean;
   campaign?: { _id: string; name: string; theme?: string; tone?: string };
+  postFormat?: PostFormat;
 }
 
-export function SocialMediaForm({ onCompose, isComposing, campaign }: SocialMediaFormProps) {
+export function SocialMediaForm({ onCompose, isComposing, campaign, postFormat = 'feed' }: SocialMediaFormProps) {
   const [gallery, setGallery] = useState<GalleryItem[]>([]);
   const [timelineIds, setTimelineIds] = useState<string[]>([]);
   const [context, setContext] = useState("");
@@ -46,7 +48,7 @@ export function SocialMediaForm({ onCompose, isComposing, campaign }: SocialMedi
 
   // Gerar imagens com IA
   const handleGenerateAI = async () => {
-    if (!context.trim() && !selectedStyle) return;
+    if (!context.trim()) return;
     if (!campaign) {
       alert("Selecione uma campanha primeiro.");
       return;
@@ -54,22 +56,18 @@ export function SocialMediaForm({ onCompose, isComposing, campaign }: SocialMedi
 
     setIsGeneratingAI(true);
     try {
-      const uploadedUrls = gallery
-        .filter((g) => g.type === "uploaded")
-        .map((g) => g.url);
-
       const count = aiImageCount;
       const response = await fetch("/api/social-media/generate-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          images: uploadedUrls,
           context,
           campaignId: campaign._id,
           additionalPrompt: additionalPrompt.trim() || undefined,
           isCarousel: count > 1,
           carouselCount: count,
           styleTemplate: selectedStyle || undefined,
+          aspectRatio: FORMAT_CONFIG[postFormat].aspectRatio,
         }),
       });
 
@@ -318,7 +316,7 @@ export function SocialMediaForm({ onCompose, isComposing, campaign }: SocialMedi
           <button
             type="button"
             onClick={handleGenerateAI}
-            disabled={isDisabled || (!context.trim() && !selectedStyle)}
+            disabled={isDisabled || !context.trim()}
             className="w-full px-4 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2 text-sm"
           >
             {isGeneratingAI ? (
@@ -392,7 +390,8 @@ export function SocialMediaForm({ onCompose, isComposing, campaign }: SocialMedi
                   <img
                     src={item.url}
                     alt="Imagem"
-                    className="w-full aspect-[4/5] object-cover"
+                    className="w-full object-cover"
+                    style={{ aspectRatio: FORMAT_CONFIG[postFormat].cssAspect }}
                   />
 
                   {/* Badge tipo */}
@@ -468,7 +467,8 @@ export function SocialMediaForm({ onCompose, isComposing, campaign }: SocialMedi
                         <img
                           src={item.url}
                           alt={idx === 0 ? "Capa" : `Slide ${idx + 1}`}
-                          className="w-full aspect-[4/5] object-cover"
+                          className="w-full object-cover"
+                          style={{ aspectRatio: FORMAT_CONFIG[postFormat].cssAspect }}
                           draggable={false}
                         />
 
@@ -541,6 +541,8 @@ export function SocialMediaForm({ onCompose, isComposing, campaign }: SocialMedi
           file={currentCropFile}
           onCrop={handleCropConfirm}
           onCancel={handleCropCancel}
+          aspectRatio={FORMAT_CONFIG[postFormat].cropAspect}
+          aspectLabel={FORMAT_CONFIG[postFormat].label}
         />
       )}
 

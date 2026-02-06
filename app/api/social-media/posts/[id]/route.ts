@@ -104,7 +104,7 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { description, status, rejectionReason, generatedImage, overlayText, originalImages, context, scheduledAt, isCarousel, carouselImages, carouselOverlayTexts } = body;
+    const { description, status, rejectionReason, generatedImage, overlayText, originalImages, context, scheduledAt, isCarousel, carouselImages, carouselOverlayTexts, format, aspectRatio } = body;
 
     if (generatedImage !== undefined) {
       post.generatedImage = generatedImage;
@@ -126,6 +126,12 @@ export async function PATCH(
     }
     if (carouselOverlayTexts !== undefined) {
       post.carouselOverlayTexts = carouselOverlayTexts;
+    }
+    if (format !== undefined) {
+      post.format = format;
+    }
+    if (aspectRatio !== undefined) {
+      post.aspectRatio = aspectRatio;
     }
 
     // Update description if provided

@@ -8,6 +8,8 @@ interface ImageCropModalProps {
   file: File;
   onCrop: (croppedFile: File) => void;
   onCancel: () => void;
+  aspectRatio?: number;
+  aspectLabel?: string;
 }
 
 async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<File> {
@@ -44,7 +46,7 @@ async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<File> {
   });
 }
 
-export function ImageCropModal({ file, onCrop, onCancel }: ImageCropModalProps) {
+export function ImageCropModal({ file, onCrop, onCancel, aspectRatio = 4 / 5, aspectLabel = '4:5' }: ImageCropModalProps) {
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -77,14 +79,14 @@ export function ImageCropModal({ file, onCrop, onCancel }: ImageCropModalProps) 
   if (!imageSrc) return null;
 
   return (
-    <Modal isOpen={true} onClose={onCancel} title="Recortar Imagem (4:5)" size="lg">
+    <Modal isOpen={true} onClose={onCancel} title={`Recortar Imagem (${aspectLabel})`} size="lg">
       <div className="space-y-4">
         <div className="relative w-full h-[400px] bg-slate-900 rounded-lg overflow-hidden">
           <Cropper
             image={imageSrc}
             crop={crop}
             zoom={zoom}
-            aspect={4 / 5}
+            aspect={aspectRatio}
             onCropChange={setCrop}
             onZoomChange={setZoom}
             onCropComplete={onCropComplete}

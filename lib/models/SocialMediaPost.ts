@@ -13,6 +13,7 @@ export interface ISocialMediaPost extends Document {
   isCarousel?: boolean;
   carouselImages?: string[];
   carouselOverlayTexts?: string[];
+  format: 'feed' | 'stories';
   aspectRatio: string;
   status: 'draft' | 'pending' | 'scheduled' | 'published' | 're-evaluation' | 'rejected';
   scheduledAt?: Date | null;
@@ -79,6 +80,11 @@ const SocialMediaPostSchema: Schema = new Schema(
     carouselOverlayTexts: {
       type: [String],
       default: []
+    },
+    format: {
+      type: String,
+      enum: ['feed', 'stories'],
+      default: 'feed'
     },
     aspectRatio: {
       type: String,

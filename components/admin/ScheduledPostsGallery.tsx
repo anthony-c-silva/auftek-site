@@ -13,7 +13,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Trash2,
-  Layers
+  Layers,
+  Smartphone
 } from "lucide-react";
 import { PostDetailModal, PostForModal } from "./PostDetailModal";
 import { useAuth } from "@/context/AuthContext";
@@ -275,6 +276,12 @@ export function ScheduledPostsGallery() {
                   <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
                     <Layers size={12} />
                     {1 + (post.carouselImages?.length || 0)}
+                  </div>
+                )}
+                {post.format === 'stories' && (
+                  <div className="absolute bottom-2 left-2 bg-purple-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
+                    <Smartphone size={12} />
+                    Stories
                   </div>
                 )}
                 {user?.role === 'admin' && (

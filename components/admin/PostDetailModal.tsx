@@ -15,7 +15,8 @@ import {
   Copy,
   Loader2,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Smartphone
 } from "lucide-react";
 
 interface Author {
@@ -42,6 +43,7 @@ export interface PostForModal {
   isCarousel?: boolean;
   carouselImages?: string[];
   carouselOverlayTexts?: string[];
+  format?: 'feed' | 'stories';
   status: 'draft' | 'pending' | 'scheduled' | 'published' | 're-evaluation' | 'rejected';
   rejectionReason?: string;
   scheduledAt?: string;
@@ -357,10 +359,18 @@ export function PostDetailModal({
             </div>
           )}
 
-          {/* Post Type */}
-          <div className="flex items-center gap-4 text-sm">
-            <span className="text-slate-500">Cunho/Tom:</span>
-            <span className="text-slate-700 font-medium">{getPostTypeLabel(post.postType)}</span>
+          {/* Post Type & Format */}
+          <div className="flex items-center gap-4 text-sm flex-wrap">
+            <div className="flex items-center gap-2">
+              <span className="text-slate-500">Cunho/Tom:</span>
+              <span className="text-slate-700 font-medium">{getPostTypeLabel(post.postType)}</span>
+            </div>
+            {post.format === 'stories' && (
+              <div className="flex items-center gap-1.5 bg-purple-50 text-purple-700 px-2.5 py-1 rounded-full text-xs font-medium">
+                <Smartphone size={12} />
+                Stories (9:16)
+              </div>
+            )}
           </div>
 
           {/* Original Images */}
