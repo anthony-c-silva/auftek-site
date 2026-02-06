@@ -313,7 +313,7 @@ export async function POST(request: Request) {
 
         REQUISITOS OBRIGATÓRIOS:
         ${hasImages ? '1. Mescle todas as imagens fornecidas em uma composição única e atraente' : '1. Crie uma composição visual atraente baseada no contexto fornecido'}
-        2. Adicione o texto "${overlayText}" de forma DESTACADA e LEGÍVEL NO CENTRO DA IMAGEM, palavras não podem quebrar linhas
+        2. Adicione o texto "${overlayText}" de forma DESTACADA e LEGÍVEL NO CENTRO DA IMAGEM (centralizado vertical e horizontalmente), palavras não podem quebrar linhas
         3. Use tipografia moderna, profissional e em negrito
         4. O texto não deve ter cores que contrastem tanto com o fundo
         5. Layout otimizado para ${formatDescription} com proporção exata 4:5
@@ -321,6 +321,8 @@ export async function POST(request: Request) {
         7. O texto deve estar CLARAMENTE VISÍVEL e ser o elemento principal
         8. Use efeitos de sombra ou contorno no texto para melhorar a legibilidade
         9. NÃO inclua nenhum logo, marca d'água ou branding na imagem. O logo será adicionado automaticamente.
+        10. MUITO IMPORTANTE: Os 15% inferiores da imagem DEVEM ficar LIVRES de texto, elementos importantes ou informações. Essa área será reservada para o logo da empresa. O texto NUNCA deve descer até a parte inferior da imagem.
+        11. NÃO inclua setas, indicadores de navegação ou elementos de UI (como setas para "deslizar" ou "scroll"). A imagem deve ser apenas o conteúdo visual.
         ${previousPostsContext ? '10. Mantenha consistência visual com as publicações anteriores da campanha' : ''}
         ${campaign?.customPromptImage ? `\n        INSTRUÇÕES ADICIONAIS DE DESIGN DO USUÁRIO:\n        ${campaign.customPromptImage}` : ''}
         ${styleCoverPart ? '\n        IMAGEM DE REFERÊNCIA DE ESTILO: A primeira imagem após o prompt é o estilo visual a ser seguido.' : ''}
@@ -461,11 +463,13 @@ export async function POST(request: Request) {
 
               REQUISITOS PARA O SLIDE:
               1. FUNDO: Cor sólida ou gradiente sutil das cores da CAPA. Sem fotos no fundo.
-              2. TEXTO: Legível, bem distribuído, pode ocupar 2-4 linhas. Fonte da mesma família da capa.
+              2. TEXTO: Legível, bem distribuído, pode ocupar 2-4 linhas. Fonte da mesma família da capa. Posicione o texto NO CENTRO DA IMAGEM (centralizado vertical e horizontalmente).
               3. CORES: Consistentes com a capa (mesmas cores de texto).
               4. COMPOSIÇÃO: Espaço negativo amplo. O texto é o elemento principal.
               5. LEGIBILIDADE: Sombra sutil no texto se necessário para contraste.
               6. NÃO inclua nenhum logo, marca d'água ou branding na imagem. O logo será adicionado automaticamente.
+              7. MUITO IMPORTANTE: Os 15% inferiores da imagem DEVEM ficar LIVRES de texto ou elementos importantes. Essa área será reservada para o logo da empresa.
+              8. NÃO inclua setas, indicadores de navegação ou elementos de UI (como setas para "deslizar" ou "scroll"). A imagem deve ser apenas o conteúdo visual.
               ${campaign?.customPromptImage ? `\nINSTRUÇÕES DE DESIGN:\n${campaign.customPromptImage}` : ''}
             `;
 
