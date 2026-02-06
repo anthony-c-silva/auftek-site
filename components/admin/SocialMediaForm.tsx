@@ -153,151 +153,6 @@ export function SocialMediaForm({ onGenerate, onStaticPost, isGenerating, campai
         )}
       </div>
 
-      {/* Image Upload Section - Only enabled after mode selection */}
-      <div className={!imageMode ? 'opacity-50 pointer-events-none' : ''}>
-        <label className="block text-sm font-bold text-slate-700 mb-2">
-          {imageMode === 'static' ? 'Imagem' : 'Imagens'}
-        </label>
-
-        {/* Upload Area */}
-        <div className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${!imageMode ? 'border-slate-200 bg-slate-50' : 'border-slate-300 hover:border-blue-400'
-          }`}>
-          <input
-            type="file"
-            id="image-upload"
-            multiple={imageMode === 'ai'}
-            accept="image/*"
-            onChange={(e) => handleFileUpload(e.target.files)}
-            className="hidden"
-            disabled={!imageMode || uploading || isGenerating}
-          />
-          <label
-            htmlFor="image-upload"
-            className={`flex flex-col items-center gap-2 ${!imageMode ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-          >
-            {uploading ? (
-              <>
-                <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
-                <p className="text-sm text-slate-600">Fazendo upload...</p>
-              </>
-            ) : !imageMode ? (
-              <>
-                <Upload className="w-12 h-12 text-slate-300" />
-                <p className="text-sm text-slate-400">
-                  Selecione o tipo de publicação acima
-                </p>
-              </>
-            ) : (
-              <>
-                <Upload className="w-12 h-12 text-slate-400" />
-                <p className="text-sm text-slate-600">
-                  {imageMode === 'static'
-                    ? 'Clique para fazer upload da imagem'
-                    : 'Clique para fazer upload ou arraste imagens aqui'
-                  }
-                </p>
-                <p className="text-xs text-slate-400">
-                  {imageMode === 'static'
-                    ? 'Selecione uma imagem pronta'
-                    : selectedStyle
-                      ? 'Opcional - o template de estilo será usado como referência'
-                      : 'Suporta múltiplas imagens'
-                  }
-                </p>
-              </>
-            )}
-          </label>
-        </div>
-
-        {/* Image Preview Grid */}
-        {images.length > 0 && (
-          <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {images.map((img, index) => (
-              <div key={index} className="relative group">
-                <img
-                  src={img}
-                  alt={`Upload ${index + 1}`}
-                  className="w-full h-32 object-cover rounded-lg border border-slate-200"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeImage(index)}
-                  className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Campaign Info */}
-      {campaign && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h3 className="text-sm font-bold text-blue-900 mb-2">Campanha Selecionada</h3>
-          <p className="text-sm text-blue-800 font-medium mb-1">{campaign.name}</p>
-          {campaign.theme && (
-            <p className="text-xs text-blue-700 mb-1">
-              <span className="font-medium">Tema:</span> {campaign.theme}
-            </p>
-          )}
-          {campaign.tone && (
-            <p className="text-xs text-blue-700">
-              <span className="font-medium">Tom:</span> {campaign.tone}
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Context Input */}
-      <div>
-        <label htmlFor="context" className="block text-sm font-bold text-slate-700 mb-2">
-          Contexto da Publicação
-        </label>
-        <textarea
-          id="context"
-          value={context}
-          onChange={(e) => setContext(e.target.value)}
-          placeholder="Descreva o contexto da publicação. Ex: Lançamento de novo produto, evento corporativo, conquista da empresa..."
-          className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-slate-900 placeholder:text-slate-400"
-          rows={8}
-          disabled={isGenerating}
-        />
-        <p className="text-xs text-slate-500 mt-1">
-          {imageMode === 'ai'
-            ? 'A IA irá gerar automaticamente um texto curto para a imagem baseado neste contexto. Formato: 4:5 (Feed do Instagram)'
-            : 'Descreva o contexto da publicação. A IA irá gerar a descrição baseada neste texto.'
-          }
-        </p>
-      </div>
-
-      {/* Additional Prompt (Optional) - Only show for AI mode */}
-      {
-        imageMode === 'ai' && (
-          <div>
-            <label htmlFor="additionalPrompt" className="block text-sm font-bold text-slate-700 mb-2">
-              Instruções Adicionais para IA
-            </label>
-            <textarea
-              id="additionalPrompt"
-              value={additionalPrompt}
-              onChange={(e) => setAdditionalPrompt(e.target.value)}
-              placeholder="Ex: Use cores quentes, foque em elementos de verão, tom mais descontraído..."
-              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-slate-900 placeholder:text-slate-400"
-              rows={3}
-              disabled={isGenerating}
-            />
-            <p className="text-xs text-slate-500 mt-1">
-              {campaign
-                ? 'Estas instruções complementam os prompts da campanha para esta publicação específica.'
-                : 'Forneça instruções específicas para a IA sobre estilo, tom ou elementos visuais desejados.'
-              }
-            </p>
-          </div>
-        )
-      }
-
       {/* Carousel Toggle - Only for AI mode */}
       {imageMode === 'ai' && (
         <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
@@ -379,6 +234,133 @@ export function SocialMediaForm({ onGenerate, onStaticPost, isGenerating, campai
           )}
         </div>
       )}
+
+      {/* Image Upload Section - Only enabled after mode selection */}
+      <div className={!imageMode ? 'opacity-50 pointer-events-none' : ''}>
+        <label className="block text-sm font-bold text-slate-700 mb-2">
+          {imageMode === 'static' ? 'Imagem' : 'Imagens'}
+        </label>
+
+        {/* Upload Area */}
+        <div className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${!imageMode ? 'border-slate-200 bg-slate-50' : 'border-slate-300 hover:border-blue-400'
+          }`}>
+          <input
+            type="file"
+            id="image-upload"
+            multiple={imageMode === 'ai'}
+            accept="image/*"
+            onChange={(e) => handleFileUpload(e.target.files)}
+            className="hidden"
+            disabled={!imageMode || uploading || isGenerating}
+          />
+          <label
+            htmlFor="image-upload"
+            className={`flex flex-col items-center gap-2 ${!imageMode ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+          >
+            {uploading ? (
+              <>
+                <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
+                <p className="text-sm text-slate-600">Fazendo upload...</p>
+              </>
+            ) : !imageMode ? (
+              <>
+                <Upload className="w-12 h-12 text-slate-300" />
+                <p className="text-sm text-slate-400">
+                  Selecione o tipo de publicação acima
+                </p>
+              </>
+            ) : (
+              <>
+                <Upload className="w-12 h-12 text-slate-400" />
+                <p className="text-sm text-slate-600">
+                  {imageMode === 'static'
+                    ? 'Clique para fazer upload da imagem'
+                    : 'Clique para fazer upload ou arraste imagens aqui'
+                  }
+                </p>
+                <p className="text-xs text-slate-400">
+                  {imageMode === 'static'
+                    ? 'Selecione uma imagem pronta'
+                    : selectedStyle
+                      ? 'Opcional - o template de estilo será usado como referência'
+                      : 'Suporta múltiplas imagens'
+                  }
+                </p>
+              </>
+            )}
+          </label>
+        </div>
+
+        {/* Image Preview Grid */}
+        {images.length > 0 && (
+          <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {images.map((img, index) => (
+              <div key={index} className="relative group">
+                <img
+                  src={img}
+                  alt={`Upload ${index + 1}`}
+                  className="w-full h-32 object-cover rounded-lg border border-slate-200"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeImage(index)}
+                  className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Context Input */}
+      <div>
+        <label htmlFor="context" className="block text-sm font-bold text-slate-700 mb-2">
+          Contexto da Publicação
+        </label>
+        <textarea
+          id="context"
+          value={context}
+          onChange={(e) => setContext(e.target.value)}
+          placeholder="Descreva o contexto da publicação. Ex: Lançamento de novo produto, evento corporativo, conquista da empresa..."
+          className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-slate-900 placeholder:text-slate-400"
+          rows={8}
+          disabled={isGenerating}
+        />
+        <p className="text-xs text-slate-500 mt-1">
+          {imageMode === 'ai'
+            ? 'A IA irá gerar automaticamente um texto curto para a imagem baseado neste contexto. Formato: 4:5 (Feed do Instagram)'
+            : 'Descreva o contexto da publicação. A IA irá gerar a descrição baseada neste texto.'
+          }
+        </p>
+      </div>
+
+      {/* Additional Prompt (Optional) - Only show for AI mode */}
+      {
+        imageMode === 'ai' && (
+          <div>
+            <label htmlFor="additionalPrompt" className="block text-sm font-bold text-slate-700 mb-2">
+              Instruções Adicionais para IA
+            </label>
+            <textarea
+              id="additionalPrompt"
+              value={additionalPrompt}
+              onChange={(e) => setAdditionalPrompt(e.target.value)}
+              placeholder="Ex: Use cores quentes, foque em elementos de verão, tom mais descontraído..."
+              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-slate-900 placeholder:text-slate-400"
+              rows={3}
+              disabled={isGenerating}
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              {campaign
+                ? 'Estas instruções complementam os prompts da campanha para esta publicação específica.'
+                : 'Forneça instruções específicas para a IA sobre estilo, tom ou elementos visuais desejados.'
+              }
+            </p>
+          </div>
+        )
+      }
 
       {/* Style Selection Modal */}
       <StyleSelectionModal
