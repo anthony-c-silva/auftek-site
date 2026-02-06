@@ -58,103 +58,44 @@ export default function SocialMediaPage() {
 
   if (isLoading || !user) return null;
 
-  const handleGenerate = async (data: { images: string[]; text: string; context: string; additionalPrompt?: string; isCarousel?: boolean; carouselCount?: number; styleTemplate?: { id: string; name: string; images: { cover: string; slides: string[] } } }) => {
+  const handleCompose = async (data: { timeline: { id: string; url: string; overlayText: string; type: "ai" | "uploaded" }[]; context: string; originalUploadedImages: string[] }) => {
     setIsGenerating(true);
     setGeneratedContent(null);
 
     try {
-      const imageResponse = await fetch("/api/social-media/generate-image", {
+      const cover = data.timeline[0];
+      const slides = data.timeline.slice(1);
+
+      // Gerar descrição
+      const descResp = await fetch("/api/social-media/generate-description", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          images: data.images,
+          text: cover.overlayText || data.context,
           context: data.context,
-          campaignId: selectedCampaign?._id || undefined,
-          additionalPrompt: data.additionalPrompt,
-          isCarousel: data.isCarousel,
-          carouselCount: data.carouselCount,
-          styleTemplate: data.styleTemplate,
+          campaignId: selectedCampaign?._id,
         }),
       });
 
-      if (!imageResponse.ok) {
-        const errorData = await imageResponse.json();
-        throw new Error(errorData.error || "Erro ao gerar imagem");
-      }
-
-      const imageResult = await imageResponse.json();
-
-      const descriptionResponse = await fetch("/api/social-media/generate-description", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: imageResult.overlayText,
-          context: data.context,
-          campaignId: selectedCampaign?._id || undefined,
-          additionalPrompt: data.additionalPrompt,
-        }),
-      });
-
-      if (!descriptionResponse.ok) {
+      if (!descResp.ok) {
         throw new Error("Erro ao gerar descrição");
       }
 
-      const descriptionResult = await descriptionResponse.json();
+      const descResult = await descResp.json();
 
       setGeneratedContent({
-        generatedImage: imageResult.generatedImage,
-        overlayText: imageResult.overlayText,
-        description: descriptionResult.description,
-        originalImages: data.images,
+        generatedImage: cover.url,
+        overlayText: cover.overlayText,
+        description: descResult.description,
+        originalImages: data.originalUploadedImages,
         context: data.context,
-        isCarousel: imageResult.isCarousel,
-        carouselImages: imageResult.carouselImages,
-        carouselOverlayTexts: imageResult.carouselOverlayTexts,
+        isCarousel: slides.length > 0,
+        carouselImages: slides.map((s) => s.url),
+        carouselOverlayTexts: slides.map((s) => s.overlayText),
       });
-
     } catch (error: unknown) {
-      console.error("Erro na geração:", error);
-      const errorMessage = error instanceof Error ? error.message : "Erro ao gerar conteúdo";
-      alert(errorMessage);
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  // Handler for static image posts (no AI image generation)
-  const handleStaticPost = async (data: { image: string; context: string; description?: string }) => {
-    setIsGenerating(true);
-    setGeneratedContent(null);
-
-    try {
-      // Generate description with OpenAI (only description, no image generation)
-      const descriptionResponse = await fetch("/api/social-media/generate-description", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: data.context, // Use context as the text for description
-          context: data.context,
-          campaignId: selectedCampaign?._id || undefined,
-        }),
-      });
-
-      if (!descriptionResponse.ok) {
-        throw new Error("Erro ao gerar descrição");
-      }
-
-      const descriptionResult = await descriptionResponse.json();
-
-      setGeneratedContent({
-        generatedImage: data.image,
-        overlayText: "",
-        description: descriptionResult.description,
-        originalImages: [data.image],
-        context: data.context,
-      });
-
-    } catch (error: unknown) {
-      console.error("Erro ao processar imagem:", error);
-      const errorMessage = error instanceof Error ? error.message : "Erro ao processar publicação";
+      console.error("Erro ao preparar publicação:", error);
+      const errorMessage = error instanceof Error ? error.message : "Erro ao preparar publicação";
       alert(errorMessage);
     } finally {
       setIsGenerating(false);
@@ -241,9 +182,8 @@ export default function SocialMediaPage() {
                       Criar Novo Post
                     </h2>
                     <SocialMediaForm
-                      onGenerate={handleGenerate}
-                      onStaticPost={handleStaticPost}
-                      isGenerating={isGenerating}
+                      onCompose={handleCompose}
+                      isComposing={isGenerating}
                       campaign={selectedCampaign}
                     />
                   </div>
@@ -276,9 +216,9 @@ export default function SocialMediaPage() {
                     ) : isGenerating ? (
                       <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-12 text-center">
                         <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                        <p className="text-slate-600 font-medium mb-2">Gerando publicação...</p>
+                        <p className="text-slate-600 font-medium mb-2">Preparando publicação...</p>
                         <p className="text-slate-400 text-sm">
-                          A IA está criando a imagem e descrição
+                          A IA está gerando a descrição
                         </p>
                       </div>
                     ) : (

@@ -1,320 +1,227 @@
 "use client";
 
-import React, { useState } from "react";
-import { Upload, X, Loader2, Sparkles, Image as ImageIcon, Layers, Palette } from "lucide-react";
+import React, { useState, useMemo } from "react";
+import { Upload, X, Loader2, Sparkles, Image as ImageIcon, Palette, GripVertical, Star, Plus, Minus } from "lucide-react";
+import { Reorder } from "framer-motion";
 import { StyleSelectionModal, StyleTemplate } from "./StyleSelectionModal";
+import { ImageCropModal } from "./ImageCropModal";
 
-type ImageMode = 'static' | 'ai' | null;
+interface GalleryItem {
+  id: string;
+  url: string;
+  overlayText: string;
+  type: "ai" | "uploaded";
+}
 
 interface SocialMediaFormProps {
-  onGenerate: (data: { images: string[]; text: string; context: string; additionalPrompt?: string; isCarousel?: boolean; carouselCount?: number; styleTemplate?: StyleTemplate }) => void;
-  onStaticPost?: (data: { image: string; context: string; description?: string }) => void;
-  isGenerating: boolean;
+  onCompose: (data: {
+    timeline: GalleryItem[];
+    context: string;
+    originalUploadedImages: string[];
+  }) => void;
+  isComposing: boolean;
   campaign?: { _id: string; name: string; theme?: string; tone?: string };
 }
 
-export function SocialMediaForm({ onGenerate, onStaticPost, isGenerating, campaign }: SocialMediaFormProps) {
-  const [imageMode, setImageMode] = useState<ImageMode>(null);
-  const [images, setImages] = useState<string[]>([]);
+export function SocialMediaForm({ onCompose, isComposing, campaign }: SocialMediaFormProps) {
+  const [gallery, setGallery] = useState<GalleryItem[]>([]);
+  const [timelineIds, setTimelineIds] = useState<string[]>([]);
   const [context, setContext] = useState("");
   const [additionalPrompt, setAdditionalPrompt] = useState("");
-  const [isCarousel, setIsCarousel] = useState(false);
-  const [carouselCount, setCarouselCount] = useState(3);
-  const [uploading, setUploading] = useState(false);
+  const [aiImageCount, setAiImageCount] = useState(3);
   const [selectedStyle, setSelectedStyle] = useState<StyleTemplate | null>(null);
   const [isStyleModalOpen, setIsStyleModalOpen] = useState(false);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [cropQueue, setCropQueue] = useState<File[]>([]);
+  const [currentCropFile, setCurrentCropFile] = useState<File | null>(null);
 
-  const handleFileUpload = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
+  const timelineItems = useMemo(() => {
+    return timelineIds
+      .map((id) => gallery.find((g) => g.id === id))
+      .filter((item): item is GalleryItem => item !== undefined);
+  }, [timelineIds, gallery]);
 
-    setUploading(true);
-    const uploadedImages: string[] = [];
+  const timelineIdSet = useMemo(() => new Set(timelineIds), [timelineIds]);
 
+  // Gerar imagens com IA
+  const handleGenerateAI = async () => {
+    if (!context.trim() && !selectedStyle) return;
+    if (!campaign) {
+      alert("Selecione uma campanha primeiro.");
+      return;
+    }
+
+    setIsGeneratingAI(true);
     try {
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
+      const uploadedUrls = gallery
+        .filter((g) => g.type === "uploaded")
+        .map((g) => g.url);
 
-        // Upload to KingHost
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('folder', 'social-media');
+      const count = aiImageCount;
+      const response = await fetch("/api/social-media/generate-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          images: uploadedUrls,
+          context,
+          campaignId: campaign._id,
+          additionalPrompt: additionalPrompt.trim() || undefined,
+          isCarousel: count > 1,
+          carouselCount: count,
+          styleTemplate: selectedStyle || undefined,
+        }),
+      });
 
-        const response = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!response.ok) {
-          throw new Error('Erro ao fazer upload da imagem');
-        }
-
-        const result = await response.json();
-        if (result.url) {
-          uploadedImages.push(result.url);
-        }
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Erro ao gerar imagem");
       }
 
-      setImages([...images, ...uploadedImages]);
-      setUploading(false);
-    } catch (error) {
-      console.error("Erro ao processar imagens:", error);
-      alert("Erro ao fazer upload das imagens");
-      setUploading(false);
+      const result = await response.json();
+
+      // Achatar response em GalleryItems
+      const newItems: GalleryItem[] = [];
+
+      if (result.generatedImage) {
+        newItems.push({
+          id: crypto.randomUUID(),
+          url: result.generatedImage,
+          overlayText: result.overlayText || "",
+          type: "ai",
+        });
+      }
+
+      if (result.carouselImages && result.carouselImages.length > 0) {
+        result.carouselImages.forEach((url: string, i: number) => {
+          newItems.push({
+            id: crypto.randomUUID(),
+            url,
+            overlayText: result.carouselOverlayTexts?.[i] || "",
+            type: "ai",
+          });
+        });
+      }
+
+      setGallery((prev) => [...prev, ...newItems]);
+
+      // Se timeline vazia, auto-preencher
+      if (timelineIds.length === 0) {
+        setTimelineIds(newItems.map((item) => item.id));
+      }
+    } catch (error: unknown) {
+      console.error("Erro na geração IA:", error);
+      const msg = error instanceof Error ? error.message : "Erro ao gerar imagens";
+      alert(msg);
+    } finally {
+      setIsGeneratingAI(false);
     }
   };
 
-  const removeImage = (index: number) => {
-    setImages(images.filter((_, i) => i !== index));
+  // Upload de fotos — inicia fila de crop
+  const handleFileUpload = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const fileArray = Array.from(files);
+    setCropQueue(fileArray.slice(1));
+    setCurrentCropFile(fileArray[0]);
+  };
+
+  const uploadCroppedFile = async (file: File) => {
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("folder", "social-media");
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error("Erro ao fazer upload da imagem");
+
+      const result = await response.json();
+      if (result.url) {
+        setGallery((prev) => [
+          ...prev,
+          { id: crypto.randomUUID(), url: result.url, overlayText: "", type: "uploaded" },
+        ]);
+      }
+    } catch (error) {
+      console.error("Erro ao processar imagem:", error);
+      alert("Erro ao fazer upload da imagem");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const advanceCropQueue = () => {
+    if (cropQueue.length > 0) {
+      const [next, ...rest] = cropQueue;
+      setCurrentCropFile(next);
+      setCropQueue(rest);
+    } else {
+      setCurrentCropFile(null);
+    }
+  };
+
+  const handleCropConfirm = async (croppedFile: File) => {
+    await uploadCroppedFile(croppedFile);
+    advanceCropQueue();
+  };
+
+  const handleCropCancel = () => {
+    advanceCropQueue();
+  };
+
+  const toggleTimeline = (id: string) => {
+    setTimelineIds((prev) =>
+      prev.includes(id) ? prev.filter((tid) => tid !== id) : [...prev, id]
+    );
+  };
+
+  const removeFromTimeline = (id: string) => {
+    setTimelineIds((prev) => prev.filter((tid) => tid !== id));
+  };
+
+  const removeFromGallery = (id: string) => {
+    setGallery((prev) => prev.filter((g) => g.id !== id));
+    setTimelineIds((prev) => prev.filter((tid) => tid !== id));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!imageMode) {
-      alert("Por favor, selecione o tipo de publicação.");
+    if (timelineIds.length === 0) {
+      alert("Adicione pelo menos uma imagem à composição.");
+      return;
+    }
+    if (!context.trim()) {
+      alert("Descreva o contexto da publicação.");
       return;
     }
 
-    if (imageMode === 'static') {
-      if (images.length === 0 || !context.trim()) {
-        alert("Por favor, adicione uma imagem e descreva o contexto.");
-        return;
-      }
-      onStaticPost?.({
-        image: images[0],
-        context,
-        description: additionalPrompt.trim() || undefined
-      });
-    } else {
-      if (!context.trim()) {
-        alert("Por favor, descreva o contexto da publicação.");
-        return;
-      }
-      if (images.length === 0 && !selectedStyle) {
-        alert("Por favor, adicione pelo menos uma imagem ou selecione um template de estilo.");
-        return;
-      }
-      onGenerate({
-        images,
-        text: "",
-        context,
-        additionalPrompt: additionalPrompt.trim() || undefined,
-        isCarousel: isCarousel || undefined,
-        carouselCount: isCarousel ? carouselCount : undefined,
-        styleTemplate: selectedStyle || undefined,
-      });
-    }
+    const originalUploadedImages = gallery
+      .filter((g) => g.type === "uploaded")
+      .map((g) => g.url);
+
+    onCompose({ timeline: timelineItems, context, originalUploadedImages });
   };
 
   const handleReset = () => {
-    setImages([]);
+    setGallery([]);
+    setTimelineIds([]);
     setContext("");
     setAdditionalPrompt("");
-    setIsCarousel(false);
-    setCarouselCount(3);
+    setAiImageCount(3);
     setSelectedStyle(null);
   };
 
+  const isDisabled = isComposing || isGeneratingAI || isUploading;
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Image Mode Toggle */}
-      <div>
-        <label className="block text-sm font-bold text-slate-700 mb-2">
-          Tipo de Publicação
-        </label>
-        <div className="bg-slate-100 p-1 rounded-lg flex">
-          <button
-            type="button"
-            onClick={() => setImageMode('static')}
-            className={`flex-1 px-4 py-2.5 rounded-md text-sm font-medium transition flex items-center justify-center gap-2 ${imageMode === 'static'
-              ? 'bg-white text-blue-600 shadow-sm'
-              : 'text-slate-600 hover:text-slate-900'
-              }`}
-          >
-            <ImageIcon size={18} />
-            Imagem Pronta
-          </button>
-          <button
-            type="button"
-            onClick={() => setImageMode('ai')}
-            className={`flex-1 px-4 py-2.5 rounded-md text-sm font-medium transition flex items-center justify-center gap-2 ${imageMode === 'ai'
-              ? 'bg-white text-blue-600 shadow-sm'
-              : 'text-slate-600 hover:text-slate-900'
-              }`}
-          >
-            <Sparkles size={18} />
-            Gerar com IA
-          </button>
-        </div>
-        {!imageMode && (
-          <p className="text-xs text-amber-600 mt-2">
-            Selecione o tipo de publicação para continuar
-          </p>
-        )}
-      </div>
-
-      {/* Carousel Toggle - Only for AI mode */}
-      {imageMode === 'ai' && (
-        <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={isCarousel}
-              onChange={(e) => setIsCarousel(e.target.checked)}
-              disabled={isGenerating}
-              className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-            />
-            <div className="flex items-center gap-2">
-              <Layers size={18} className="text-slate-500" />
-              <span className="text-sm font-medium text-slate-700">Gerar Carrossel</span>
-            </div>
-          </label>
-
-          {isCarousel && (
-            <div className="mt-3 pl-8">
-              <label className="block text-sm text-slate-600 mb-1">Total de slides</label>
-              <select
-                value={carouselCount}
-                onChange={(e) => setCarouselCount(Number(e.target.value))}
-                disabled={isGenerating}
-                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-              >
-                {Array.from({ length: 9 }, (_, i) => i + 2).map(n => (
-                  <option key={n} value={n}>{n} slides</option>
-                ))}
-              </select>
-              <p className="text-xs text-slate-500 mt-1">
-                1 capa + {carouselCount - 1} slide(s) de conteúdo
-              </p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Style Selection - Only for AI mode */}
-      {imageMode === 'ai' && (
-        <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Palette size={18} className="text-slate-500" />
-              <div>
-                <span className="text-sm font-medium text-slate-700">Template de Estilo</span>
-                <p className="text-xs text-slate-500">Opcional - A IA seguirá o estilo visual selecionado</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsStyleModalOpen(true)}
-              disabled={isGenerating}
-              className="px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition disabled:opacity-50"
-            >
-              {selectedStyle ? 'Alterar' : 'Selecionar'}
-            </button>
-          </div>
-
-          {selectedStyle && (
-            <div className="mt-3 flex items-center gap-3 p-3 bg-white rounded-lg border border-slate-200">
-              <img
-                src={selectedStyle.preview}
-                alt={selectedStyle.name}
-                className="w-16 h-20 object-cover rounded"
-              />
-              <div className="flex-1">
-                <p className="text-sm font-medium text-slate-900">{selectedStyle.name}</p>
-                <p className="text-xs text-slate-500">{selectedStyle.images.slides.length} exemplo(s) de slide</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedStyle(null)}
-                className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition"
-              >
-                <X size={16} />
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Image Upload Section - Only enabled after mode selection */}
-      <div className={!imageMode ? 'opacity-50 pointer-events-none' : ''}>
-        <label className="block text-sm font-bold text-slate-700 mb-2">
-          {imageMode === 'static' ? 'Imagem' : 'Imagens'}
-        </label>
-
-        {/* Upload Area */}
-        <div className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${!imageMode ? 'border-slate-200 bg-slate-50' : 'border-slate-300 hover:border-blue-400'
-          }`}>
-          <input
-            type="file"
-            id="image-upload"
-            multiple={imageMode === 'ai'}
-            accept="image/*"
-            onChange={(e) => handleFileUpload(e.target.files)}
-            className="hidden"
-            disabled={!imageMode || uploading || isGenerating}
-          />
-          <label
-            htmlFor="image-upload"
-            className={`flex flex-col items-center gap-2 ${!imageMode ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-          >
-            {uploading ? (
-              <>
-                <Loader2 className="w-12 h-12 text-blue-500 animate-spin" />
-                <p className="text-sm text-slate-600">Fazendo upload...</p>
-              </>
-            ) : !imageMode ? (
-              <>
-                <Upload className="w-12 h-12 text-slate-300" />
-                <p className="text-sm text-slate-400">
-                  Selecione o tipo de publicação acima
-                </p>
-              </>
-            ) : (
-              <>
-                <Upload className="w-12 h-12 text-slate-400" />
-                <p className="text-sm text-slate-600">
-                  {imageMode === 'static'
-                    ? 'Clique para fazer upload da imagem'
-                    : 'Clique para fazer upload ou arraste imagens aqui'
-                  }
-                </p>
-                <p className="text-xs text-slate-400">
-                  {imageMode === 'static'
-                    ? 'Selecione uma imagem pronta'
-                    : selectedStyle
-                      ? 'Opcional - o template de estilo será usado como referência'
-                      : 'Suporta múltiplas imagens'
-                  }
-                </p>
-              </>
-            )}
-          </label>
-        </div>
-
-        {/* Image Preview Grid */}
-        {images.length > 0 && (
-          <div className="mt-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {images.map((img, index) => (
-              <div key={index} className="relative group">
-                <img
-                  src={img}
-                  alt={`Upload ${index + 1}`}
-                  className="w-full h-32 object-cover rounded-lg border border-slate-200"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeImage(index)}
-                  className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Context Input */}
+      {/* 1. Contexto da Publicação */}
       <div>
         <label htmlFor="context" className="block text-sm font-bold text-slate-700 mb-2">
           Contexto da Publicação
@@ -325,42 +232,300 @@ export function SocialMediaForm({ onGenerate, onStaticPost, isGenerating, campai
           onChange={(e) => setContext(e.target.value)}
           placeholder="Descreva o contexto da publicação. Ex: Lançamento de novo produto, evento corporativo, conquista da empresa..."
           className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-slate-900 placeholder:text-slate-400"
-          rows={8}
-          disabled={isGenerating}
+          rows={5}
+          disabled={isDisabled}
         />
-        <p className="text-xs text-slate-500 mt-1">
-          {imageMode === 'ai'
-            ? 'A IA irá gerar automaticamente um texto curto para a imagem baseado neste contexto. Formato: 4:5 (Feed do Instagram)'
-            : 'Descreva o contexto da publicação. A IA irá gerar a descrição baseada neste texto.'
-          }
-        </p>
       </div>
 
-      {/* Additional Prompt (Optional) - Only show for AI mode */}
-      {
-        imageMode === 'ai' && (
+      {/* 2. Ferramentas: Gerar com IA + Upload */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* 2a. Gerar com IA */}
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 space-y-3">
+          <h3 className="text-sm font-bold text-purple-800 flex items-center gap-2">
+            <Sparkles size={16} />
+            Gerar com IA
+          </h3>
+
+          {/* Estilo */}
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-purple-700 font-medium">Template de Estilo</span>
+            <button
+              type="button"
+              onClick={() => setIsStyleModalOpen(true)}
+              disabled={isDisabled}
+              className="text-xs text-purple-600 hover:text-purple-800 font-medium disabled:opacity-50"
+            >
+              {selectedStyle ? selectedStyle.name : "Selecionar"}
+            </button>
+          </div>
+
+          {selectedStyle && (
+            <div className="flex items-center gap-2 p-2 bg-white rounded border border-purple-200">
+              <img
+                src={selectedStyle.preview}
+                alt={selectedStyle.name}
+                className="w-10 h-12 object-cover rounded"
+              />
+              <span className="text-xs text-purple-800 flex-1">{selectedStyle.name}</span>
+              <button
+                type="button"
+                onClick={() => setSelectedStyle(null)}
+                className="p-1 text-purple-400 hover:text-red-500 rounded transition"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
+
+          {/* Quantidade */}
           <div>
-            <label htmlFor="additionalPrompt" className="block text-sm font-bold text-slate-700 mb-2">
-              Instruções Adicionais para IA
-            </label>
+            <label className="text-xs text-purple-700 font-medium block mb-1">Quantidade de imagens</label>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setAiImageCount((c) => Math.max(1, c - 1))}
+                disabled={isDisabled || aiImageCount <= 1}
+                className="p-1.5 rounded border border-purple-300 text-purple-700 hover:bg-purple-100 disabled:opacity-40 transition"
+              >
+                <Minus size={14} />
+              </button>
+              <span className="text-sm font-bold text-purple-900 w-6 text-center">{aiImageCount}</span>
+              <button
+                type="button"
+                onClick={() => setAiImageCount((c) => Math.min(10, c + 1))}
+                disabled={isDisabled || aiImageCount >= 10}
+                className="p-1.5 rounded border border-purple-300 text-purple-700 hover:bg-purple-100 disabled:opacity-40 transition"
+              >
+                <Plus size={14} />
+              </button>
+            </div>
+          </div>
+
+          {/* Instruções */}
+          <div>
+            <label className="text-xs text-purple-700 font-medium block mb-1">Instruções adicionais</label>
             <textarea
-              id="additionalPrompt"
               value={additionalPrompt}
               onChange={(e) => setAdditionalPrompt(e.target.value)}
-              placeholder="Ex: Use cores quentes, foque em elementos de verão, tom mais descontraído..."
-              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-slate-900 placeholder:text-slate-400"
-              rows={3}
-              disabled={isGenerating}
+              placeholder="Cores, estilo, elementos visuais..."
+              className="w-full px-3 py-2 border border-purple-200 rounded-lg text-sm text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-purple-400 focus:border-transparent resize-none"
+              rows={2}
+              disabled={isDisabled}
             />
-            <p className="text-xs text-slate-500 mt-1">
-              {campaign
-                ? 'Estas instruções complementam os prompts da campanha para esta publicação específica.'
-                : 'Forneça instruções específicas para a IA sobre estilo, tom ou elementos visuais desejados.'
-              }
+          </div>
+
+          {/* Botão Gerar */}
+          <button
+            type="button"
+            onClick={handleGenerateAI}
+            disabled={isDisabled || (!context.trim() && !selectedStyle)}
+            className="w-full px-4 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2 text-sm"
+          >
+            {isGeneratingAI ? (
+              <>
+                <Loader2 className="animate-spin" size={16} />
+                Gerando {aiImageCount} imagem(ns)...
+              </>
+            ) : (
+              <>
+                <Sparkles size={16} />
+                Gerar {aiImageCount} imagem(ns)
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* 2b. Upload de Fotos */}
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 space-y-3">
+          <h3 className="text-sm font-bold text-green-800 flex items-center gap-2">
+            <ImageIcon size={16} />
+            Upload de Fotos
+          </h3>
+
+          <div className="border-2 border-dashed border-green-300 rounded-lg p-6 text-center hover:border-green-400 transition">
+            <input
+              type="file"
+              id="image-upload"
+              multiple
+              accept="image/*"
+              onChange={(e) => handleFileUpload(e.target.files)}
+              className="hidden"
+              disabled={isDisabled}
+            />
+            <label htmlFor="image-upload" className="cursor-pointer flex flex-col items-center gap-2">
+              {isUploading ? (
+                <>
+                  <Loader2 className="w-8 h-8 text-green-500 animate-spin" />
+                  <p className="text-xs text-green-700">Fazendo upload...</p>
+                </>
+              ) : (
+                <>
+                  <Upload className="w-8 h-8 text-green-400" />
+                  <p className="text-xs text-green-700">Clique ou arraste fotos</p>
+                  <p className="text-xs text-green-500">Suporta múltiplas imagens</p>
+                </>
+              )}
+            </label>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Banco de Imagens */}
+      {gallery.length > 0 && (
+        <div>
+          <h3 className="text-sm font-bold text-slate-700 mb-2">
+            Banco de Imagens ({gallery.length})
+          </h3>
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+            {gallery.map((item) => {
+              const isInTimeline = timelineIdSet.has(item.id);
+              return (
+                <div
+                  key={item.id}
+                  className={`relative group cursor-pointer rounded-lg overflow-hidden border-2 transition ${
+                    isInTimeline
+                      ? "border-blue-500 ring-2 ring-blue-200"
+                      : "border-slate-200 hover:border-slate-300"
+                  }`}
+                  onClick={() => toggleTimeline(item.id)}
+                >
+                  <img
+                    src={item.url}
+                    alt="Imagem"
+                    className="w-full aspect-[4/5] object-cover"
+                  />
+
+                  {/* Badge tipo */}
+                  <span
+                    className={`absolute top-1.5 left-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                      item.type === "ai"
+                        ? "bg-purple-600 text-white"
+                        : "bg-green-600 text-white"
+                    }`}
+                  >
+                    {item.type === "ai" ? "IA" : "Foto"}
+                  </span>
+
+                  {/* Check se na timeline */}
+                  {isInTimeline && (
+                    <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  )}
+
+                  {/* Botão remover do banco */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeFromGallery(item.id);
+                    }}
+                    className="absolute bottom-1.5 right-1.5 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X size={12} />
+                  </button>
+
+                  {/* Overlay text truncado */}
+                  {item.overlayText && (
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-2 py-1">
+                      <p className="text-[10px] text-white truncate">{item.overlayText}</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* 4. Composição (Timeline) */}
+      <div>
+        <h3 className="text-sm font-bold text-slate-700 mb-2">
+          Composição ({timelineItems.length} {timelineItems.length === 1 ? "imagem" : "imagens"})
+        </h3>
+
+        {timelineItems.length > 0 ? (
+          <div className="bg-slate-100 rounded-lg p-3 overflow-x-auto">
+            <Reorder.Group
+              axis="x"
+              values={timelineIds}
+              onReorder={setTimelineIds}
+              className="flex gap-3"
+            >
+              {timelineIds.map((id, idx) => {
+                const item = gallery.find((g) => g.id === id);
+                if (!item) return null;
+                return (
+                  <Reorder.Item
+                    key={id}
+                    value={id}
+                    className="relative shrink-0 cursor-grab active:cursor-grabbing"
+                  >
+                    <div className="w-24 rounded-lg overflow-hidden border-2 border-white shadow-md bg-white">
+                      <div className="relative">
+                        <img
+                          src={item.url}
+                          alt={idx === 0 ? "Capa" : `Slide ${idx + 1}`}
+                          className="w-full aspect-[4/5] object-cover"
+                          draggable={false}
+                        />
+
+                        {/* Label Capa */}
+                        {idx === 0 && (
+                          <div className="absolute top-1 left-1 flex items-center gap-0.5 bg-yellow-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
+                            <Star size={8} fill="white" />
+                            Capa
+                          </div>
+                        )}
+
+                        {/* Número do slide */}
+                        {idx > 0 && (
+                          <div className="absolute top-1 left-1 bg-slate-700 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
+                            {idx + 1}
+                          </div>
+                        )}
+
+                        {/* Overlay text */}
+                        {item.overlayText && (
+                          <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-1 py-0.5">
+                            <p className="text-[8px] text-white truncate">{item.overlayText}</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Barra inferior: drag handle + remover */}
+                      <div className="flex items-center justify-between px-1.5 py-1">
+                        <GripVertical size={12} className="text-slate-400" />
+                        <button
+                          type="button"
+                          onClick={() => removeFromTimeline(id)}
+                          className="p-0.5 text-slate-400 hover:text-red-500 transition"
+                        >
+                          <X size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  </Reorder.Item>
+                );
+              })}
+            </Reorder.Group>
+          </div>
+        ) : (
+          <div className="bg-slate-100 rounded-lg p-6 text-center border-2 border-dashed border-slate-300">
+            <p className="text-sm text-slate-400">
+              Selecione imagens do banco acima para montar a publicação
             </p>
           </div>
-        )
-      }
+        )}
+
+        {timelineItems.length > 1 && (
+          <p className="text-xs text-blue-600 mt-1.5 font-medium">
+            Carrossel: 1 capa + {timelineItems.length - 1} slide(s)
+          </p>
+        )}
+      </div>
 
       {/* Style Selection Modal */}
       <StyleSelectionModal
@@ -370,27 +535,30 @@ export function SocialMediaForm({ onGenerate, onStaticPost, isGenerating, campai
         selectedStyle={selectedStyle}
       />
 
-      {/* Action Buttons */}
+      {/* Crop Modal */}
+      {currentCropFile && (
+        <ImageCropModal
+          file={currentCropFile}
+          onCrop={handleCropConfirm}
+          onCancel={handleCropCancel}
+        />
+      )}
+
+      {/* Botões de ação */}
       <div className="flex gap-3">
         <button
           type="submit"
-          disabled={isGenerating || uploading || !context.trim() || (images.length === 0 && imageMode === 'static') || (images.length === 0 && !selectedStyle && imageMode === 'ai')}
-          className={`flex-1 text-white px-6 py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed font-bold flex items-center justify-center gap-2 ${imageMode === 'static' ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
-            }`}
+          disabled={isDisabled || timelineIds.length === 0 || !context.trim()}
+          className="flex-1 text-white px-6 py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed font-bold flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700"
         >
-          {isGenerating ? (
+          {isComposing ? (
             <>
               <Loader2 className="animate-spin" size={20} />
-              {imageMode === 'ai' ? 'Gerando...' : 'Processando...'}
-            </>
-          ) : imageMode === 'ai' ? (
-            <>
-              <Sparkles size={20} />
-              Gerar com IA
+              Preparando...
             </>
           ) : (
             <>
-              <ImageIcon size={20} />
+              <Palette size={20} />
               Criar Publicação
             </>
           )}
@@ -398,12 +566,12 @@ export function SocialMediaForm({ onGenerate, onStaticPost, isGenerating, campai
         <button
           type="button"
           onClick={handleReset}
-          disabled={isGenerating || uploading}
+          disabled={isDisabled}
           className="px-6 py-3 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed font-bold"
         >
           Limpar
         </button>
       </div>
-    </form >
+    </form>
   );
 }
