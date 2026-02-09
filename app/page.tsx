@@ -11,7 +11,7 @@ import { Publications } from '@/components/landing/Publications';
 import { Historys } from '@/components/history/Historys'
 import { Energy } from '@/components/landing/Energy';
 import { Partners } from '@/components/landing/Partners';
-import { Team } from '@/components/landing/Team';
+// import { Team } from '@/components/landing/Team';
 import { Contact } from '@/components/landing/Contact';
 
 // 2. EXPORT DEFAULT
@@ -28,7 +28,7 @@ export default function Home() {
         <Historys />
         <Energy />
         <Partners />
-        <Team />
+        {/* <Team /> */}
         <Contact />
       </main>
   );
