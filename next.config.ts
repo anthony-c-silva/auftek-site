@@ -4,11 +4,6 @@ const nextConfig: NextConfig = {
     images: {
         remotePatterns: [
             {
-                protocol: 'http',
-                hostname: 'auftek.com',
-                pathname: '/blog-uploads/**',
-            },
-            {
                 protocol: 'https',
                 hostname: 'auftek.com',
                 pathname: '/blog-uploads/**',
