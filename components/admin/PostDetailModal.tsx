@@ -45,9 +45,8 @@ export interface PostForModal {
   carouselImages?: string[];
   carouselOverlayTexts?: string[];
   format?: 'feed' | 'stories';
-  status: 'draft' | 'pending' | 'scheduled' | 'published' | 're-evaluation' | 'rejected';
+  status: 'draft' | 'pending' | 'published' | 're-evaluation' | 'rejected';
   rejectionReason?: string;
-  scheduledAt?: string;
   publishedAt?: string;
   createdAt: string;
   author?: Author | null;
@@ -119,7 +118,6 @@ export function PostDetailModal({
     const config = {
       draft: { label: 'Rascunho', color: 'bg-slate-500', icon: null },
       pending: { label: 'Pendente', color: 'bg-yellow-500', icon: Clock },
-      scheduled: { label: 'Agendado', color: 'bg-purple-500', icon: Calendar },
       published: { label: 'Publicado', color: 'bg-green-500', icon: Check },
       're-evaluation': { label: 'Em Revisão', color: 'bg-orange-500', icon: RefreshCw },
       rejected: { label: 'Rejeitado', color: 'bg-red-500', icon: AlertCircle }
@@ -301,15 +299,6 @@ export function PostDetailModal({
               <Calendar size={18} className="text-slate-400" />
               <p className="text-sm text-slate-600">Criado em {formatDate(post.createdAt)}</p>
             </div>
-
-            {post.scheduledAt && (
-              <div className="flex items-center gap-3">
-                <Clock size={18} className="text-purple-500" />
-                <p className="text-sm text-purple-600 font-medium">
-                  Agendado para {formatDate(post.scheduledAt)}
-                </p>
-              </div>
-            )}
 
             {post.publishedAt && (
               <div className="flex items-center gap-3">

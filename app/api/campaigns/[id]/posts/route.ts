@@ -139,8 +139,7 @@ export async function POST(
       carouselOverlayTexts,
       format,
       aspectRatio,
-      status,
-      scheduledAt
+      status
     } = body;
 
     // Validate required fields
@@ -165,20 +164,15 @@ export async function POST(
       );
     }
 
-    // Determine final status based on user role and scheduling
-    let finalStatus: 'draft' | 'pending' | 'scheduled' | 'published' = 'draft';
+    // Determine final status based on user role
+    let finalStatus: 'draft' | 'pending' | 'published' = 'draft';
     let publishedAt: Date | null = null;
     let submittedAt: Date | null = null;
 
     if (status === 'published') {
       if (user.role === 'admin') {
-        // Admins with scheduling go to scheduled, otherwise publish directly
-        if (scheduledAt && new Date(scheduledAt) > new Date()) {
-          finalStatus = 'scheduled';
-        } else {
-          finalStatus = 'published';
-          publishedAt = new Date();
-        }
+        finalStatus = 'published';
+        publishedAt = new Date();
       } else {
         // Non-admins submit for approval
         finalStatus = 'pending';
@@ -202,8 +196,7 @@ export async function POST(
       aspectRatio: aspectRatio || '4:5',
       status: finalStatus,
       submittedAt,
-      publishedAt,
-      scheduledAt: scheduledAt ? new Date(scheduledAt) : null
+      publishedAt
     });
 
     return NextResponse.json({

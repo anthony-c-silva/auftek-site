@@ -104,7 +104,7 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { description, status, rejectionReason, generatedImage, overlayText, originalImages, context, scheduledAt, isCarousel, carouselImages, carouselOverlayTexts, format, aspectRatio } = body;
+    const { description, status, rejectionReason, generatedImage, overlayText, originalImages, context, isCarousel, carouselImages, carouselOverlayTexts, format, aspectRatio } = body;
 
     if (generatedImage !== undefined) {
       post.generatedImage = generatedImage;
@@ -147,7 +147,7 @@ export async function PATCH(
 
     // Handle status changes
     if (status !== undefined) {
-      const validStatuses = ['draft', 'pending', 'scheduled', 'published', 're-evaluation', 'rejected'];
+      const validStatuses = ['draft', 'pending', 'published', 're-evaluation', 'rejected'];
       if (!validStatuses.includes(status)) {
         return NextResponse.json(
           { error: "Status inválido." },
@@ -156,21 +156,11 @@ export async function PATCH(
       }
 
       if (isAdmin) {
-        if (status === 'published' && (post.status === 'pending' || post.status === 'scheduled')) {
-          const effectiveScheduledAt = scheduledAt ? new Date(scheduledAt) : post.scheduledAt;
-
-          if (effectiveScheduledAt && new Date(effectiveScheduledAt) > new Date()) {
-            post.status = 'scheduled';
-            post.scheduledAt = new Date(effectiveScheduledAt);
-            post.approvedBy = user._id;
-            post.rejectionReason = '';
-          } else {
-            post.status = 'published';
-            post.publishedAt = new Date();
-            post.scheduledAt = null;
-            post.approvedBy = user._id;
-            post.rejectionReason = '';
-          }
+        if (status === 'published' && post.status === 'pending') {
+          post.status = 'published';
+          post.publishedAt = new Date();
+          post.approvedBy = user._id;
+          post.rejectionReason = '';
         }
         else if (status === 'rejected') {
           if (!rejectionReason || !rejectionReason.trim()) {
@@ -196,16 +186,10 @@ export async function PATCH(
           post.status = 'pending';
           post.submittedAt = new Date();
           post.rejectionReason = '';
-          if (scheduledAt) {
-            post.scheduledAt = new Date(scheduledAt);
-          }
         }
         else if (status === 'published') {
           post.status = 'pending';
           post.submittedAt = new Date();
-          if (scheduledAt) {
-            post.scheduledAt = new Date(scheduledAt);
-          }
         }
         else if (status === 'draft') {
           post.status = 'draft';
@@ -217,8 +201,6 @@ export async function PATCH(
           );
         }
       }
-    } else if (scheduledAt !== undefined && isAuthor) {
-      post.scheduledAt = scheduledAt ? new Date(scheduledAt) : null;
     }
 
     await post.save();

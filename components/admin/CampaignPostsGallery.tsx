@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, MessageSquare, ArrowLeft, Clock, Check, AlertCircle, RefreshCw, Calendar, Smartphone, LayoutGrid } from "lucide-react";
+import { X, MessageSquare, ArrowLeft, Clock, Check, AlertCircle, RefreshCw, Smartphone, LayoutGrid } from "lucide-react";
 import { PostDetailModal, PostForModal } from "./PostDetailModal";
 import { useAuth } from "@/context/AuthContext";
 
@@ -47,7 +47,6 @@ export function CampaignPostsGallery({ campaignId, campaignName, onClose, onEdit
     const config = {
       draft: { label: 'Rascunho', color: 'bg-slate-500', icon: null },
       pending: { label: 'Pendente', color: 'bg-yellow-500', icon: Clock },
-      scheduled: { label: 'Agendado', color: 'bg-purple-500', icon: Calendar },
       published: { label: 'Publicado', color: 'bg-green-500', icon: Check },
       're-evaluation': { label: 'Em Revisão', color: 'bg-orange-500', icon: RefreshCw },
       rejected: { label: 'Rejeitado', color: 'bg-red-500', icon: AlertCircle }

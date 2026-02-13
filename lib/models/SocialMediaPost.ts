@@ -15,8 +15,7 @@ export interface ISocialMediaPost extends Document {
   carouselOverlayTexts?: string[];
   format: 'feed' | 'stories';
   aspectRatio: string;
-  status: 'draft' | 'pending' | 'scheduled' | 'published' | 're-evaluation' | 'rejected';
-  scheduledAt?: Date | null;
+  status: 'draft' | 'pending' | 'published' | 're-evaluation' | 'rejected';
   approvedBy?: mongoose.Types.ObjectId;
   rejectionReason?: string;
   submittedAt?: Date | null;
@@ -92,13 +91,9 @@ const SocialMediaPostSchema: Schema = new Schema(
     },
     status: {
       type: String,
-      enum: ['draft', 'pending', 'scheduled', 'published', 're-evaluation', 'rejected'],
+      enum: ['draft', 'pending', 'published', 're-evaluation', 'rejected'],
       default: 'draft',
       index: true
-    },
-    scheduledAt: {
-      type: Date,
-      default: null
     },
     approvedBy: {
       type: Schema.Types.ObjectId,
@@ -127,7 +122,7 @@ const SocialMediaPostSchema: Schema = new Schema(
 
 // Compound index for fetching posts within a campaign chronologically
 SocialMediaPostSchema.index({ campaignId: 1, createdAt: -1 });
-SocialMediaPostSchema.index({ status: 1, scheduledAt: 1, deletedAt: 1 });
+SocialMediaPostSchema.index({ status: 1, deletedAt: 1 });
 
 const SocialMediaPost: Model<ISocialMediaPost> = mongoose.models.SocialMediaPost || mongoose.model<ISocialMediaPost>("SocialMediaPost", SocialMediaPostSchema);
 

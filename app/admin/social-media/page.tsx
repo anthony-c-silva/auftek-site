@@ -11,10 +11,8 @@ import { CampaignList } from "@/components/admin/CampaignList";
 import { CreateCampaignModal } from "@/components/admin/CreateCampaignModal";
 import { PublishedPostsGallery } from "@/components/admin/PublishedPostsGallery";
 import { PendingPostsReview } from "@/components/admin/PendingPostsReview";
-import { ScheduledPostsGallery } from "@/components/admin/ScheduledPostsGallery";
-
 type ViewMode = 'campaigns' | 'approvals';
-type ApprovalSubView = 'all' | 'pending' | 'scheduled';
+type ApprovalSubView = 'all' | 'pending';
 
 // Type for post being edited
 interface EditingPost {
@@ -294,15 +292,6 @@ export default function SocialMediaPage() {
                     {user.role === 'admin' ? 'Pendentes' : 'Minhas Pendentes'}
                   </button>
                   <button
-                    onClick={() => setApprovalSubView('scheduled')}
-                    className={`px-4 py-2 font-medium text-sm transition border-b-2 -mb-px ${approvalSubView === 'scheduled'
-                      ? 'border-blue-600 text-blue-600'
-                      : 'border-transparent text-slate-600 hover:text-slate-900'
-                      }`}
-                  >
-                    Agendadas
-                  </button>
-                  <button
                     onClick={() => setApprovalSubView('all')}
                     className={`px-4 py-2 font-medium text-sm transition border-b-2 -mb-px ${approvalSubView === 'all'
                       ? 'border-blue-600 text-blue-600'
@@ -347,8 +336,6 @@ export default function SocialMediaPage() {
                 });
                 setViewMode('campaigns');
               }} />
-            ) : approvalSubView === 'scheduled' ? (
-              <ScheduledPostsGallery />
             ) : (
               <PublishedPostsGallery />
             )}

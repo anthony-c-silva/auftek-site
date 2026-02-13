@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Copy, Check, Save, Send, AlertCircle, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { Copy, Check, Save, Send, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { PostFormat, FORMAT_CONFIG } from "@/lib/format-config";
 
@@ -27,8 +27,6 @@ export function GeneratedPostPreview({ generatedImage, overlayText, description,
   const [editedDescription, setEditedDescription] = useState(description);
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [isScheduled, setIsScheduled] = useState(false);
-  const [scheduledAt, setScheduledAt] = useState('');
   const [currentSlide, setCurrentSlide] = useState(0);
 
   const allSlides = isCarousel && carouselImages && carouselImages.length > 0
@@ -38,12 +36,6 @@ export function GeneratedPostPreview({ generatedImage, overlayText, description,
   const allTexts = isCarousel && carouselOverlayTexts && carouselOverlayTexts.length > 0
     ? [overlayText, ...carouselOverlayTexts]
     : [overlayText];
-
-  const getMinDateTime = () => {
-    const now = new Date();
-    now.setMinutes(now.getMinutes() + 5);
-    return now.toISOString().slice(0, 16);
-  };
 
   const copyToClipboard = async (text: string) => {
     try {
@@ -78,7 +70,6 @@ export function GeneratedPostPreview({ generatedImage, overlayText, description,
             originalImages,
             context: context || 'Post gerado via IA',
             status: 'pending',
-            scheduledAt: isScheduled && scheduledAt ? new Date(scheduledAt).toISOString() : null,
             isCarousel: isCarousel || false,
             carouselImages: carouselImages || [],
             carouselOverlayTexts: carouselOverlayTexts || [],
@@ -100,7 +91,6 @@ export function GeneratedPostPreview({ generatedImage, overlayText, description,
             format: postFormat,
             aspectRatio: FORMAT_CONFIG[postFormat].aspectRatio,
             status: status,
-            scheduledAt: isScheduled && scheduledAt ? new Date(scheduledAt).toISOString() : null,
             isCarousel: isCarousel || false,
             carouselImages: carouselImages || [],
             carouselOverlayTexts: carouselOverlayTexts || [],
@@ -254,37 +244,6 @@ export function GeneratedPostPreview({ generatedImage, overlayText, description,
           <p className="text-xs text-slate-500 mt-2">
             {editedDescription.length} caracteres
           </p>
-        </div>
-
-        {/* Scheduling Option */}
-        <div className="bg-white rounded-lg p-4 mt-4">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={isScheduled}
-              onChange={(e) => setIsScheduled(e.target.checked)}
-              className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-            />
-            <div className="flex items-center gap-2">
-              <Calendar size={18} className="text-slate-500" />
-              <span className="text-sm font-medium text-slate-700">Agendar publicação</span>
-            </div>
-          </label>
-
-          {isScheduled && (
-            <div className="mt-3 pl-8">
-              <input
-                type="datetime-local"
-                value={scheduledAt}
-                onChange={(e) => setScheduledAt(e.target.value)}
-                min={getMinDateTime()}
-                className="w-full p-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <p className="text-xs text-slate-500 mt-1">
-                A publicação será publicada automaticamente após aprovação
-              </p>
-            </div>
-          )}
         </div>
 
         {/* Action Buttons */}
