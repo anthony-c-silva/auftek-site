@@ -1,14 +1,7 @@
 "use client";
 
 import React from "react";
-import {
-  ArrowRight,
-  Zap,
-  Microscope,
-  Wifi,
-  Activity,
-  ChevronDown,
-} from "lucide-react";
+import { ArrowRight, Zap, Microscope, Wifi, Activity, ChevronDown } from "lucide-react";
 import { Button } from "../ui/Button";
 import { scrollToElement } from "@/hooks/useScroll";
 import { FaBacteria } from "react-icons/fa";
@@ -21,14 +14,15 @@ const IMAGES = {
 export const Hero: React.FC = () => {
   return (
     <div className="relative w-full">
-      <div className="sticky top-0 min-h-[100dvh] flex flex-col items-center justify-center overflow-hidden bg-auftek-dark">
+      {/* Troca recomendada: remove sticky (causa variações em mobile) e usa 100svh (mais estável) */}
+      <div className="relative min-h-[100svh] flex flex-col items-center justify-center overflow-hidden bg-auftek-dark">
         <div className="absolute inset-0 w-full h-full">
           <div
             className="absolute inset-0 bg-cover bg-center z-0 opacity-20 transition-transform duration-[20s] hover:scale-105"
             style={{ backgroundImage: `url(${IMAGES.heroBg})` }}
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-auftek-dark/90 via-auftek-dark/80 to-auftek-dark z-0"></div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] md:w-[600px] md:h-[600px] bg-auftek-blue/20 rounded-full blur-[80px] md:blur-[120px] animate-[pulse-glow_4s_infinite] pointer-events-none z-0"></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-auftek-dark/90 via-auftek-dark/80 to-auftek-dark z-0" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] md:w-[600px] md:h-[600px] bg-auftek-blue/20 rounded-full blur-[80px] md:blur-[120px] animate-[pulse-glow_4s_infinite] pointer-events-none z-0" />
 
           <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none select-none">
             <Microscope className="absolute top-[15%] left-[5%] lg:top-1/4 lg:left-[10%] text-auftek-green/10 w-10 h-10 sm:w-16 sm:h-16 lg:w-24 lg:h-24 animate-float" />
@@ -37,6 +31,8 @@ export const Hero: React.FC = () => {
             <Activity className="absolute bottom-[20%] left-[8%] lg:bottom-1/3 lg:left-[15%] text-purple-500/10 w-8 h-8 sm:w-14 sm:h-14 lg:w-20 lg:h-20 animate-float" />
           </div>
         </div>
+
+        {/* Mobile-first: padding mais enxuto; tipografia com clamp pra reduzir “saltos” entre aparelhos */}
         <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex-grow flex flex-col items-center justify-center pt-24 pb-20 text-center">
           <div className="animate-fade-in-up">
             <span className="inline-block py-1.5 px-4 rounded-full bg-auftek-blue/10 text-white border border-auftek-blue/30 text-[10px] sm:text-xs font-bold tracking-widest mb-6 uppercase backdrop-blur-md shadow-[0_0_15px_rgba(30,144,255,0.3)]">
@@ -44,7 +40,7 @@ export const Hero: React.FC = () => {
             </span>
           </div>
 
-          <h1 className="animate-fade-in-up delay-100 text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-extrabold text-white mb-6 leading-[1.2] tracking-tight drop-shadow-lg max-w-4xl">
+          <h1 className="animate-fade-in-up delay-100 font-extrabold text-white mb-6 tracking-tight drop-shadow-lg max-w-4xl leading-[1.1] text-[clamp(2rem,6vw,4.25rem)]">
             Inovação que transforma <br className="hidden sm:block" />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-auftek-blue to-auftek-green block mt-2 sm:mt-0">
               ciência em soluções reais
@@ -52,7 +48,7 @@ export const Hero: React.FC = () => {
           </h1>
 
           <div className="max-w-3xl w-full space-y-6 mb-8 animate-fade-in-up delay-200">
-            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-200 font-light leading-relaxed px-4">
+            <p className="text-[clamp(1rem,2.8vw,1.5rem)] text-gray-200 font-light leading-relaxed px-4">
               Entregamos análises microbiológicas em tempo real, com laudos em{" "}
               <span className="text-auftek-green font-semibold border-b-2 border-auftek-green/30">
                 poucas horas
@@ -60,42 +56,43 @@ export const Hero: React.FC = () => {
               .
             </p>
 
-            <p className="text-sm sm:text-base text-gray-400 font-light max-w-xl mx-auto hidden sm:block">
+            <p className="text-[clamp(0.9rem,2.2vw,1rem)] text-gray-400 font-light max-w-xl mx-auto hidden sm:block">
               Instrumentação inovadora com IA e IoT para saneamento, energia e
               indústria.
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 w-full justify-center px-4 animate-fade-in-up delay-300">
-            {/* BOTÃO ATUALIZADO: MICROBIOLOGIA */}
-            <Button
-              variant="primary" // Adicionado para usar a cor sólida padrão
-              onClick={() => scrollToElement("#bioailab")}
-              className="group w-full sm:w-auto min-w-[200px] justify-center shadow-lg shadow-auftek-blue/20 hover:shadow-auftek-blue/40"
-            >
-              {/* Removida a div de animação antiga e o span wrapper desnecessário */}
-              <FaBacteria
-                className="text-white group-hover:scale-110 transition-transform"
-                size={18}
-              />
-              Soluções em Microbiologia
-              <ArrowRight
-                className="group-hover:translate-x-1 transition-transform"
-                size={18}
-              />
-            </Button>
+          {/* Mudança principal: grid + breakpoint por conteúdo (min-[420px]) e sem min-w fixo */}
+          <div className="w-full max-w-xl mx-auto px-4 animate-fade-in-up delay-300">
+            <div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2">
+              <Button
+                variant="primary"
+                onClick={() => scrollToElement("#bioailab")}
+                className="group w-full justify-center shadow-lg shadow-auftek-blue/20 hover:shadow-auftek-blue/40"
+              >
+                <FaBacteria
+                  className="text-white group-hover:scale-110 transition-transform"
+                  size={18}
+                />
+                Soluções em Microbiologia
+                <ArrowRight
+                  className="group-hover:translate-x-1 transition-transform"
+                  size={18}
+                />
+              </Button>
 
-            <Button
-              variant="outline"
-              onClick={() => scrollToElement("#energia")}
-              className="group hover:border-yellow-400/50 hover:bg-yellow-400/5 w-full sm:w-auto min-w-[200px] justify-center"
-            >
-              <Zap
-                className="text-yellow-400 group-hover:scale-110 transition-transform"
-                size={18}
-              />
-              Soluções em Energia
-            </Button>
+              <Button
+                variant="outline"
+                onClick={() => scrollToElement("#energia")}
+                className="group w-full justify-center hover:border-yellow-400/50 hover:bg-yellow-400/5"
+              >
+                <Zap
+                  className="text-yellow-400 group-hover:scale-110 transition-transform"
+                  size={18}
+                />
+                Soluções em Energia
+              </Button>
+            </div>
           </div>
         </div>
 
