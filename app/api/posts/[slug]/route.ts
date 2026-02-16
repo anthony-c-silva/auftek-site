@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import connectDB from "@/lib/mongodb";
 import Post from "@/lib/models/Post";
 import { getAuthenticatedUser } from "@/lib/auth-server";
@@ -20,7 +21,9 @@ export async function GET(request: Request, { params }: Props) {
 
         if (!post) return NextResponse.json({ error: "Post não encontrado" }, { status: 404 });
 
-        return NextResponse.json(post);
+        return NextResponse.json(post, {
+            headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' }
+        });
     } catch (error: unknown) {
         console.error("Erro GET:", error);
         return NextResponse.json({ error: "Erro interno" }, { status: 500 });
@@ -87,6 +90,8 @@ export async function PUT(request: Request, { params }: Props) {
                 details: `Aprovou alterações pendentes.`
             });
 
+            revalidatePath('/blog');
+            revalidatePath(`/blog/${post.slug}`);
             return NextResponse.json(post);
         }
 
@@ -155,6 +160,8 @@ export async function PUT(request: Request, { params }: Props) {
             }
         }
 
+        revalidatePath('/blog');
+        revalidatePath(`/blog/${post.slug}`);
         return NextResponse.json(post);
     } catch (error: unknown) {
         console.error("Erro PUT:", error);
@@ -193,6 +200,8 @@ export async function DELETE(request: Request, { params }: Props) {
             details: `Post excluído (Soft Delete)`
         });
 
+        revalidatePath('/blog');
+        revalidatePath(`/blog/${slug}`);
         return NextResponse.json({ message: "Post excluído" });
     } catch (error: unknown) {
         console.error("Erro DELETE:", error);

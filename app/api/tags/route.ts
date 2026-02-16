@@ -8,7 +8,9 @@ export async function GET() {
     try {
         await connectDB();
         const tags = await Tag.find({}).sort({ name: 1 });
-        return NextResponse.json(tags);
+        return NextResponse.json(tags, {
+            headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' }
+        });
     } catch (error) {
         return NextResponse.json({ error: "Erro ao buscar tags" }, { status: 500 });
     }

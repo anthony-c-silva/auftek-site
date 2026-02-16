@@ -164,18 +164,9 @@ export async function PATCH(
 
     await campaign.save();
 
-    // Get post count
-    const postCount = await SocialMediaPost.countDocuments({
-      campaignId: id,
-      deletedAt: null
-    });
-
     return NextResponse.json({
       success: true,
-      campaign: {
-        ...campaign.toObject(),
-        postCount
-      }
+      campaign: campaign.toObject()
     });
 
   } catch (error: any) {

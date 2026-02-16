@@ -30,20 +30,18 @@ export async function GET(request: Request) {
       .sort({ updatedAt: -1 })
       .lean();
 
-    // Get post count for each campaign
-    const campaignsWithCounts = await Promise.all(
-      campaigns.map(async (campaign) => {
-        const postCount = await SocialMediaPost.countDocuments({
-          campaignId: campaign._id,
-          deletedAt: null
-        });
+    // Get post counts in a single aggregate query
+    const campaignIds = campaigns.map(c => c._id);
+    const counts = await SocialMediaPost.aggregate([
+      { $match: { campaignId: { $in: campaignIds }, deletedAt: null } },
+      { $group: { _id: "$campaignId", count: { $sum: 1 } } }
+    ]);
+    const countMap = new Map(counts.map((c: { _id: string; count: number }) => [c._id.toString(), c.count]));
 
-        return {
-          ...campaign,
-          postCount
-        };
-      })
-    );
+    const campaignsWithCounts = campaigns.map(campaign => ({
+      ...campaign,
+      postCount: countMap.get(campaign._id.toString()) || 0
+    }));
 
     return NextResponse.json({
       success: true,

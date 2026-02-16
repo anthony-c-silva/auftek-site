@@ -30,6 +30,7 @@ export default async function BlogPage() {
         status: 'published',
         deletedAt: null
     })
+        .select('slug title excerpt coverImage createdAt readTime category tags author authorId')
         .sort({ createdAt: -1 })
         .lean();
 

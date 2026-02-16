@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import connectDB from "@/lib/mongodb";
 import Post from "@/lib/models/Post";
 import { getAuthenticatedUser } from "@/lib/auth-server";
@@ -28,7 +29,10 @@ export async function GET(request: Request) {
                 publicFilter.category = categoryParam;
             }
 
-            return NextResponse.json(await Post.find(publicFilter).sort({ createdAt: -1 }));
+            const posts = await Post.find(publicFilter).sort({ createdAt: -1 });
+            return NextResponse.json(posts, {
+                headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' }
+            });
         }
 
         const isAdmin = user.role === 'admin';
@@ -110,6 +114,7 @@ export async function POST(request: Request) {
             readTime: `${calculatedTime} min`
         });
 
+        revalidatePath('/blog');
         return NextResponse.json(newPost, { status: 201 });
 
     } catch (error: any) {

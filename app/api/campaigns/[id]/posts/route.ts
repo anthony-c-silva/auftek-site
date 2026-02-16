@@ -58,24 +58,25 @@ export async function GET(
       .sort({ createdAt: -1 })
       .lean();
 
-    // Enrich posts with author information
-    const enrichedPosts = await Promise.all(
-      posts.map(async (post) => {
-        const author = await User.findById(post.authorId)
-          .select('name email photoUrl')
-          .lean();
+    // Batch fetch all authors in a single query
+    const authorIds = [...new Set(posts.map(p => p.authorId?.toString()).filter(Boolean))];
+    const authors = await User.find({ _id: { $in: authorIds } })
+      .select('name email photoUrl')
+      .lean<{ _id: string; name: string; email: string; photoUrl?: string }[]>();
+    const authorMap = new Map(authors.map(a => [a._id.toString(), a]));
 
-        return {
-          ...post,
-          author: author ? {
-            _id: author._id,
-            name: author.name,
-            email: author.email,
-            photoUrl: author.photoUrl
-          } : null
-        };
-      })
-    );
+    const enrichedPosts = posts.map(post => {
+      const author = post.authorId ? authorMap.get(post.authorId.toString()) : null;
+      return {
+        ...post,
+        author: author ? {
+          _id: author._id,
+          name: author.name,
+          email: author.email,
+          photoUrl: author.photoUrl
+        } : null
+      };
+    });
 
     return NextResponse.json({
       success: true,

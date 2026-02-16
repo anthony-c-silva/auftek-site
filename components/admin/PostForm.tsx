@@ -9,6 +9,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import RichTextEditor from "@/components/RichTextEditor";
 import { TagManager, TagData } from "@/components/admin/TagManager";
+import { ImageCropModal } from "@/components/admin/ImageCropModal";
 
 type AIStrategy = Record<string, unknown>;
 
@@ -65,6 +66,7 @@ export const PostForm: React.FC<PostFormProps> = ({
 
     const [loading, setLoading] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [cropFile, setCropFile] = useState<File | null>(null);
 
     // AI States
     const [aiLoading, setAiLoading] = useState(false);
@@ -156,13 +158,18 @@ export const PostForm: React.FC<PostFormProps> = ({
         if (excerptStrategy) setExcerptStrategy(null);
     };
 
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
+        setCropFile(file);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+    };
 
+    const handleCropConfirm = async (croppedFile: File) => {
+        setCropFile(null);
         setIsUploading(true);
         const uploadData = new FormData();
-        uploadData.append("file", file);
+        uploadData.append("file", croppedFile);
         uploadData.append("folder", "publication");
 
         try {
@@ -180,8 +187,11 @@ export const PostForm: React.FC<PostFormProps> = ({
             alert("Error uploading image.");
         } finally {
             setIsUploading(false);
-            if (fileInputRef.current) fileInputRef.current.value = "";
         }
+    };
+
+    const handleCropCancel = () => {
+        setCropFile(null);
     };
 
     const handleAddTag = (tagName: string) => {
@@ -572,6 +582,16 @@ export const PostForm: React.FC<PostFormProps> = ({
                     isModal={true}
                     onClose={() => setShowTagManager(false)}
                     onTagCreated={handleTagCreatedInModal}
+                />
+            )}
+
+            {cropFile && (
+                <ImageCropModal
+                    file={cropFile}
+                    onCrop={handleCropConfirm}
+                    onCancel={handleCropCancel}
+                    aspectRatio={16 / 9}
+                    aspectLabel="16:9"
                 />
             )}
         </>
