@@ -27,20 +27,25 @@ export async function POST(request: Request) {
             body: formDataToSend,
         });
 
+        console.log('Upload proxy:', { url: uploadUrl, folder, fileName: file.name, fileSize: file.size, status: 'enviando...' });
+
         if (!response.ok) {
-            // Se der erro, tentamos ler o texto para logar no servidor, mas retornamos erro JSON pro front
             const errorText = await response.text();
-            console.error("Erro KingHost:", errorText);
-            throw new Error(`Falha remota: ${response.statusText}`);
+            console.error("Erro KingHost:", response.status, errorText);
+            return NextResponse.json(
+                { error: `KingHost ${response.status}: ${errorText}` },
+                { status: response.status }
+            );
         }
 
         const result = await response.json();
         return NextResponse.json(result);
 
-    } catch (error: any) {
-        console.error('Erro no Proxy de Upload:', error);
+    } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : 'Erro interno';
+        console.error('Erro no Proxy de Upload:', message);
         return NextResponse.json(
-            { error: error.message || 'Erro interno' },
+            { error: message },
             { status: 500 }
         );
     }
