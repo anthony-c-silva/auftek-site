@@ -74,6 +74,7 @@ export async function PUT(request: Request, { params }: Props) {
             if (post.pendingChanges.coverImage) post.coverImage = post.pendingChanges.coverImage;
             if (post.pendingChanges.tags?.length) post.tags = post.pendingChanges.tags;
             if (post.pendingChanges.slug) post.slug = post.pendingChanges.slug;
+            if (post.pendingChanges.category) post.category = post.pendingChanges.category;
 
             post.pendingChanges = undefined;
             post.status = 'published';
@@ -109,7 +110,8 @@ export async function PUT(request: Request, { params }: Props) {
                 excerpt: body.excerpt ?? currentPending.excerpt ?? post.excerpt,
                 coverImage: body.coverImage ?? currentPending.coverImage ?? post.coverImage,
                 tags: body.tags ?? currentPending.tags ?? post.tags,
-                slug: body.slug ?? currentPending.slug ?? post.slug
+                slug: body.slug ?? currentPending.slug ?? post.slug,
+                category: body.category ?? currentPending.category ?? post.category
             };
 
             post.status = 're-evaluation';
@@ -145,6 +147,7 @@ export async function PUT(request: Request, { params }: Props) {
                 if (body.coverImage) post.coverImage = body.coverImage;
                 if (body.tags) post.tags = body.tags;
                 if (body.slug) post.slug = body.slug;
+                if (body.category === 'general' || body.category === 'case_study') post.category = body.category;
 
                 if (body.status) {
                     // Autor não pode forçar 'published' diretamente se não for admin
